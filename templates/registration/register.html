@@ -2,1057 +2,344 @@
 
 {% block title %}Join PeerLearn - Registration{% endblock %}
 
-{% block extra_head %}
-<style>
-    .wizard-bg {
-        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-    }
-    .wizard-step {
-        transition: all 0.3s ease;
-    }
-    .wizard-step.hidden {
-        opacity: 0;
-        transform: translateX(20px);
-        pointer-events: none;
-    }
-    .progress-bar {
-        transition: width 0.3s ease;
-    }
-    .form-card {
-        backdrop-filter: blur(20px);
-        background: rgba(255, 255, 255, 0.95);
-    }
-    .role-card {
-        transition: all 0.3s ease;
-    }
-    .role-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    }
-    .domain-selector {
-        transition: all 0.2s ease;
-    }
-    .domain-selector:hover {
-        transform: scale(1.05);
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="min-h-screen wizard-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" 
-     x-data="registrationWizard()" 
-     x-init="init()">
-    
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 overflow-hidden">
-        <div class="absolute -top-40 -right-40 w-96 h-96 bg-white bg-opacity-5 rounded-full"></div>
-        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-white bg-opacity-10 rounded-full"></div>
-    </div>
-    
-    <div class="relative z-10 max-w-2xl w-full">
-        <!-- Header -->
+<div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-white mb-2">Join PeerLearn</h1>
-            <p class="text-blue-100 text-lg">Create your account in 4 simple steps</p>
-        </div>
-        
-        <!-- Progress Bar -->
-        <div class="mb-8 bg-white bg-opacity-20 rounded-full p-1 backdrop-blur-sm">
-            <div class="relative">
-                <div class="flex items-center justify-between">
-                    <template x-for="(step, index) in steps" :key="step.id">
-                        <div class="flex items-center" :class="index < steps.length - 1 ? 'flex-1' : ''">
-                            <div :class="currentStep >= index + 1 ? 'bg-white text-blue-600' : 'bg-blue-300 text-blue-600'"
-                                 class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors z-10 relative bg-white">
-                                <span x-text="index + 1"></span>
-                            </div>
-                            <div x-show="index < steps.length - 1" class="flex-1 mx-3">
-                                <div class="h-2 bg-blue-300 rounded-full">
-                                    <div :class="currentStep > index + 1 ? 'w-full' : 'w-0'"
-                                         class="progress-bar h-2 bg-white rounded-full"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                
-                <!-- Step Labels -->
-                <div class="flex justify-between mt-3">
-                    <template x-for="step in steps" :key="step.id">
-                        <div class="text-xs text-white font-medium text-center" x-text="step.name"></div>
-                    </template>
-                </div>
-            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Join PeerLearn</h1>
+            <p class="text-gray-600">Create your account to get started</p>
         </div>
 
-        <!-- Wizard Container -->
-        <div class="form-card rounded-2xl shadow-2xl p-8 border border-white border-opacity-20">
+        <form method="post" id="registrationForm">
+            {% csrf_token %}
             
-            <!-- Step 1: Role Selection -->
-            <div x-show="currentStep === 1" class="wizard-step">
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-gray-900">Are you a Learner or Mentor?</h3>
-                    <p class="mt-2 text-gray-600">Choose your path to get started</p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div @click="selectRole('learner')" 
-                         :class="formData.role === 'learner' ? 'ring-4 ring-blue-500 bg-blue-50 border-blue-500' : 'hover:bg-gray-50 border-gray-200'"
-                         class="role-card cursor-pointer border-2 rounded-xl p-6">
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i data-feather="book-open" class="h-8 w-8 text-blue-600"></i>
-                            </div>
-                            <h4 class="text-xl font-semibold text-gray-900 mb-3">Learn from Experts</h4>
-                            <p class="text-gray-600 text-sm mb-4">Connect with mentors and expand your knowledge through personalized sessions</p>
-                            <div class="space-y-2 text-left">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
-                                    Browse expert mentors
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
-                                    Book 1-on-1 sessions
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
-                                    Request custom sessions
-                                </div>
-                            </div>
+            <!-- Role Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">I want to:</label>
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
+                        <input type="radio" name="role" value="learner" required 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900">Learn from Experts</div>
+                            <div class="text-sm text-gray-600">Connect with mentors and expand your knowledge</div>
                         </div>
-                    </div>
-                    
-                    <div @click="selectRole('mentor')" 
-                         :class="formData.role === 'mentor' ? 'ring-4 ring-blue-500 bg-blue-50 border-blue-500' : 'hover:bg-gray-50 border-gray-200'"
-                         class="role-card cursor-pointer border-2 rounded-xl p-6">
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i data-feather="users" class="h-8 w-8 text-blue-600"></i>
-                            </div>
-                            <h4 class="text-xl font-semibold text-gray-900 mb-3">Teach and Mentor</h4>
-                            <p class="text-gray-600 text-sm mb-4">Share your expertise and help others grow while earning income</p>
-                            <div class="space-y-2 text-left">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
-                                    Create live sessions
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
-                                    Set your own rates
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
-                                    Build your reputation
-                                </div>
-                            </div>
+                    </label>
+                    <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
+                        <input type="radio" name="role" value="mentor" required
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900">Teach and Mentor</div>
+                            <div class="text-sm text-gray-600">Share your expertise and help others grow</div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="mt-8 flex justify-end">
-                    <button @click="nextStep()" 
-                            :disabled="!formData.role"
-                            :class="formData.role ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
-                            class="px-8 py-3 text-white font-semibold rounded-xl transition-colors">
-                        Next
-                    </button>
+                    </label>
                 </div>
             </div>
 
-            <!-- Step 2: Basic Information -->
-            <div x-show="currentStep === 2" class="wizard-step">
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-gray-900">Basic Information</h3>
-                    <p class="mt-2 text-gray-600">Tell us about yourself</p>
+            <!-- Personal Information -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
+                    <input type="text" name="first_name" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="John">
                 </div>
-                
-                <div class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- First Name Field -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                First Name *
-                            </label>
-                            <div class="relative">
-                                <input x-model="formData.firstName" 
-                                       @input="validateField('firstName'); updateIcons()"
-                                       @blur="validateField('firstName'); updateIcons()"
-                                       type="text" 
-                                       placeholder="e.g., John"
-                                       :class="errors.firstName ? 'border-red-500 focus:ring-red-500 bg-red-50' : formData.firstName ? 'border-green-500 focus:ring-green-500 bg-green-50' : 'border-gray-300 focus:ring-blue-500'"
-                                       class="w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white">
-                                <div x-show="formData.firstName && !errors.firstName" class="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                    <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div x-show="errors.firstName" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
-                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span x-text="errors.firstName"></span>
-                            </div>
-                            <div x-show="!errors.firstName && suggestions.firstName" class="mt-1 text-blue-600 text-xs flex items-center space-x-1">
-                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span x-text="suggestions.firstName"></span>
-                            </div>
-                        </div>
-                        
-                        <!-- Last Name Field -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                Last Name *
-                            </label>
-                            <div class="relative">
-                                <input x-model="formData.lastName" 
-                                       @input="validateField('lastName')"
-                                       @blur="validateField('lastName')"
-                                       type="text" 
-                                       placeholder="e.g., Smith"
-                                       :class="errors.lastName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'"
-                                       class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
-                                <div x-show="formData.lastName && !errors.lastName" class="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                    <i data-feather="check" class="h-5 w-5 text-green-500"></i>
-                                </div>
-                            </div>
-                            <div x-show="errors.lastName" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
-                                <i data-feather="alert-circle" class="h-3 w-3"></i>
-                                <span x-text="errors.lastName"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Email Field with Live Checking -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Email Address *
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <i data-feather="mail" class="h-5 w-5 text-gray-400"></i>
-                            </div>
-                            <input x-model="formData.email" 
-                                   @input="validateEmailLive()"
-                                   @blur="checkEmailExists()"
-                                   type="email" 
-                                   placeholder="john.smith@example.com"
-                                   :class="errors.email ? 'border-red-500 focus:ring-red-500' : emailStatus.valid ? 'border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-blue-500'"
-                                   class="w-full pl-12 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
-                            
-                            <!-- Loading/Status Icons -->
-                            <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <div x-show="emailStatus.checking" class="animate-spin">
-                                    <i data-feather="loader" class="h-5 w-5 text-blue-500"></i>
-                                </div>
-                                <div x-show="!emailStatus.checking && emailStatus.valid && !emailStatus.exists">
-                                    <i data-feather="check" class="h-5 w-5 text-green-500"></i>
-                                </div>
-                                <div x-show="!emailStatus.checking && emailStatus.exists">
-                                    <i data-feather="x" class="h-5 w-5 text-red-500"></i>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Email Status Messages -->
-                        <div x-show="errors.email" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
-                            <i data-feather="alert-circle" class="h-3 w-3"></i>
-                            <span x-text="errors.email"></span>
-                        </div>
-                        <div x-show="emailStatus.exists" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
-                            <i data-feather="alert-triangle" class="h-3 w-3"></i>
-                            <span>This email is already registered. <a href="{% url 'login' %}" class="underline">Sign in instead?</a></span>
-                        </div>
-                        <div x-show="emailStatus.valid && !emailStatus.exists && !emailStatus.checking" class="mt-1 text-green-600 text-xs flex items-center space-x-1">
-                            <i data-feather="check-circle" class="h-3 w-3"></i>
-                            <span>Email is available</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Password Field with Eye Toggle -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Create Password *
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <i data-feather="lock" class="h-5 w-5 text-gray-400"></i>
-                            </div>
-                            <input x-model="formData.password" 
-                                   @input="checkPasswordStrength()"
-                                   :type="showPassword ? 'text' : 'password'"
-                                   placeholder="Create a strong password"
-                                   :class="errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'"
-                                   class="w-full pl-12 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
-                            
-                            <!-- Eye Toggle Button -->
-                            <button type="button" 
-                                    @click="showPassword = !showPassword"
-                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-gray-100 transition-colors">
-                                <i :data-feather="showPassword ? 'eye-off' : 'eye'" class="h-5 w-5 text-gray-500"></i>
-                            </button>
-                        </div>
-                        
-                        <!-- Password Strength Indicator -->
-                        <div x-show="formData.password" class="mt-3">
-                            <div class="flex justify-between text-xs text-gray-600 mb-2">
-                                <span>Password Strength</span>
-                                <span x-text="passwordStrength.text" :class="passwordStrength.textColor"></span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div :class="passwordStrength.color" 
-                                     :style="`width: ${passwordStrength.percentage}%`"
-                                     class="h-2 rounded-full transition-all duration-300"></div>
-                            </div>
-                            
-                            <!-- Password Requirements -->
-                            <div class="mt-3 space-y-1">
-                                <div class="flex items-center space-x-2 text-xs">
-                                    <i :data-feather="passwordChecks.length ? 'check' : 'x'" 
-                                       :class="passwordChecks.length ? 'text-green-500' : 'text-gray-400'"
-                                       class="h-3 w-3"></i>
-                                    <span :class="passwordChecks.length ? 'text-green-600' : 'text-gray-500'">
-                                        At least 8 characters
-                                    </span>
-                                </div>
-                                <div class="flex items-center space-x-2 text-xs">
-                                    <i :data-feather="passwordChecks.uppercase ? 'check' : 'x'" 
-                                       :class="passwordChecks.uppercase ? 'text-green-500' : 'text-gray-400'"
-                                       class="h-3 w-3"></i>
-                                    <span :class="passwordChecks.uppercase ? 'text-green-600' : 'text-gray-500'">
-                                        One uppercase letter
-                                    </span>
-                                </div>
-                                <div class="flex items-center space-x-2 text-xs">
-                                    <i :data-feather="passwordChecks.lowercase ? 'check' : 'x'" 
-                                       :class="passwordChecks.lowercase ? 'text-green-500' : 'text-gray-400'"
-                                       class="h-3 w-3"></i>
-                                    <span :class="passwordChecks.lowercase ? 'text-green-600' : 'text-gray-500'">
-                                        One lowercase letter
-                                    </span>
-                                </div>
-                                <div class="flex items-center space-x-2 text-xs">
-                                    <i :data-feather="passwordChecks.number ? 'check' : 'x'" 
-                                       :class="passwordChecks.number ? 'text-green-500' : 'text-gray-400'"
-                                       class="h-3 w-3"></i>
-                                    <span :class="passwordChecks.number ? 'text-green-600' : 'text-gray-500'">
-                                        One number
-                                    </span>
-                                </div>
-                                <div class="flex items-center space-x-2 text-xs">
-                                    <i :data-feather="passwordChecks.special ? 'check' : 'x'" 
-                                       :class="passwordChecks.special ? 'text-green-500' : 'text-gray-400'"
-                                       class="h-3 w-3"></i>
-                                    <span :class="passwordChecks.special ? 'text-green-600' : 'text-gray-500'">
-                                        One special character (!@#$%^&*)
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div x-show="errors.password" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
-                            <i data-feather="alert-circle" class="h-3 w-3"></i>
-                            <span x-text="errors.password"></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Confirm Password Field -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Confirm Password *
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <i data-feather="lock" class="h-5 w-5 text-gray-400"></i>
-                            </div>
-                            <input x-model="formData.confirmPassword" 
-                                   @input="validatePasswordMatch()"
-                                   :type="showConfirmPassword ? 'text' : 'password'"
-                                   placeholder="Confirm your password"
-                                   :class="errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : passwordMatch ? 'border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-blue-500'"
-                                   class="w-full pl-12 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
-                            
-                            <!-- Eye Toggle for Confirm Password -->
-                            <button type="button" 
-                                    @click="showConfirmPassword = !showConfirmPassword"
-                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-gray-100 transition-colors">
-                                <i :data-feather="showConfirmPassword ? 'eye-off' : 'eye'" class="h-5 w-5 text-gray-500"></i>
-                            </button>
-                        </div>
-                        
-                        <div x-show="formData.confirmPassword && passwordMatch" class="mt-1 text-green-600 text-xs flex items-center space-x-1">
-                            <i data-feather="check-circle" class="h-3 w-3"></i>
-                            <span>Passwords match</span>
-                        </div>
-                        <div x-show="errors.confirmPassword" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
-                            <i data-feather="alert-circle" class="h-3 w-3"></i>
-                            <span x-text="errors.confirmPassword"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-8 flex justify-between">
-                    <button @click="previousStep()" 
-                            class="px-6 py-3 text-gray-600 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-                        Back
-                    </button>
-                    <button @click="nextStep()" 
-                            :disabled="!isStep2Valid()"
-                            :class="isStep2Valid() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
-                            class="px-8 py-3 text-white font-semibold rounded-xl transition-colors">
-                        Next
-                    </button>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Last Name *</label>
+                    <input type="text" name="last_name" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Smith">
                 </div>
             </div>
 
-            <!-- Step 3: Expertise & Profile Image -->
-            <div x-show="currentStep === 3" class="wizard-step">
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-gray-900">
-                        <span x-text="formData.role === 'mentor' ? 'Your Teaching Expertise' : 'Your Learning Interests'"></span>
-                    </h3>
-                    <p class="mt-2 text-gray-600" 
-                       x-text="formData.role === 'mentor' ? 'What domains do you want to teach?' : 'What do you want to learn?'"></p>
-                </div>
-                
-                <div class="space-y-6">
-                    <!-- Domain Selection -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <span x-text="formData.role === 'mentor' ? 'Teaching Domains' : 'Interest Areas'"></span>
-                        </label>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            <template x-for="domain in domains" :key="domain.value">
-                                <label class="cursor-pointer">
-                                    <input type="checkbox" 
-                                           :value="domain.value"
-                                           x-model="formData.domains"
-                                           class="sr-only peer">
-                                    <div :class="formData.domains.includes(domain.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'"
-                                         class="domain-selector border-2 rounded-lg p-3 text-center transition-all">
-                                        <div class="text-2xl mb-1" x-text="domain.icon"></div>
-                                        <div class="text-sm font-medium" x-text="domain.name"></div>
-                                    </div>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-                    
-                    <!-- Skills -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <span x-text="formData.role === 'mentor' ? 'Your Skills & Technologies' : 'Skills You Want to Learn'"></span>
-                        </label>
-                        <input x-model="formData.skills" 
-                               type="text" 
-                               placeholder="e.g., React, Python, UI Design, Data Analysis..."
-                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                    </div>
-                    
-                    <!-- Profile Image Upload -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Profile Picture</label>
-                        <div class="flex items-center space-x-4">
-                            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-2xl font-bold">
-                                <span x-text="formData.firstName ? formData.firstName.charAt(0).toUpperCase() : '?'"></span>
-                            </div>
-                            <div class="flex-1">
-                                <input type="file" 
-                                       @change="handleImageUpload($event)"
-                                       accept="image/*"
-                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors">
-                                <p class="text-xs text-gray-500 mt-1">Upload image → Real-time preview</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-8 flex justify-between">
-                    <button @click="previousStep()" 
-                            class="px-6 py-3 text-gray-600 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-                        Back
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                <input type="email" name="email" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                       placeholder="john@example.com">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
+                <div class="relative">
+                    <input type="password" name="password1" required id="password"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Create a strong password">
+                    <button type="button" onclick="togglePassword()" 
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                        <svg id="eyeIcon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
                     </button>
-                    <button @click="nextStep()" 
-                            :disabled="formData.domains.length === 0"
-                            :class="formData.domains.length > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
-                            class="px-8 py-3 text-white font-semibold rounded-xl transition-colors">
-                        Next
-                    </button>
+                </div>
+                <div id="passwordStrength" class="mt-2 hidden">
+                    <div class="text-xs text-gray-600 mb-1">Password Strength: <span id="strengthText">Weak</span></div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="strengthBar" class="h-2 rounded-full transition-all duration-300 bg-red-500" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Step 4: Verify & Complete -->
-            <div x-show="currentStep === 4" class="wizard-step">
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-gray-900">Review Details</h3>
-                    <p class="mt-2 text-gray-600">Please review your information before creating your account</p>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password *</label>
+                <input type="password" name="password2" required id="confirmPassword"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                       placeholder="Confirm your password">
+                <div id="passwordMatch" class="mt-1 text-sm hidden"></div>
+            </div>
+
+            <!-- Skills with Auto-suggestions -->
+            <div class="mb-4" id="skillsSection">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Skills & Technologies *</label>
+                <div class="relative">
+                    <input type="text" name="skills" id="skillsInput" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="e.g., React, Python, UI Design, Data Science..."
+                           autocomplete="off">
+                    <div id="skillsSuggestions" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden mt-1 max-h-48 overflow-y-auto"></div>
                 </div>
-                
-                <div class="bg-blue-50 rounded-xl p-6 mb-6">
-                    <div class="space-y-4">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl font-bold">
-                                <span x-text="formData.firstName ? formData.firstName.charAt(0).toUpperCase() : '?'"></span>
-                            </div>
-                            <div>
-                                <h4 class="text-lg font-semibold" x-text="`${formData.firstName} ${formData.lastName}`"></h4>
-                                <p class="text-gray-600" x-text="formData.email"></p>
-                                <span :class="formData.role === 'mentor' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'"
-                                      class="px-2 py-1 text-xs font-medium rounded-full capitalize"
-                                      x-text="formData.role"></span>
-                            </div>
-                        </div>
-                        
-                        <div x-show="formData.domains.length > 0">
-                            <h5 class="font-medium text-gray-900 mb-2">
-                                <span x-text="formData.role === 'mentor' ? 'Teaching Areas' : 'Interest Areas'"></span>
-                            </h5>
-                            <div class="flex flex-wrap gap-2">
-                                <template x-for="domain in formData.domains" :key="domain">
-                                    <span class="bg-white text-blue-800 px-2 py-1 text-xs font-medium rounded-full border"
-                                          x-text="getDomainName(domain)"></span>
-                                </template>
-                            </div>
-                        </div>
-                        
-                        <div x-show="formData.skills">
-                            <h5 class="font-medium text-gray-900 mb-1">Skills</h5>
-                            <p class="text-gray-600 text-sm" x-text="formData.skills"></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-8 flex justify-between">
-                    <button @click="previousStep()" 
-                            class="px-6 py-3 text-gray-600 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-                        Back
-                    </button>
-                    <button @click="submitRegistration()" 
-                            :disabled="isSubmitting"
-                            :class="!isSubmitting ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
-                            class="px-8 py-3 text-white font-bold rounded-xl transition-colors shadow-lg">
-                        <span x-show="!isSubmitting">Finish → API call to /api/auth/register → Redirects to /login</span>
-                        <span x-show="isSubmitting" class="flex items-center space-x-2">
-                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Creating Account...</span>
-                        </span>
-                    </button>
+                <div class="mt-2">
+                    <div id="selectedSkills" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Login Link -->
+
+            <!-- Domain/Expertise -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Domain of Interest *</label>
+                <select name="expertise" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <option value="">Select your domain</option>
+                    <option value="web-development">Web Development</option>
+                    <option value="mobile-development">Mobile Development</option>
+                    <option value="data-science">Data Science & Analytics</option>
+                    <option value="machine-learning">AI & Machine Learning</option>
+                    <option value="design">UI/UX Design</option>
+                    <option value="business">Business & Marketing</option>
+                    <option value="devops">DevOps & Cloud</option>
+                    <option value="cybersecurity">Cybersecurity</option>
+                    <option value="blockchain">Blockchain</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <!-- Bio -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Bio</label>
+                <textarea name="bio" rows="3"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Tell us about yourself and your experience..."></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg">
+                Create Account
+            </button>
+        </form>
+
         <div class="mt-6 text-center">
-            <span class="text-sm text-white">
-                Already have an account?
-                <a href="{% url 'login' %}" class="font-medium text-blue-100 hover:text-white underline">
-                    Sign in here
-                </a>
+            <span class="text-sm text-gray-600">
+                Already have an account? 
+                <a href="{% url 'login' %}" class="font-medium text-blue-600 hover:text-blue-800">Sign in here</a>
             </span>
         </div>
     </div>
 </div>
 
 <script>
-function registrationWizard() {
-    return {
-        currentStep: 1,
-        isSubmitting: false,
+// Real-time field validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registrationForm');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');
+    const passwordMatch = document.getElementById('passwordMatch');
+
+    // Password strength checking
+    password.addEventListener('input', function() {
+        const value = this.value;
+        passwordStrength.classList.remove('hidden');
         
-        steps: [
-            { id: 1, name: 'Role' },
-            { id: 2, name: 'Info' },
-            { id: 3, name: 'Profile' },
-            { id: 4, name: 'Complete' }
-        ],
+        let score = 0;
+        if (value.length >= 8) score++;
+        if (/[a-z]/.test(value)) score++;
+        if (/[A-Z]/.test(value)) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
         
-        formData: {
-            role: '',
-            firstName: '',
-            lastName: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-            domains: [],
-            skills: '',
-            profileImage: null
-        },
+        const percentage = (score / 5) * 100;
+        strengthBar.style.width = percentage + '%';
         
-        // Enhanced validation and UI state
-        errors: {
-            firstName: '',
-            lastName: '',
-            email: '',
-            password: '',
-            confirmPassword: ''
-        },
-        
-        suggestions: {
-            firstName: '',
-            lastName: '',
-            email: ''
-        },
-        
-        emailStatus: {
-            valid: false,
-            exists: false,
-            checking: false
-        },
-        
-        passwordStrength: {
-            percentage: 0,
-            text: 'Weak',
-            textColor: 'text-red-600',
-            color: 'bg-red-500'
-        },
-        
-        passwordChecks: {
-            length: false,
-            uppercase: false,
-            lowercase: false,
-            number: false,
-            special: false
-        },
-        
-        showPassword: false,
-        showConfirmPassword: false,
-        passwordMatch: false,
-        
-        domains: [
-            { value: 'web-development', name: 'Web Dev', icon: '🌐' },
-            { value: 'mobile-development', name: 'Mobile', icon: '📱' },
-            { value: 'data-science', name: 'Data Science', icon: '📊' },
-            { value: 'machine-learning', name: 'AI/ML', icon: '🤖' },
-            { value: 'design', name: 'Design', icon: '🎨' },
-            { value: 'business', name: 'Business', icon: '💼' },
-            { value: 'devops', name: 'DevOps', icon: '⚙️' },
-            { value: 'blockchain', name: 'Blockchain', icon: '🔗' },
-            { value: 'cybersecurity', name: 'Security', icon: '🔒' },
-            { value: 'other', name: 'Other', icon: '🔧' }
-        ],
-        
-        init() {
-            this.updateIcons();
-        },
-        
-        selectRole(role) {
-            this.formData.role = role;
-        },
-        
-        nextStep() {
-            if (this.currentStep < 4) {
-                this.currentStep++;
-                this.updateIcons();
-            }
-        },
-        
-        previousStep() {
-            if (this.currentStep > 1) {
-                this.currentStep--;
-            }
-        },
-        
-        // Enhanced field validation
-        validateField(fieldName) {
-            this.errors[fieldName] = '';
-            this.suggestions[fieldName] = '';
-            
-            const value = this.formData[fieldName];
-            
-            if (fieldName === 'firstName' || fieldName === 'lastName') {
-                if (!value || value.length < 2) {
-                    this.errors[fieldName] = 'Must be at least 2 characters';
-                } else if (!/^[a-zA-Z\s'-]+$/.test(value)) {
-                    this.errors[fieldName] = 'Only letters, spaces, hyphens and apostrophes allowed';
-                } else if (value.length > 50) {
-                    this.errors[fieldName] = 'Must be less than 50 characters';
-                } else {
-                    // Capitalize first letter suggestion
-                    const formatted = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
-                    if (value !== formatted) {
-                        this.suggestions[fieldName] = `Suggestion: ${formatted}`;
-                    }
-                }
-            }
-        },
-        
-        // Live email validation
-        validateEmailLive() {
-            this.errors.email = '';
-            this.emailStatus.valid = false;
-            
-            const email = this.formData.email;
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            if (!email) {
-                return;
-            }
-            
-            if (!emailRegex.test(email)) {
-                this.errors.email = 'Please enter a valid email address';
-                return;
-            }
-            
-            // Check for common typos in domains
-            const commonDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
-            const domain = email.split('@')[1];
-            
-            if (domain && !commonDomains.includes(domain.toLowerCase())) {
-                // Check for typos
-                for (let commonDomain of commonDomains) {
-                    if (this.levenshteinDistance(domain.toLowerCase(), commonDomain) <= 2) {
-                        this.suggestions.email = `Did you mean ${email.split('@')[0]}@${commonDomain}?`;
-                        break;
-                    }
-                }
-            }
-            
-            this.emailStatus.valid = true;
-        },
-        
-        // Check if email already exists in database
-        async checkEmailExists() {
-            if (!this.emailStatus.valid || !this.formData.email) return;
-            
-            this.emailStatus.checking = true;
-            
-            try {
-                const response = await fetch('/api/check-email/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCSRFToken()
-                    },
-                    body: JSON.stringify({ email: this.formData.email })
-                });
-                
-                const data = await response.json();
-                this.emailStatus.exists = data.exists;
-            } catch (error) {
-                console.log('Email check temporarily unavailable');
-            } finally {
-                this.emailStatus.checking = false;
-            }
-        },
-        
-        // Enhanced password strength checking
-        checkPasswordStrength() {
-            const password = this.formData.password;
-            
-            // Reset checks
-            this.passwordChecks = {
-                length: password.length >= 8,
-                uppercase: /[A-Z]/.test(password),
-                lowercase: /[a-z]/.test(password),
-                number: /[0-9]/.test(password),
-                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-            };
-            
-            // Calculate score
-            const checks = Object.values(this.passwordChecks);
-            const score = checks.filter(Boolean).length;
-            const percentage = (score / 5) * 100;
-            
-            this.passwordStrength.percentage = percentage;
-            
-            if (percentage < 40) {
-                this.passwordStrength.text = 'Weak';
-                this.passwordStrength.textColor = 'text-red-600';
-                this.passwordStrength.color = 'bg-red-500';
-            } else if (percentage < 60) {
-                this.passwordStrength.text = 'Fair';
-                this.passwordStrength.textColor = 'text-orange-600';
-                this.passwordStrength.color = 'bg-orange-500';
-            } else if (percentage < 80) {
-                this.passwordStrength.text = 'Good';
-                this.passwordStrength.textColor = 'text-yellow-600';
-                this.passwordStrength.color = 'bg-yellow-500';
-            } else {
-                this.passwordStrength.text = 'Strong';
-                this.passwordStrength.textColor = 'text-green-600';
-                this.passwordStrength.color = 'bg-green-500';
-            }
-            
-            // Validate password match if confirm password exists
-            this.validatePasswordMatch();
-        },
-        
-        // Password confirmation validation
-        validatePasswordMatch() {
-            if (!this.formData.confirmPassword) {
-                this.passwordMatch = false;
-                this.errors.confirmPassword = '';
-                return;
-            }
-            
-            if (this.formData.password !== this.formData.confirmPassword) {
-                this.passwordMatch = false;
-                this.errors.confirmPassword = 'Passwords do not match';
-            } else {
-                this.passwordMatch = true;
-                this.errors.confirmPassword = '';
-            }
-        },
-        
-        // Enhanced step 2 validation
-        isStep2Valid() {
-            return this.formData.firstName && 
-                   this.formData.lastName && 
-                   this.formData.email && 
-                   this.formData.password && 
-                   this.formData.confirmPassword &&
-                   !this.errors.firstName &&
-                   !this.errors.lastName &&
-                   !this.errors.email &&
-                   !this.errors.password &&
-                   !this.errors.confirmPassword &&
-                   this.emailStatus.valid &&
-                   !this.emailStatus.exists &&
-                   this.passwordMatch &&
-                   this.passwordStrength.percentage >= 60; // Require at least "Good" password
-        },
-        
-        // Helper function for email typo detection
-        levenshteinDistance(str1, str2) {
-            const matrix = [];
-            
-            for (let i = 0; i <= str2.length; i++) {
-                matrix[i] = [i];
-            }
-            
-            for (let j = 0; j <= str1.length; j++) {
-                matrix[0][j] = j;
-            }
-            
-            for (let i = 1; i <= str2.length; i++) {
-                for (let j = 1; j <= str1.length; j++) {
-                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-                        matrix[i][j] = matrix[i - 1][j - 1];
-                    } else {
-                        matrix[i][j] = Math.min(
-                            matrix[i - 1][j - 1] + 1,
-                            matrix[i][j - 1] + 1,
-                            matrix[i - 1][j] + 1
-                        );
-                    }
-                }
-            }
-            
-            return matrix[str2.length][str1.length];
-        },
-        
-        handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                this.formData.profileImage = file;
-                // Real-time image preview updates instantly
-            }
-        },
-        
-        getDomainName(value) {
-            const domain = this.domains.find(d => d.value === value);
-            return domain ? domain.name : value;
-        },
-        
-        async submitRegistration() {
-            this.isSubmitting = true;
-            
-            try {
-                // API call to /api/auth/register
-                const formData = new FormData();
-                formData.append('role', this.formData.role);
-                formData.append('first_name', this.formData.firstName);
-                formData.append('last_name', this.formData.lastName);
-                formData.append('email', this.formData.email);
-                formData.append('password1', this.formData.password);
-                formData.append('password2', this.formData.password);
-                formData.append('expertise', JSON.stringify(this.formData.domains));
-                formData.append('skills', this.formData.skills);
-                
-                if (this.formData.profileImage) {
-                    formData.append('profile_image', this.formData.profileImage);
-                }
-                
-                const response = await fetch('{% url "register" %}', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': this.getCSRFToken()
-                    }
-                });
-                
-                if (response.ok) {
-                    // Redirects to /login
-                    window.location.href = '{% url "login" %}';
-                } else {
-                    alert('Registration failed. Please try again.');
-                }
-            } catch (error) {
-                alert('Registration failed. Please try again.');
-            } finally {
-                this.isSubmitting = false;
-            }
-        },
-        
-        getCSRFToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-        },
-        
-        updateIcons() {
-            this.$nextTick(() => {
-                if (typeof feather !== 'undefined') {
-                    feather.replace();
-                }
-            });
+        if (percentage < 40) {
+            strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-red-500';
+            strengthText.textContent = 'Weak';
+            strengthText.className = 'text-red-600 font-medium';
+        } else if (percentage < 80) {
+            strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-yellow-500';
+            strengthText.textContent = 'Good';
+            strengthText.className = 'text-yellow-600 font-medium';
+        } else {
+            strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-green-500';
+            strengthText.textContent = 'Strong';
+            strengthText.className = 'text-green-600 font-medium';
         }
+    });
+
+    // Password confirmation
+    function checkPasswordMatch() {
+        if (confirmPassword.value) {
+            if (password.value === confirmPassword.value) {
+                passwordMatch.textContent = '✓ Passwords match';
+                passwordMatch.className = 'mt-1 text-sm text-green-600';
+                passwordMatch.classList.remove('hidden');
+                confirmPassword.className = 'w-full px-4 py-3 border border-green-500 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors';
+            } else {
+                passwordMatch.textContent = '✗ Passwords do not match';
+                passwordMatch.className = 'mt-1 text-sm text-red-600';
+                passwordMatch.classList.remove('hidden');
+                confirmPassword.className = 'w-full px-4 py-3 border border-red-500 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors';
+            }
+        } else {
+            passwordMatch.classList.add('hidden');
+            confirmPassword.className = 'w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors';
+        }
+    }
+
+    password.addEventListener('input', checkPasswordMatch);
+    confirmPassword.addEventListener('input', checkPasswordMatch);
+
+    // Field validation on input
+    const inputs = form.querySelectorAll('input[required]');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.className = this.className.replace('border-gray-300', 'border-green-500');
+            } else {
+                this.className = this.className.replace('border-green-500', 'border-gray-300');
+            }
+        });
+    });
+
+    // Skills auto-suggestions for recommendation system
+    const skillsInput = document.getElementById('skillsInput');
+    const skillsSuggestions = document.getElementById('skillsSuggestions');
+    const selectedSkillsDiv = document.getElementById('selectedSkills');
+    let selectedSkills = [];
+
+    const skillsData = [
+        // Programming Languages
+        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'TypeScript', 'Go', 'Rust', 'PHP', 'Ruby',
+        // Web Development
+        'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'Next.js', 'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS',
+        // Mobile Development
+        'React Native', 'Flutter', 'Swift', 'Kotlin', 'Xamarin', 'Ionic',
+        // Data Science & ML
+        'Machine Learning', 'Deep Learning', 'Data Science', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Scikit-learn',
+        // Databases
+        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Firebase',
+        // Cloud & DevOps
+        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'CI/CD',
+        // Design
+        'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Photoshop', 'Illustrator',
+        // Other
+        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
+    ];
+
+    skillsInput.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        if (value.length < 2) {
+            skillsSuggestions.classList.add('hidden');
+            return;
+        }
+
+        const matches = skillsData.filter(skill => 
+            skill.toLowerCase().includes(value) && 
+            !selectedSkills.includes(skill)
+        ).slice(0, 5);
+
+        if (matches.length > 0) {
+            skillsSuggestions.innerHTML = matches.map(skill => 
+                `<div class="p-2 hover:bg-blue-50 cursor-pointer skill-suggestion" data-skill="${skill}">${skill}</div>`
+            ).join('');
+            skillsSuggestions.classList.remove('hidden');
+        } else {
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    skillsSuggestions.addEventListener('click', function(e) {
+        if (e.target.classList.contains('skill-suggestion')) {
+            const skill = e.target.getAttribute('data-skill');
+            addSkill(skill);
+            skillsInput.value = '';
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    function addSkill(skill) {
+        if (!selectedSkills.includes(skill)) {
+            selectedSkills.push(skill);
+            updateSkillsDisplay();
+            updateSkillsInput();
+        }
+    }
+
+    function removeSkill(skill) {
+        selectedSkills = selectedSkills.filter(s => s !== skill);
+        updateSkillsDisplay();
+        updateSkillsInput();
+    }
+
+    function updateSkillsDisplay() {
+        selectedSkillsDiv.innerHTML = selectedSkills.map(skill => 
+            `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                ${skill}
+                <button type="button" onclick="removeSkill('${skill}')" class="ml-2 text-blue-600 hover:text-blue-800">×</button>
+            </span>`
+        ).join('');
+    }
+
+    function updateSkillsInput() {
+        const hiddenInput = document.querySelector('input[name="skills"]') || document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'skills';
+        hiddenInput.value = selectedSkills.join(',');
+        if (!document.querySelector('input[name="skills"]')) {
+            form.appendChild(hiddenInput);
+        }
+    }
+
+    // Make removeSkill globally available
+    window.removeSkill = removeSkill;
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!skillsInput.contains(e.target) && !skillsSuggestions.contains(e.target)) {
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+});
+
+// Toggle password visibility
+function togglePassword() {
+    const password = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if (password.type === 'password') {
+        password.type = 'text';
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+        `;
+    } else {
+        password.type = 'password';
+        eyeIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+        `;
     }
 }
 </script>
-
-        <form class="mt-8 space-y-6" method="post" style="display: none;">
-            {% csrf_token %}
-            
-            <!-- Role Selection -->
-            <div class="space-y-4">
-                <label class="text-base font-medium text-gray-900">I want to:</label>
-                <div class="space-y-2">
-                    <div class="flex items-center">
-                        <input id="role_learner" 
-                               name="{{ form.role.name }}" 
-                               type="radio" 
-                               value="learner" 
-                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                               {% if form.role.value == 'learner' %}checked{% endif %}>
-                        <label for="role_learner" class="ml-3 block text-sm font-medium text-gray-700">
-                            Learn from experts
-                        </label>
-                    </div>
-                    <div class="flex items-center">
-                        <input id="role_mentor" 
-                               name="{{ form.role.name }}" 
-                               type="radio" 
-                               value="mentor" 
-                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                               {% if form.role.value == 'mentor' %}checked{% endif %}>
-                        <label for="role_mentor" class="ml-3 block text-sm font-medium text-gray-700">
-                            Teach and mentor others
-                        </label>
-                    </div>
-                </div>
-                {% if form.role.errors %}
-                <div class="text-red-600 text-sm">{{ form.role.errors.0 }}</div>
-                {% endif %}
-            </div>
-            
-            <!-- Personal Information -->
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">First Name</label>
-                        <input id="{{ form.first_name.id_for_label }}" 
-                               name="{{ form.first_name.name }}" 
-                               type="text" 
-                               required 
-                               class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
-                               value="{{ form.first_name.value|default:'' }}">
-                        {% if form.first_name.errors %}
-                        <div class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Last Name</label>
-                        <input id="{{ form.last_name.id_for_label }}" 
-                               name="{{ form.last_name.name }}" 
-                               type="text" 
-                               required 
-                               class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
-                               value="{{ form.last_name.value|default:'' }}">
-                        {% if form.last_name.errors %}
-                        <div class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div>
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Username</label>
-                    <input id="{{ form.username.id_for_label }}" 
-                           name="{{ form.username.name }}" 
-                           type="text" 
-                           required 
-                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
-                           value="{{ form.username.value|default:'' }}">
-                    {% if form.username.errors %}
-                    <div class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                
-                <div>
-                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="{{ form.email.id_for_label }}" 
-                           name="{{ form.email.name }}" 
-                           type="email" 
-                           required 
-                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
-                           value="{{ form.email.value|default:'' }}">
-                    {% if form.email.errors %}
-                    <div class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                
-                <div>
-                    <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-gray-700">Bio (Optional)</label>
-                    <textarea id="{{ form.bio.id_for_label }}" 
-                              name="{{ form.bio.name }}" 
-                              rows="3" 
-                              class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
-                              placeholder="Tell us about yourself...">{{ form.bio.value|default:'' }}</textarea>
-                    {% if form.bio.errors %}
-                    <div class="text-red-600 text-sm mt-1">{{ form.bio.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Password -->
-            <div class="space-y-4">
-                <div>
-                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input id="{{ form.password1.id_for_label }}" 
-                           name="{{ form.password1.name }}" 
-                           type="password" 
-                           required 
-                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                    {% if form.password1.errors %}
-                    <div class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                
-                <div>
-                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                    <input id="{{ form.password2.id_for_label }}" 
-                           name="{{ form.password2.name }}" 
-                           type="password" 
-                           required 
-                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                    {% if form.password2.errors %}
-                    <div class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div>
-                <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                        <i data-feather="user-plus" class="h-5 w-5 text-green-500 group-hover:text-green-400"></i>
-                    </span>
-                    Create Account
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 {% endblock %}
