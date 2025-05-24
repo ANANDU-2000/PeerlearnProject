@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Join PeerLearn - Registration{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Join PeerLearn</h1>
+            <p class="text-gray-600">Create your account to get started</p>
+        </div>
+
+        <form method="post" action="{% url 'register' %}">
+            {% csrf_token %}
+            
+            <!-- Role Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">I want to:</label>
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
+                        <input type="radio" name="role" value="learner" required 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900">Learn from Experts</div>
+                            <div class="text-sm text-gray-500">Connect with mentors and expand your knowledge</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
+                        <input type="radio" name="role" value="mentor" required
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900">Teach and Mentor</div>
+                            <div class="text-sm text-gray-500">Share your expertise and help others grow</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Name Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
+                    <input type="text" name="first_name" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Your first name">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Last Name *</label>
+                    <input type="text" name="last_name" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Your last name">
+                </div>
+            </div>
+
+            <!-- Username -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Username *</label>
+                <input type="text" name="username" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                       placeholder="Choose a username">
+            </div>
+
+            <!-- Email -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                <input type="email" name="email" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                       placeholder="your@email.com">
+            </div>
+
+            <!-- Skills with Auto-suggestions -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Skills & Technologies *</label>
+                <div class="relative">
+                    <input type="text" id="skillsInput" autocomplete="off"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Type skills like React, Python, Design...">
+                    <div id="skillsSuggestions" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden mt-1 max-h-48 overflow-y-auto"></div>
+                </div>
+                <input type="hidden" name="skills" id="skillsHidden">
+                <div id="selectedSkills" class="mt-2 flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Domain/Expertise -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Primary Domain *</label>
+                <select name="expertise" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <option value="">Select your primary domain</option>
+                    <option value="web-development">Web Development</option>
+                    <option value="mobile-development">Mobile Development</option>
+                    <option value="data-science">Data Science & Analytics</option>
+                    <option value="machine-learning">AI & Machine Learning</option>
+                    <option value="design">UI/UX Design</option>
+                    <option value="business">Business & Marketing</option>
+                    <option value="devops">DevOps & Cloud</option>
+                    <option value="cybersecurity">Cybersecurity</option>
+                    <option value="blockchain">Blockchain</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
+                <div class="relative">
+                    <input type="password" name="password1" id="password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pr-12"
+                           placeholder="Create a strong password">
+                    <button type="button" onclick="togglePassword()" 
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <svg id="eyeIcon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password *</label>
+                <input type="password" name="password2" id="confirmPassword" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                       placeholder="Confirm your password">
+            </div>
+
+            <!-- Bio -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Bio (Optional)</label>
+                <textarea name="bio" rows="3"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Tell us about yourself and your experience..."></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg">
+                Create Account
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <span class="text-sm text-gray-600">
+                Already have an account? 
+                <a href="{% url 'login' %}" class="text-blue-600 font-semibold hover:text-blue-700">Sign in</a>
+            </span>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Skills auto-suggestions system
+    const skillsInput = document.getElementById('skillsInput');
+    const skillsSuggestions = document.getElementById('skillsSuggestions');
+    const selectedSkillsDiv = document.getElementById('selectedSkills');
+    const skillsHidden = document.getElementById('skillsHidden');
+    let selectedSkills = [];
+
+    const skillsDatabase = [
+        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'TypeScript', 'Go', 'Rust', 'PHP', 'Ruby',
+        'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'Next.js', 'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS',
+        'React Native', 'Flutter', 'Swift', 'Kotlin', 'Xamarin', 'Ionic',
+        'Machine Learning', 'Deep Learning', 'Data Science', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Scikit-learn',
+        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Firebase',
+        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'CI/CD',
+        'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Photoshop', 'Illustrator',
+        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
+    ];
+
+    skillsInput.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        if (value.length < 2) {
+            skillsSuggestions.classList.add('hidden');
+            return;
+        }
+
+        const matches = skillsDatabase.filter(skill => 
+            skill.toLowerCase().includes(value) && 
+            !selectedSkills.includes(skill)
+        ).slice(0, 5);
+
+        if (matches.length > 0) {
+            skillsSuggestions.innerHTML = matches.map(skill => 
+                `<div class="p-2 hover:bg-blue-50 cursor-pointer skill-suggestion" data-skill="${skill}">${skill}</div>`
+            ).join('');
+            skillsSuggestions.classList.remove('hidden');
+        } else {
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    skillsSuggestions.addEventListener('click', function(e) {
+        if (e.target.classList.contains('skill-suggestion')) {
+            const skill = e.target.getAttribute('data-skill');
+            addSkill(skill);
+            skillsInput.value = '';
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    function addSkill(skill) {
+        if (!selectedSkills.includes(skill)) {
+            selectedSkills.push(skill);
+            updateSkillsDisplay();
+            updateHiddenInput();
+        }
+    }
+
+    function removeSkill(skill) {
+        selectedSkills = selectedSkills.filter(s => s !== skill);
+        updateSkillsDisplay();
+        updateHiddenInput();
+    }
+
+    function updateSkillsDisplay() {
+        selectedSkillsDiv.innerHTML = selectedSkills.map(skill => 
+            `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                ${skill}
+                <button type="button" onclick="removeSkill('${skill}')" class="ml-2 text-blue-600 hover:text-blue-800">×</button>
+            </span>`
+        ).join('');
+    }
+
+    function updateHiddenInput() {
+        skillsHidden.value = selectedSkills.join(',');
+    }
+
+    // Make removeSkill globally available
+    window.removeSkill = removeSkill;
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!skillsInput.contains(e.target) && !skillsSuggestions.contains(e.target)) {
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+});
+
+// Toggle password visibility
+function togglePassword() {
+    const password = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if (password.type === 'password') {
+        password.type = 'text';
+    } else {
+        password.type = 'password';
+    }
+}
+</script>
+{% endblock %}

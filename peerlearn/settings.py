@@ -119,6 +119,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# CSRF trusted origins for Replit
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.replit.dev',
+    'https://*.replit.app',
+    'https://*.replit.co',
+]
+
 # Login/logout redirects
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
