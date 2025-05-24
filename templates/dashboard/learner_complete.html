@@ -1,0 +1,935 @@
+{% extends 'base.html' %}
+
+{% block title %}Learner Dashboard - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .learner-bg {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    }
+    .session-card {
+        transition: all 0.3s ease;
+    }
+    .session-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .tab-content {
+        min-height: 400px;
+    }
+    .recommendation-card {
+        background: linear-gradient(45deg, #f0f9ff, #e0f2fe);
+        border-left: 4px solid #3b82f6;
+    }
+    .waiting-animation {
+        animation: pulse 2s infinite;
+    }
+    .ready-button {
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+        from { box-shadow: 0 0 10px #3b82f6; }
+        to { box-shadow: 0 0 20px #3b82f6, 0 0 30px #3b82f6; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="learnerDashboard()" x-init="init()">
+    
+    <!-- Learner Header -->
+    <div class="learner-bg text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Welcome back, {{ user.first_name }}!</h1>
+                    <p class="mt-2 text-blue-100">Ready to learn something new today?</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <button @click="openRequestModal()" 
+                            class="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors">
+                        <i data-feather="plus" class="h-4 w-4 inline mr-2"></i>
+                        Request Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i data-feather="book-open" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Sessions Attended</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.attended"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i data-feather="clock" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Upcoming Sessions</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.upcoming"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <i data-feather="star" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Learning Hours</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.hours"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <i data-feather="trending-up" class="h-6 w-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Skill Level</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.level"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-lg mb-6">
+            <!-- Web Navigation -->
+            <div class="hidden md:block border-b border-gray-200">
+                <nav class="flex space-x-8" aria-label="Tabs">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button @click="activeTab = tab.id"
+                                :class="activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <i :data-feather="tab.icon" class="h-4 w-4"></i>
+                                <span x-text="tab.name"></span>
+                                <span x-show="tab.badge" 
+                                      x-text="tab.badge"
+                                      class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full"></span>
+                            </div>
+                        </button>
+                    </template>
+                </nav>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div class="md:hidden p-4">
+                <select x-model="activeTab" class="w-full rounded-lg border-gray-300">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <option :value="tab.id" x-text="tab.name"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="bg-white rounded-xl shadow-lg">
+            
+            <!-- 1. Browse Sessions -->
+            <div x-show="activeTab === 'browse'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Browse Available Sessions</h3>
+                    <div class="flex items-center space-x-2 text-sm text-gray-600">
+                        <span x-text="`${filteredSessions.length} sessions available`"></span>
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    </div>
+                </div>
+                
+                <!-- Filters with Real-time Updates -->
+                <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <input type="text" x-model="searchQuery" @input="filterSessions()"
+                               placeholder="Search sessions..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <select x-model="domainFilter" @change="filterSessions()"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="">All Domains</option>
+                            <option value="web-development">Web Development</option>
+                            <option value="data-science">Data Science</option>
+                            <option value="design">Design</option>
+                            <option value="business">Business</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select x-model="priceFilter" @change="filterSessions()"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="">Any Price</option>
+                            <option value="free">Free</option>
+                            <option value="under-50">Under $50</option>
+                            <option value="50-100">$50 - $100</option>
+                            <option value="over-100">Over $100</option>
+                        </select>
+                    </div>
+                    <div>
+                        <input type="date" x-model="dateFilter" @change="filterSessions()"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                
+                <!-- Session Cards with Real-time Seat Updates -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="session in filteredSessions" :key="session.id">
+                        <div class="session-card border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
+                                    <p class="text-sm text-gray-600 mb-3" x-text="session.description"></p>
+                                    <div class="flex items-center text-sm text-gray-500 mb-2">
+                                        <i data-feather="user" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="session.mentor"></span>
+                                    </div>
+                                </div>
+                                <span :class="session.price === 'Free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                                      class="px-2 py-1 text-xs font-medium rounded-full"
+                                      x-text="session.price"></span>
+                            </div>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Date & Time</span>
+                                    <span class="font-medium" x-text="session.schedule"></span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Duration</span>
+                                    <span class="font-medium" x-text="`${session.duration} min`"></span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Available Seats</span>
+                                    <span :class="session.availableSeats <= 2 ? 'text-red-600' : 'text-green-600'"
+                                          class="font-medium" 
+                                          x-text="`${session.availableSeats}/${session.maxParticipants}`"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-3">
+                                <button @click="viewSessionDetail(session.id)"
+                                        class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                                    View Details
+                                </button>
+                                <button @click="bookSession(session.id)"
+                                        :disabled="session.availableSeats === 0"
+                                        :class="session.availableSeats === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
+                                        class="flex-1 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                    <span x-text="session.availableSeats === 0 ? 'Full' : 'Book Now'"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 2. My Sessions -->
+            <div x-show="activeTab === 'sessions'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">My Sessions</h3>
+                    <div class="flex space-x-2">
+                        <button @click="sessionView = 'upcoming'"
+                                :class="sessionView === 'upcoming' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                            Upcoming
+                        </button>
+                        <button @click="sessionView = 'past'"
+                                :class="sessionView === 'past' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                            Past
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Sessions with Real-time Status -->
+                <div x-show="sessionView === 'upcoming'" class="space-y-4">
+                    <template x-for="session in mySessions.upcoming" :key="session.id">
+                        <div class="border border-gray-200 rounded-xl p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
+                                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                                        <i data-feather="user" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="session.mentor"></span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="session.schedule"></span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span x-show="session.timeToStart <= 10"
+                                          class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium mb-2">
+                                        Starting in <span x-text="session.timeToStart"></span> min
+                                    </span>
+                                    <div x-show="session.mentorReady && session.timeToStart <= 10">
+                                        <button @click="joinSession(session.id)"
+                                                class="ready-button bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">
+                                            Join Class
+                                        </button>
+                                    </div>
+                                    <div x-show="!session.mentorReady && session.timeToStart <= 10">
+                                        <button @click="markReady(session.id)"
+                                                :class="session.learnerReady ? 'bg-blue-600' : 'bg-gray-600'"
+                                                class="px-6 py-2 rounded-lg text-white font-semibold">
+                                            <span x-text="session.learnerReady ? 'I\'m Ready' : 'Mark Ready'"></span>
+                                        </button>
+                                        <p class="text-sm text-gray-600 mt-2 waiting-animation">
+                                            Waiting for mentor...
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Past Sessions -->
+                <div x-show="sessionView === 'past'" class="space-y-4">
+                    <template x-for="session in mySessions.past" :key="session.id">
+                        <div class="border border-gray-200 rounded-xl p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
+                                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                                        <i data-feather="user" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="session.mentor"></span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="session.completedDate"></span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div x-show="session.rating" class="flex items-center mb-2">
+                                        <template x-for="i in 5" :key="i">
+                                            <i data-feather="star" 
+                                               :class="i <= session.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'"
+                                               class="h-4 w-4"></i>
+                                        </template>
+                                    </div>
+                                    <button x-show="!session.feedback" @click="openFeedbackModal(session.id)"
+                                            class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                        Leave Feedback
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 3. My Requests -->
+            <div x-show="activeTab === 'requests'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">My Session Requests</h3>
+                    <button @click="openRequestModal()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
+                        <i data-feather="plus" class="h-4 w-4 inline mr-2"></i>
+                        New Request
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <template x-for="request in myRequests" :key="request.id">
+                        <div class="border border-gray-200 rounded-xl p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="request.topic"></h4>
+                                    <p class="text-sm text-gray-600 mb-3" x-text="request.description"></p>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                        <span x-text="`${request.duration} min`"></span>
+                                        <span x-text="request.urgency"></span>
+                                        <span x-text="request.domain"></span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span :class="getRequestStatusColor(request.status)"
+                                          class="px-3 py-1 text-xs font-medium rounded-full mb-2 inline-block"
+                                          x-text="request.status"></span>
+                                    <p class="text-sm text-gray-500" x-text="request.created"></p>
+                                    <button x-show="request.status === 'pending'" @click="cancelRequest(request.id)"
+                                            class="mt-2 text-red-600 text-sm hover:text-red-800">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 4. Recommendations -->
+            <div x-show="activeTab === 'recommendations'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Recommended for You</h3>
+                
+                <!-- Trending Sessions -->
+                <div class="recommendation-card rounded-xl p-6 mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-feather="trending-up" class="h-5 w-5 mr-2 text-blue-600"></i>
+                        Trending Sessions
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="session in recommendations.trending" :key="session.id">
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h5 class="font-medium text-gray-900" x-text="session.title"></h5>
+                                    <span class="bg-orange-100 text-orange-800 px-2 py-1 text-xs font-medium rounded-full">
+                                        🔥 Hot
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3" x-text="session.mentor"></p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-blue-600 font-medium" x-text="session.price"></span>
+                                    <button @click="bookSession(session.id)"
+                                            class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                        Book Now
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- Based on Your Interests -->
+                <div class="recommendation-card rounded-xl p-6 mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-feather="heart" class="h-5 w-5 mr-2 text-blue-600"></i>
+                        Based on Your Interests
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="session in recommendations.personalized" :key="session.id">
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h5 class="font-medium text-gray-900" x-text="session.title"></h5>
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">
+                                        <span x-text="`${session.matchScore}% match`"></span>
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3" x-text="session.mentor"></p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-blue-600 font-medium" x-text="session.price"></span>
+                                    <button @click="bookSession(session.id)"
+                                            class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                        Book Now
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Notifications -->
+            <div x-show="activeTab === 'notifications'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                    <button @click="markAllNotificationsRead()"
+                            class="text-blue-600 text-sm hover:text-blue-800">
+                        Mark All Read
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <template x-for="notification in notifications" :key="notification.id">
+                        <div :class="notification.read ? 'bg-gray-50' : 'bg-blue-50 border-l-4 border-blue-500'"
+                             class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <i :data-feather="getNotificationIcon(notification.type)" 
+                                           class="h-4 w-4 mr-2 text-blue-600"></i>
+                                        <h4 class="font-medium text-gray-900" x-text="notification.title"></h4>
+                                        <span x-show="!notification.read" 
+                                              class="ml-2 w-2 h-2 bg-blue-600 rounded-full"></span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2" x-text="notification.message"></p>
+                                    <p class="text-xs text-gray-500" x-text="notification.time"></p>
+                                </div>
+                                <button x-show="notification.actionable" @click="handleNotificationAction(notification)"
+                                        class="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                    <span x-text="notification.actionText"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Modal -->
+    <div x-show="showRequestModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" @click="showRequestModal = false">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Request Custom Session</h3>
+                    <form @submit.prevent="submitRequest()">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Topic</label>
+                                <input type="text" x-model="newRequest.topic" required
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Description</label>
+                                <textarea x-model="newRequest.description" rows="3" required
+                                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Duration (minutes)</label>
+                                    <select x-model="newRequest.duration" required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        <option value="30">30 minutes</option>
+                                        <option value="60">1 hour</option>
+                                        <option value="90">1.5 hours</option>
+                                        <option value="120">2 hours</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Urgency</label>
+                                    <select x-model="newRequest.urgency" required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        <option value="today">Today</option>
+                                        <option value="tomorrow">Tomorrow</option>
+                                        <option value="this-week">This Week</option>
+                                        <option value="next-week">Next Week</option>
+                                        <option value="flexible">Flexible</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" @click="showRequestModal = false"
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function learnerDashboard() {
+    return {
+        activeTab: 'browse',
+        sessionView: 'upcoming',
+        showRequestModal: false,
+        
+        // Search and filters
+        searchQuery: '',
+        domainFilter: '',
+        priceFilter: '',
+        dateFilter: '',
+        
+        // Data
+        stats: {
+            attended: 12,
+            upcoming: 3,
+            hours: 45,
+            level: 'Intermediate'
+        },
+        
+        tabs: [
+            { id: 'browse', name: 'Browse Sessions', icon: 'search', badge: null },
+            { id: 'sessions', name: 'My Sessions', icon: 'video', badge: '3' },
+            { id: 'requests', name: 'Requests', icon: 'clock', badge: '2' },
+            { id: 'recommendations', name: 'Recommendations', icon: 'star', badge: null },
+            { id: 'notifications', name: 'Notifications', icon: 'bell', badge: '5' }
+        ],
+        
+        allSessions: [
+            {
+                id: 1,
+                title: 'React Fundamentals',
+                description: 'Learn the basics of React including components, state, and props',
+                mentor: 'John Smith',
+                price: 'Free',
+                schedule: 'Jan 25, 2:00 PM',
+                duration: 60,
+                availableSeats: 8,
+                maxParticipants: 15,
+                domain: 'web-development'
+            },
+            {
+                id: 2,
+                title: 'Python Data Analysis',
+                description: 'Master data analysis with Python using pandas and numpy',
+                mentor: 'Sarah Johnson',
+                price: '$49',
+                schedule: 'Jan 26, 4:00 PM',
+                duration: 90,
+                availableSeats: 3,
+                maxParticipants: 12,
+                domain: 'data-science'
+            },
+            {
+                id: 3,
+                title: 'UI/UX Design Principles',
+                description: 'Essential design principles for creating user-friendly interfaces',
+                mentor: 'Mike Chen',
+                price: '$79',
+                schedule: 'Jan 27, 10:00 AM',
+                duration: 120,
+                availableSeats: 0,
+                maxParticipants: 10,
+                domain: 'design'
+            }
+        ],
+        
+        mySessions: {
+            upcoming: [
+                {
+                    id: 1,
+                    title: 'Advanced JavaScript',
+                    mentor: 'Alex Brown',
+                    schedule: 'Jan 25, 3:00 PM',
+                    timeToStart: 8,
+                    mentorReady: true,
+                    learnerReady: false
+                },
+                {
+                    id: 2,
+                    title: 'Machine Learning Basics',
+                    mentor: 'Emily Davis',
+                    schedule: 'Jan 26, 1:00 PM',
+                    timeToStart: 1440,
+                    mentorReady: false,
+                    learnerReady: false
+                }
+            ],
+            past: [
+                {
+                    id: 3,
+                    title: 'React Fundamentals',
+                    mentor: 'John Smith',
+                    completedDate: 'Jan 20, 2024',
+                    rating: 5,
+                    feedback: true
+                },
+                {
+                    id: 4,
+                    title: 'Python Basics',
+                    mentor: 'Sarah Johnson',
+                    completedDate: 'Jan 18, 2024',
+                    rating: 0,
+                    feedback: false
+                }
+            ]
+        },
+        
+        myRequests: [
+            {
+                id: 1,
+                topic: 'Advanced React Hooks',
+                description: 'Need help with custom hooks and complex state management',
+                duration: 90,
+                urgency: 'this-week',
+                domain: 'web-development',
+                status: 'pending',
+                created: '2 days ago'
+            },
+            {
+                id: 2,
+                topic: 'Database Design',
+                description: 'Help with designing efficient database schemas',
+                duration: 60,
+                urgency: 'flexible',
+                domain: 'backend',
+                status: 'accepted',
+                created: '1 week ago'
+            }
+        ],
+        
+        recommendations: {
+            trending: [
+                {
+                    id: 1,
+                    title: 'Next.js Full Stack',
+                    mentor: 'David Wilson',
+                    price: '$89'
+                },
+                {
+                    id: 2,
+                    title: 'TypeScript Mastery',
+                    mentor: 'Lisa Garcia',
+                    price: '$65'
+                }
+            ],
+            personalized: [
+                {
+                    id: 3,
+                    title: 'React Native Development',
+                    mentor: 'Tom Anderson',
+                    price: '$75',
+                    matchScore: 92
+                },
+                {
+                    id: 4,
+                    title: 'Vue.js Fundamentals',
+                    mentor: 'Anna Martinez',
+                    price: '$55',
+                    matchScore: 87
+                }
+            ]
+        },
+        
+        notifications: [
+            {
+                id: 1,
+                type: 'session_reminder',
+                title: 'Session Starting Soon',
+                message: 'Your Advanced JavaScript session starts in 10 minutes',
+                time: '8 minutes ago',
+                read: false,
+                actionable: true,
+                actionText: 'Join Now'
+            },
+            {
+                id: 2,
+                type: 'request_accepted',
+                title: 'Request Accepted',
+                message: 'Your Database Design request has been accepted by Emily Davis',
+                time: '2 hours ago',
+                read: false,
+                actionable: false
+            }
+        ],
+        
+        newRequest: {
+            topic: '',
+            description: '',
+            duration: 60,
+            urgency: 'flexible'
+        },
+        
+        filteredSessions: [],
+        
+        init() {
+            this.filteredSessions = this.allSessions;
+            this.updateIcons();
+            this.startRealTimeUpdates();
+        },
+        
+        filterSessions() {
+            let filtered = this.allSessions;
+            
+            if (this.searchQuery) {
+                filtered = filtered.filter(session => 
+                    session.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                    session.description.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                    session.mentor.toLowerCase().includes(this.searchQuery.toLowerCase())
+                );
+            }
+            
+            if (this.domainFilter) {
+                filtered = filtered.filter(session => session.domain === this.domainFilter);
+            }
+            
+            if (this.priceFilter) {
+                filtered = filtered.filter(session => {
+                    const price = session.price === 'Free' ? 0 : parseInt(session.price.replace('$', ''));
+                    switch (this.priceFilter) {
+                        case 'free': return price === 0;
+                        case 'under-50': return price > 0 && price < 50;
+                        case '50-100': return price >= 50 && price <= 100;
+                        case 'over-100': return price > 100;
+                        default: return true;
+                    }
+                });
+            }
+            
+            this.filteredSessions = filtered;
+        },
+        
+        async bookSession(sessionId) {
+            try {
+                const response = await fetch(`/api/bookings/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+                
+                if (response.ok) {
+                    // Update seat count via WebSocket
+                    const session = this.allSessions.find(s => s.id === sessionId);
+                    if (session) {
+                        session.availableSeats--;
+                    }
+                    this.filterSessions();
+                    this.showNotification('Session booked successfully!', 'success');
+                    
+                    // Redirect to learner/sessions
+                    setTimeout(() => {
+                        this.activeTab = 'sessions';
+                    }, 1500);
+                }
+            } catch (error) {
+                this.showNotification('Failed to book session', 'error');
+            }
+        },
+        
+        viewSessionDetail(sessionId) {
+            window.location.href = `/sessions/${sessionId}/`;
+        },
+        
+        async markReady(sessionId) {
+            const session = this.mySessions.upcoming.find(s => s.id === sessionId);
+            if (session) {
+                session.learnerReady = true;
+                this.showNotification('Ready status updated', 'success');
+            }
+        },
+        
+        joinSession(sessionId) {
+            window.location.href = `/room/${sessionId}/`;
+        },
+        
+        openRequestModal() {
+            this.showRequestModal = true;
+        },
+        
+        async submitRequest() {
+            try {
+                const response = await fetch('/api/requests/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify(this.newRequest)
+                });
+                
+                if (response.ok) {
+                    this.myRequests.unshift({
+                        id: Date.now(),
+                        ...this.newRequest,
+                        status: 'pending',
+                        created: 'Just now'
+                    });
+                    
+                    this.newRequest = { topic: '', description: '', duration: 60, urgency: 'flexible' };
+                    this.showRequestModal = false;
+                    this.showNotification('Request submitted successfully!', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Failed to submit request', 'error');
+            }
+        },
+        
+        async cancelRequest(requestId) {
+            if (confirm('Are you sure you want to cancel this request?')) {
+                const index = this.myRequests.findIndex(r => r.id === requestId);
+                if (index !== -1) {
+                    this.myRequests.splice(index, 1);
+                    this.showNotification('Request cancelled', 'success');
+                }
+            }
+        },
+        
+        getRequestStatusColor(status) {
+            const colors = {
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'accepted': 'bg-green-100 text-green-800',
+                'rejected': 'bg-red-100 text-red-800',
+                'completed': 'bg-gray-100 text-gray-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        },
+        
+        getNotificationIcon(type) {
+            const icons = {
+                'session_reminder': 'clock',
+                'session_starting': 'play',
+                'booking_confirmed': 'check-circle',
+                'session_cancelled': 'x-circle',
+                'request_accepted': 'check',
+                'request_rejected': 'x',
+                'new_message': 'message-square'
+            };
+            return icons[type] || 'bell';
+        },
+        
+        markAllNotificationsRead() {
+            this.notifications.forEach(n => n.read = true);
+        },
+        
+        handleNotificationAction(notification) {
+            if (notification.type === 'session_reminder') {
+                this.activeTab = 'sessions';
+            }
+        },
+        
+        startRealTimeUpdates() {
+            // Simulate real-time updates
+            setInterval(() => {
+                // Update time to start for upcoming sessions
+                this.mySessions.upcoming.forEach(session => {
+                    if (session.timeToStart > 0) {
+                        session.timeToStart--;
+                    }
+                });
+            }, 60000); // Update every minute
+        },
+        
+        showNotification(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

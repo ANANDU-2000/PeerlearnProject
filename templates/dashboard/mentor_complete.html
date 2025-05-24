@@ -1,0 +1,810 @@
+{% extends 'base.html' %}
+
+{% block title %}Mentor Dashboard - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mentor-bg {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+    .session-card {
+        transition: all 0.3s ease;
+    }
+    .session-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .earnings-card {
+        background: linear-gradient(45deg, #ecfdf5, #d1fae5);
+        border-left: 4px solid #10b981;
+    }
+    .ready-button {
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+        from { box-shadow: 0 0 10px #10b981; }
+        to { box-shadow: 0 0 20px #10b981, 0 0 30px #10b981; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="mentorDashboard()" x-init="init()">
+    
+    <!-- Mentor Header -->
+    <div class="mentor-bg text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Mentor Dashboard</h1>
+                    <p class="mt-2 text-green-100">Share your expertise and help others grow</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <button @click="createSession()" 
+                            class="bg-white text-green-600 px-6 py-3 rounded-xl font-semibold hover:bg-green-50 transition-colors">
+                        <i data-feather="plus" class="h-4 w-4 inline mr-2"></i>
+                        Create Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i data-feather="users" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Students</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.totalStudents"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i data-feather="video" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Sessions This Month</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.sessionsThisMonth"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <i data-feather="star" class="h-6 w-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Average Rating</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.averageRating"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="session-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <i data-feather="dollar-sign" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Monthly Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.monthlyEarnings"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-lg mb-6">
+            <!-- Web Navigation -->
+            <div class="hidden md:block border-b border-gray-200">
+                <nav class="flex space-x-8" aria-label="Tabs">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button @click="activeTab = tab.id"
+                                :class="activeTab === tab.id ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <i :data-feather="tab.icon" class="h-4 w-4"></i>
+                                <span x-text="tab.name"></span>
+                                <span x-show="tab.badge" 
+                                      x-text="tab.badge"
+                                      class="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full"></span>
+                            </div>
+                        </button>
+                    </template>
+                </nav>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div class="md:hidden p-4">
+                <select x-model="activeTab" class="w-full rounded-lg border-gray-300">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <option :value="tab.id" x-text="tab.name"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="bg-white rounded-xl shadow-lg">
+            
+            <!-- 1. My Sessions -->
+            <div x-show="activeTab === 'sessions'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">My Sessions</h3>
+                    <div class="flex space-x-2">
+                        <button @click="sessionView = 'draft'"
+                                :class="sessionView === 'draft' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                            Draft
+                        </button>
+                        <button @click="sessionView = 'scheduled'"
+                                :class="sessionView === 'scheduled' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                            Scheduled
+                        </button>
+                        <button @click="sessionView = 'past'"
+                                :class="sessionView === 'past' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                            Past
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Draft Sessions -->
+                <div x-show="sessionView === 'draft'" class="space-y-4">
+                    <template x-for="session in mySessions.draft" :key="session.id">
+                        <div class="border border-gray-200 rounded-xl p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
+                                    <p class="text-sm text-gray-600 mb-3" x-text="session.description"></p>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                        <span x-text="`${session.duration} min`"></span>
+                                        <span x-text="`Max ${session.maxParticipants} participants`"></span>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-3">
+                                    <button @click="editSession(session.id)"
+                                            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                                        Edit
+                                    </button>
+                                    <button @click="publishSession(session.id)"
+                                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-medium">
+                                        Publish
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Scheduled Sessions -->
+                <div x-show="sessionView === 'scheduled'" class="space-y-4">
+                    <template x-for="session in mySessions.scheduled" :key="session.id">
+                        <div class="border border-gray-200 rounded-xl p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
+                                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                                        <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="session.schedule"></span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i data-feather="users" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="`${session.participants}/${session.maxParticipants} participants`"></span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span x-show="session.timeToStart <= 10"
+                                          class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium mb-2">
+                                        Starting in <span x-text="session.timeToStart"></span> min
+                                    </span>
+                                    <div x-show="session.timeToStart <= 10">
+                                        <button @click="markMentorReady(session.id)"
+                                                :class="session.mentorReady ? 'bg-green-600' : 'bg-gray-600'"
+                                                class="block w-full px-4 py-2 rounded-lg text-white font-semibold mb-2">
+                                            <span x-text="session.mentorReady ? 'I\'m Ready' : 'Mark Ready'"></span>
+                                        </button>
+                                        <button x-show="session.mentorReady && session.learnersReady" 
+                                                @click="startSession(session.id)"
+                                                class="ready-button bg-green-600 text-white px-4 py-2 rounded-lg font-semibold">
+                                            Start Class
+                                        </button>
+                                        <p x-show="session.mentorReady && !session.learnersReady" 
+                                           class="text-sm text-gray-600 mt-2">
+                                            Waiting for learners...
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Past Sessions -->
+                <div x-show="sessionView === 'past'" class="space-y-4">
+                    <template x-for="session in mySessions.past" :key="session.id">
+                        <div class="border border-gray-200 rounded-xl p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
+                                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                                        <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="session.completedDate"></span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i data-feather="users" class="h-4 w-4 mr-1"></i>
+                                        <span x-text="`${session.participants} participants`"></span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="flex items-center mb-2">
+                                        <template x-for="i in 5" :key="i">
+                                            <i data-feather="star" 
+                                               :class="i <= session.averageRating ? 'text-yellow-400 fill-current' : 'text-gray-300'"
+                                               class="h-4 w-4"></i>
+                                        </template>
+                                        <span class="ml-2 text-sm text-gray-600" x-text="`${session.averageRating}/5`"></span>
+                                    </div>
+                                    <p class="text-sm font-medium text-green-600" x-text="`Earned: $${session.earnings}`"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 2. Requests -->
+            <div x-show="activeTab === 'requests'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Session Requests</h3>
+                
+                <div class="space-y-4">
+                    <template x-for="request in sessionRequests" :key="request.id">
+                        <div class="border border-gray-200 rounded-xl p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="request.topic"></h4>
+                                    <p class="text-sm text-gray-600 mb-3" x-text="request.description"></p>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                        <span x-text="`By: ${request.learner}`"></span>
+                                        <span x-text="`${request.duration} min`"></span>
+                                        <span x-text="request.urgency"></span>
+                                        <span x-text="request.budget"></span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        <strong>Skills needed:</strong> <span x-text="request.skills"></span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span :class="getRequestStatusColor(request.status)"
+                                          class="px-3 py-1 text-xs font-medium rounded-full mb-3 inline-block"
+                                          x-text="request.status"></span>
+                                    <p class="text-sm text-gray-500 mb-3" x-text="request.created"></p>
+                                    <div x-show="request.status === 'pending'" class="flex flex-col space-y-2">
+                                        <button @click="acceptRequest(request.id)"
+                                                class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">
+                                            Accept
+                                        </button>
+                                        <button @click="rejectRequest(request.id)"
+                                                class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700">
+                                            Decline
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 3. Earnings -->
+            <div x-show="activeTab === 'earnings'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Earnings & Payouts</h3>
+                
+                <!-- Earnings Overview -->
+                <div class="earnings-card rounded-xl p-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-gray-600">Total Earnings</p>
+                            <p class="text-3xl font-bold text-green-600" x-text="earnings.total"></p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-gray-600">Available for Payout</p>
+                            <p class="text-3xl font-bold text-green-600" x-text="earnings.available"></p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-gray-600">Pending</p>
+                            <p class="text-3xl font-bold text-yellow-600" x-text="earnings.pending"></p>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <button @click="requestPayout()"
+                                :disabled="earnings.availableAmount === 0"
+                                :class="earnings.availableAmount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'"
+                                class="px-6 py-3 text-white rounded-lg font-semibold">
+                            Request Payout
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Payout History -->
+                <div class="border border-gray-200 rounded-xl p-6">
+                    <h4 class="font-semibold text-gray-900 mb-4">Payout History</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="payout in payoutHistory" :key="payout.id">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="payout.date"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="`$${payout.amount}`"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span :class="payout.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                  x-text="payout.status"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="payout.method"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Analytics -->
+            <div x-show="activeTab === 'analytics'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Performance Analytics</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Follower Metrics -->
+                    <div class="border border-gray-200 rounded-xl p-6">
+                        <h4 class="font-semibold text-gray-900 mb-4">Followers & Reach</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Total Followers</span>
+                                <span class="text-sm font-medium" x-text="analytics.followers"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Profile Views (30d)</span>
+                                <span class="text-sm font-medium" x-text="analytics.profileViews"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Session Views (30d)</span>
+                                <span class="text-sm font-medium" x-text="analytics.sessionViews"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enrollment Metrics -->
+                    <div class="border border-gray-200 rounded-xl p-6">
+                        <h4 class="font-semibold text-gray-900 mb-4">Enrollments & Ratings</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Total Enrollments</span>
+                                <span class="text-sm font-medium" x-text="analytics.totalEnrollments"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Completion Rate</span>
+                                <span class="text-sm font-medium" x-text="`${analytics.completionRate}%`"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Average Rating</span>
+                                <span class="text-sm font-medium" x-text="`${analytics.averageRating}/5`"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Profile -->
+            <div x-show="activeTab === 'profile'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Mentor Profile</h3>
+                
+                <form @submit.prevent="updateProfile()">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Expertise Areas</label>
+                                <input type="text" x-model="profile.expertise"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Hourly Rate</label>
+                                <input type="number" x-model="profile.hourlyRate"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Bio</label>
+                            <textarea x-model="profile.bio" rows="4"
+                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Skills & Technologies</label>
+                            <input type="text" x-model="profile.skills"
+                                   placeholder="React, Python, Data Science, etc."
+                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+                        <div>
+                            <button type="submit"
+                                    class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 6. Notifications -->
+            <div x-show="activeTab === 'notifications'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                    <button @click="markAllNotificationsRead()"
+                            class="text-green-600 text-sm hover:text-green-800">
+                        Mark All Read
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <template x-for="notification in notifications" :key="notification.id">
+                        <div :class="notification.read ? 'bg-gray-50' : 'bg-green-50 border-l-4 border-green-500'"
+                             class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <i :data-feather="getNotificationIcon(notification.type)" 
+                                           class="h-4 w-4 mr-2 text-green-600"></i>
+                                        <h4 class="font-medium text-gray-900" x-text="notification.title"></h4>
+                                        <span x-show="!notification.read" 
+                                              class="ml-2 w-2 h-2 bg-green-600 rounded-full"></span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2" x-text="notification.message"></p>
+                                    <p class="text-xs text-gray-500" x-text="notification.time"></p>
+                                </div>
+                                <button x-show="notification.actionable" @click="handleNotificationAction(notification)"
+                                        class="ml-4 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                    <span x-text="notification.actionText"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function mentorDashboard() {
+    return {
+        activeTab: 'sessions',
+        sessionView: 'scheduled',
+        
+        // Data
+        stats: {
+            totalStudents: 156,
+            sessionsThisMonth: 23,
+            averageRating: 4.8,
+            monthlyEarnings: '$2,340'
+        },
+        
+        tabs: [
+            { id: 'sessions', name: 'My Sessions', icon: 'video', badge: null },
+            { id: 'requests', name: 'Requests', icon: 'clock', badge: '5' },
+            { id: 'earnings', name: 'Earnings', icon: 'dollar-sign', badge: null },
+            { id: 'analytics', name: 'Analytics', icon: 'trending-up', badge: null },
+            { id: 'profile', name: 'Profile', icon: 'user', badge: null },
+            { id: 'notifications', name: 'Notifications', icon: 'bell', badge: '3' }
+        ],
+        
+        mySessions: {
+            draft: [
+                {
+                    id: 1,
+                    title: 'Advanced React Patterns',
+                    description: 'Learn advanced React patterns including hooks, context, and performance optimization',
+                    duration: 90,
+                    maxParticipants: 15
+                }
+            ],
+            scheduled: [
+                {
+                    id: 2,
+                    title: 'JavaScript Fundamentals',
+                    schedule: 'Jan 25, 2:00 PM',
+                    participants: 8,
+                    maxParticipants: 12,
+                    timeToStart: 5,
+                    mentorReady: false,
+                    learnersReady: true
+                }
+            ],
+            past: [
+                {
+                    id: 3,
+                    title: 'React Fundamentals',
+                    completedDate: 'Jan 20, 2024',
+                    participants: 10,
+                    averageRating: 5,
+                    earnings: 120
+                }
+            ]
+        },
+        
+        sessionRequests: [
+            {
+                id: 1,
+                topic: 'Advanced React Hooks',
+                description: 'Need help with custom hooks and state management',
+                learner: 'Sarah Johnson',
+                duration: 90,
+                urgency: 'this-week',
+                budget: '$50-100',
+                skills: 'React, JavaScript, State Management',
+                status: 'pending',
+                created: '2 hours ago'
+            }
+        ],
+        
+        earnings: {
+            total: '$3,450',
+            available: '$890',
+            pending: '$340',
+            availableAmount: 890
+        },
+        
+        payoutHistory: [
+            {
+                id: 1,
+                date: 'Jan 15, 2024',
+                amount: 250,
+                status: 'completed',
+                method: 'PayPal'
+            }
+        ],
+        
+        analytics: {
+            followers: 234,
+            profileViews: 1250,
+            sessionViews: 890,
+            totalEnrollments: 156,
+            completionRate: 94,
+            averageRating: 4.8
+        },
+        
+        profile: {
+            expertise: 'Web Development, React, JavaScript',
+            hourlyRate: 65,
+            bio: 'Experienced full-stack developer with 8+ years of experience...',
+            skills: 'React, Node.js, Python, AWS'
+        },
+        
+        notifications: [
+            {
+                id: 1,
+                type: 'new_request',
+                title: 'New Session Request',
+                message: 'Sarah Johnson requested a session on Advanced React Hooks',
+                time: '2 hours ago',
+                read: false,
+                actionable: true,
+                actionText: 'View Request'
+            }
+        ],
+        
+        init() {
+            this.updateIcons();
+            this.startRealTimeUpdates();
+        },
+        
+        createSession() {
+            window.location.href = '/mentor/sessions/create/';
+        },
+        
+        editSession(sessionId) {
+            window.location.href = `/mentor/sessions/${sessionId}/edit/`;
+        },
+        
+        async publishSession(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/publish/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Move from draft to scheduled
+                    const sessionIndex = this.mySessions.draft.findIndex(s => s.id === sessionId);
+                    if (sessionIndex !== -1) {
+                        const session = this.mySessions.draft.splice(sessionIndex, 1)[0];
+                        this.mySessions.scheduled.push({
+                            ...session,
+                            schedule: 'TBD',
+                            participants: 0,
+                            timeToStart: 1440,
+                            mentorReady: false,
+                            learnersReady: false
+                        });
+                    }
+                    this.showNotification('Session published successfully!', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Failed to publish session', 'error');
+            }
+        },
+        
+        markMentorReady(sessionId) {
+            const session = this.mySessions.scheduled.find(s => s.id === sessionId);
+            if (session) {
+                session.mentorReady = true;
+                this.showNotification('Ready status updated', 'success');
+            }
+        },
+        
+        startSession(sessionId) {
+            window.location.href = `/room/${sessionId}/`;
+        },
+        
+        async acceptRequest(requestId) {
+            try {
+                const response = await fetch(`/api/requests/${requestId}/accept/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const request = this.sessionRequests.find(r => r.id === requestId);
+                    if (request) {
+                        request.status = 'accepted';
+                    }
+                    this.showNotification('Request accepted successfully!', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Failed to accept request', 'error');
+            }
+        },
+        
+        async rejectRequest(requestId) {
+            const request = this.sessionRequests.find(r => r.id === requestId);
+            if (request) {
+                request.status = 'rejected';
+                this.showNotification('Request declined', 'success');
+            }
+        },
+        
+        async requestPayout() {
+            try {
+                const response = await fetch('/api/earnings/payout/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    this.earnings.pending = this.earnings.available;
+                    this.earnings.available = '$0';
+                    this.earnings.availableAmount = 0;
+                    this.showNotification('Payout requested successfully!', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Failed to request payout', 'error');
+            }
+        },
+        
+        async updateProfile() {
+            try {
+                const response = await fetch('/api/users/profile/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify(this.profile)
+                });
+                
+                if (response.ok) {
+                    this.showNotification('Profile updated successfully!', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Failed to update profile', 'error');
+            }
+        },
+        
+        getRequestStatusColor(status) {
+            const colors = {
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'accepted': 'bg-green-100 text-green-800',
+                'rejected': 'bg-red-100 text-red-800',
+                'completed': 'bg-gray-100 text-gray-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        },
+        
+        getNotificationIcon(type) {
+            const icons = {
+                'new_request': 'clock',
+                'session_booked': 'calendar',
+                'payment_received': 'dollar-sign',
+                'new_review': 'star',
+                'session_reminder': 'bell'
+            };
+            return icons[type] || 'bell';
+        },
+        
+        markAllNotificationsRead() {
+            this.notifications.forEach(n => n.read = true);
+        },
+        
+        handleNotificationAction(notification) {
+            if (notification.type === 'new_request') {
+                this.activeTab = 'requests';
+            }
+        },
+        
+        startRealTimeUpdates() {
+            setInterval(() => {
+                this.mySessions.scheduled.forEach(session => {
+                    if (session.timeToStart > 0) {
+                        session.timeToStart--;
+                    }
+                });
+            }, 60000);
+        },
+        
+        showNotification(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

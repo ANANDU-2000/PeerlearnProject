@@ -1,0 +1,609 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ session.title }} - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .session-hero {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    }
+    .tab-content {
+        min-height: 300px;
+    }
+    .booking-card {
+        background: linear-gradient(45deg, #f0f9ff, #e0f2fe);
+        border-left: 4px solid #3b82f6;
+    }
+    .review-card {
+        transition: all 0.3s ease;
+    }
+    .review-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .seat-indicator {
+        animation: pulse 2s infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="sessionDetail()" x-init="init()">
+    
+    <!-- Session Hero -->
+    <div class="session-hero text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center mb-4">
+                        <span :class="session.status === 'live' ? 'bg-red-500' : session.status === 'scheduled' ? 'bg-green-500' : 'bg-gray-500'"
+                              class="px-3 py-1 text-xs font-medium rounded-full text-white mr-3">
+                            <span x-text="session.status.toUpperCase()"></span>
+                            <span x-show="session.status === 'live'" class="ml-1 seat-indicator">●</span>
+                        </span>
+                        <span class="text-blue-100 text-sm" x-text="session.domain"></span>
+                    </div>
+                    
+                    <h1 class="text-4xl font-bold mb-4" x-text="session.title"></h1>
+                    <p class="text-xl text-blue-100 mb-6" x-text="session.description"></p>
+                    
+                    <div class="flex items-center space-x-6 text-blue-100">
+                        <div class="flex items-center">
+                            <i data-feather="user" class="h-5 w-5 mr-2"></i>
+                            <span x-text="`by ${session.mentor}`"></span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-feather="calendar" class="h-5 w-5 mr-2"></i>
+                            <span x-text="session.schedule"></span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-feather="clock" class="h-5 w-5 mr-2"></i>
+                            <span x-text="`${session.duration} minutes`"></span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-feather="users" class="h-5 w-5 mr-2"></i>
+                            <span :class="session.availableSeats <= 2 ? 'text-red-200' : 'text-green-200'"
+                                  x-text="`${session.availableSeats}/${session.maxParticipants} seats available`"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Booking Card -->
+                <div class="mt-8 lg:mt-0 lg:ml-8">
+                    <div class="booking-card rounded-2xl p-6 bg-white shadow-2xl max-w-sm">
+                        <div class="text-center mb-6">
+                            <div class="text-3xl font-bold text-gray-900 mb-2" x-text="session.price === 'Free' ? 'Free' : session.price"></div>
+                            <p class="text-sm text-gray-600">per person</p>
+                        </div>
+                        
+                        <!-- Real-time Seat Updates -->
+                        <div class="mb-6">
+                            <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                <span>Available Seats</span>
+                                <span x-text="`${session.availableSeats}/${session.maxParticipants}`"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div :style="`width: ${(session.maxParticipants - session.availableSeats) / session.maxParticipants * 100}%`"
+                                     class="bg-blue-600 h-2 rounded-full transition-all duration-500"></div>
+                            </div>
+                            <p x-show="session.availableSeats <= 2" class="text-red-600 text-xs mt-1 font-medium">
+                                Only <span x-text="session.availableSeats"></span> seats left!
+                            </p>
+                        </div>
+                        
+                        <!-- Booking Button -->
+                        <button @click="bookSession()"
+                                :disabled="session.availableSeats === 0 || isBooked"
+                                :class="session.availableSeats === 0 || isBooked ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
+                                class="w-full text-white px-6 py-4 rounded-xl font-bold text-lg transition-colors">
+                            <span x-show="!isBooked && session.availableSeats > 0">Book Now</span>
+                            <span x-show="isBooked">Already Booked</span>
+                            <span x-show="!isBooked && session.availableSeats === 0">Fully Booked</span>
+                        </button>
+                        
+                        <div class="mt-4 text-center">
+                            <p class="text-xs text-gray-500">Free cancellation up to 2 hours before</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-lg mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8" aria-label="Tabs">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button @click="activeTab = tab.id"
+                                :class="activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <i :data-feather="tab.icon" class="h-4 w-4"></i>
+                                <span x-text="tab.name"></span>
+                            </div>
+                        </button>
+                    </template>
+                </nav>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Tab Content -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+                
+                <!-- Overview Tab -->
+                <div x-show="activeTab === 'overview'" class="tab-content">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Session Overview</h3>
+                    
+                    <div class="prose max-w-none">
+                        <div class="mb-8">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">What You'll Learn</h4>
+                            <ul class="space-y-2">
+                                <template x-for="objective in session.objectives" :key="objective">
+                                    <li class="flex items-start">
+                                        <i data-feather="check-circle" class="h-5 w-5 text-green-500 mr-3 mt-0.5"></i>
+                                        <span x-text="objective"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-8">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Prerequisites</h4>
+                            <ul class="space-y-2">
+                                <template x-for="prereq in session.prerequisites" :key="prereq">
+                                    <li class="flex items-start">
+                                        <i data-feather="arrow-right" class="h-5 w-5 text-blue-500 mr-3 mt-0.5"></i>
+                                        <span x-text="prereq"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-8">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Session Format</h4>
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="flex items-center">
+                                        <i data-feather="video" class="h-5 w-5 text-blue-600 mr-3"></i>
+                                        <span>Live Video Session</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-feather="message-circle" class="h-5 w-5 text-blue-600 mr-3"></i>
+                                        <span>Interactive Q&A</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-feather="screen-share" class="h-5 w-5 text-blue-600 mr-3"></i>
+                                        <span>Screen Sharing</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-feather="download" class="h-5 w-5 text-blue-600 mr-3"></i>
+                                        <span>Resource Materials</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Curriculum Tab -->
+                <div x-show="activeTab === 'curriculum'" class="tab-content">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Session Curriculum</h3>
+                    
+                    <div class="space-y-6">
+                        <template x-for="(module, index) in session.curriculum" :key="module.id">
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                        <span class="text-sm font-bold text-blue-600" x-text="index + 1"></span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2" x-text="module.title"></h4>
+                                        <p class="text-gray-600 mb-3" x-text="module.description"></p>
+                                        <div class="flex items-center text-sm text-gray-500">
+                                            <i data-feather="clock" class="h-4 w-4 mr-1"></i>
+                                            <span x-text="`${module.duration} minutes`"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- Reviews Tab -->
+                <div x-show="activeTab === 'reviews'" class="tab-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Student Reviews</h3>
+                        <div class="flex items-center">
+                            <div class="flex items-center mr-3">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-feather="star" 
+                                       :class="i <= session.averageRating ? 'text-yellow-400 fill-current' : 'text-gray-300'"
+                                       class="h-5 w-5"></i>
+                                </template>
+                            </div>
+                            <span class="text-lg font-semibold" x-text="`${session.averageRating}/5`"></span>
+                            <span class="text-gray-500 ml-2" x-text="`(${session.totalReviews} reviews)`"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Rating Breakdown -->
+                    <div class="mb-8 bg-gray-50 rounded-lg p-4">
+                        <template x-for="rating in session.ratingBreakdown" :key="rating.stars">
+                            <div class="flex items-center mb-2">
+                                <span class="text-sm text-gray-600 w-8" x-text="`${rating.stars}★`"></span>
+                                <div class="flex-1 mx-3">
+                                    <div class="bg-gray-200 rounded-full h-2">
+                                        <div :style="`width: ${rating.percentage}%`"
+                                             class="bg-yellow-400 h-2 rounded-full transition-all duration-500"></div>
+                                    </div>
+                                </div>
+                                <span class="text-sm text-gray-600 w-8" x-text="`${rating.count}`"></span>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <!-- Individual Reviews -->
+                    <div class="space-y-6">
+                        <template x-for="review in session.reviews" :key="review.id">
+                            <div class="review-card border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                        <span class="text-sm font-bold text-blue-600" x-text="review.user.charAt(0)"></span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h4 class="font-semibold text-gray-900" x-text="review.user"></h4>
+                                            <div class="flex items-center">
+                                                <template x-for="i in 5" :key="i">
+                                                    <i data-feather="star" 
+                                                       :class="i <= review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'"
+                                                       class="h-4 w-4"></i>
+                                                </template>
+                                                <span class="ml-2 text-sm text-gray-500" x-text="review.date"></span>
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-700" x-text="review.comment"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                
+                <!-- Mentor Info -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">About the Mentor</h4>
+                    <div class="flex items-center mb-4">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-xl font-bold text-blue-600" x-text="session.mentor.charAt(0)"></span>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold text-gray-900" x-text="session.mentor"></h5>
+                            <p class="text-sm text-gray-600" x-text="session.mentorTitle"></p>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 mb-4" x-text="session.mentorBio"></p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Experience</span>
+                            <span class="font-medium" x-text="session.mentorExperience"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Students Taught</span>
+                            <span class="font-medium" x-text="session.mentorStudents"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Average Rating</span>
+                            <span class="font-medium" x-text="`${session.mentorRating}/5 ⭐`"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Related Sessions -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Related Sessions</h4>
+                    <div class="space-y-4">
+                        <template x-for="related in relatedSessions" :key="related.id">
+                            <div class="border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50"
+                                 @click="viewSession(related.id)">
+                                <h5 class="font-medium text-gray-900 mb-1" x-text="related.title"></h5>
+                                <p class="text-sm text-gray-600 mb-2" x-text="related.mentor"></p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-blue-600" x-text="related.price"></span>
+                                    <span class="text-xs text-gray-500" x-text="related.schedule"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div x-show="showBookingModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" @click="showBookingModal = false">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="text-center">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Booking</h3>
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-900" x-text="session.title"></h4>
+                            <p class="text-sm text-gray-600 mt-1" x-text="`${session.schedule} • ${session.duration} minutes`"></p>
+                            <p class="text-lg font-bold text-blue-600 mt-2" x-text="session.price === 'Free' ? 'Free' : session.price"></p>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button @click="showBookingModal = false"
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button @click="confirmBooking()"
+                                    :disabled="isBooking"
+                                    class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+                                <span x-show="!isBooking">Confirm Booking</span>
+                                <span x-show="isBooking">Booking...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sessionDetail() {
+    return {
+        activeTab: 'overview',
+        showBookingModal: false,
+        isBooked: false,
+        isBooking: false,
+        
+        tabs: [
+            { id: 'overview', name: 'Overview', icon: 'info' },
+            { id: 'curriculum', name: 'Curriculum', icon: 'list' },
+            { id: 'reviews', name: 'Reviews', icon: 'star' }
+        ],
+        
+        session: {
+            id: '{{ session.id }}',
+            title: '{{ session.title|default:"React Fundamentals" }}',
+            description: '{{ session.description|default:"Learn the basics of React including components, state, and props" }}',
+            mentor: '{{ session.mentor.get_full_name|default:"John Smith" }}',
+            mentorTitle: 'Senior Frontend Developer',
+            mentorBio: 'John has been working with React for over 5 years and has taught hundreds of students the fundamentals of modern web development.',
+            mentorExperience: '8+ years',
+            mentorStudents: '340+',
+            mentorRating: 4.9,
+            schedule: '{{ session.schedule|date:"M d, H:i"|default:"Jan 25, 14:00" }}',
+            duration: {{ session.duration|default:90 }},
+            price: '{{ session.price|default:"$49" }}',
+            status: '{{ session.status|default:"scheduled" }}',
+            domain: '{{ session.domain|default:"Web Development" }}',
+            availableSeats: {{ session.available_seats|default:8 }},
+            maxParticipants: {{ session.max_participants|default:15 }},
+            averageRating: {{ session.average_rating|default:4.8 }},
+            totalReviews: {{ session.total_reviews|default:23 }},
+            
+            objectives: [
+                'Understand React components and JSX syntax',
+                'Learn state management with hooks',
+                'Build interactive user interfaces',
+                'Handle events and form inputs',
+                'Implement component lifecycle methods'
+            ],
+            
+            prerequisites: [
+                'Basic knowledge of HTML, CSS, and JavaScript',
+                'Familiarity with ES6+ features',
+                'Understanding of web development concepts',
+                'A code editor and modern web browser'
+            ],
+            
+            curriculum: [
+                {
+                    id: 1,
+                    title: 'Introduction to React',
+                    description: 'Overview of React, its benefits, and setting up the development environment',
+                    duration: 20
+                },
+                {
+                    id: 2,
+                    title: 'Components and JSX',
+                    description: 'Creating your first components and understanding JSX syntax',
+                    duration: 25
+                },
+                {
+                    id: 3,
+                    title: 'State and Props',
+                    description: 'Managing component state and passing data through props',
+                    duration: 30
+                },
+                {
+                    id: 4,
+                    title: 'Event Handling',
+                    description: 'Handling user interactions and form inputs',
+                    duration: 15
+                }
+            ],
+            
+            ratingBreakdown: [
+                { stars: 5, count: 18, percentage: 78 },
+                { stars: 4, count: 4, percentage: 17 },
+                { stars: 3, count: 1, percentage: 4 },
+                { stars: 2, count: 0, percentage: 0 },
+                { stars: 1, count: 0, percentage: 0 }
+            ],
+            
+            reviews: [
+                {
+                    id: 1,
+                    user: 'Sarah Johnson',
+                    rating: 5,
+                    comment: 'Excellent session! John explained everything clearly and answered all my questions. I feel much more confident with React now.',
+                    date: '2 days ago'
+                },
+                {
+                    id: 2,
+                    user: 'Mike Chen',
+                    rating: 5,
+                    comment: 'Great hands-on approach. The examples were practical and easy to follow. Highly recommend!',
+                    date: '1 week ago'
+                },
+                {
+                    id: 3,
+                    user: 'Emily Davis',
+                    rating: 4,
+                    comment: 'Very informative session. Would have liked more advanced topics, but perfect for beginners.',
+                    date: '2 weeks ago'
+                }
+            ]
+        },
+        
+        relatedSessions: [
+            {
+                id: 2,
+                title: 'Advanced React Hooks',
+                mentor: 'John Smith',
+                price: '$79',
+                schedule: 'Jan 28'
+            },
+            {
+                id: 3,
+                title: 'React State Management',
+                mentor: 'Sarah Wilson',
+                price: '$65',
+                schedule: 'Jan 30'
+            }
+        ],
+        
+        init() {
+            this.updateIcons();
+            this.checkBookingStatus();
+            this.startRealTimeUpdates();
+        },
+        
+        bookSession() {
+            if (this.session.availableSeats > 0 && !this.isBooked) {
+                this.showBookingModal = true;
+            }
+        },
+        
+        async confirmBooking() {
+            this.isBooking = true;
+            
+            try {
+                const response = await fetch('/api/bookings/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({ 
+                        session_id: this.session.id 
+                    })
+                });
+                
+                if (response.ok) {
+                    this.session.availableSeats--;
+                    this.isBooked = true;
+                    this.showBookingModal = false;
+                    this.showNotification('Session booked successfully! Redirecting to My Sessions...', 'success');
+                    
+                    // Redirect to learner sessions after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/learner/dashboard/#sessions';
+                    }, 2000);
+                } else {
+                    this.showNotification('Failed to book session. Please try again.', 'error');
+                }
+            } catch (error) {
+                this.showNotification('Network error. Please try again.', 'error');
+            } finally {
+                this.isBooking = false;
+            }
+        },
+        
+        viewSession(sessionId) {
+            window.location.href = `/sessions/${sessionId}/`;
+        },
+        
+        checkBookingStatus() {
+            // Check if user has already booked this session
+            fetch(`/api/bookings/check/${this.session.id}/`, {
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                this.isBooked = data.is_booked;
+            })
+            .catch(error => {
+                console.log('Could not check booking status');
+            });
+        },
+        
+        startRealTimeUpdates() {
+            // WebSocket connection for real-time seat updates
+            if (typeof WebSocket !== 'undefined') {
+                const ws = new WebSocket(`ws://${window.location.host}/ws/sessions/${this.session.id}/`);
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'seat_update') {
+                        this.session.availableSeats = data.available_seats;
+                    }
+                };
+                
+                ws.onclose = () => {
+                    console.log('WebSocket connection closed');
+                };
+            }
+        },
+        
+        showNotification(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
