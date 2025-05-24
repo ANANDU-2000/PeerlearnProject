@@ -1,18 +1,374 @@
 {% extends 'base.html' %}
 
+{% block title %}PeerLearn - Learn from Experts Live{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hero-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .feature-card {
+        transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .mentor-card {
+        transition: all 0.3s ease;
+    }
+    .mentor-card:hover {
+        transform: scale(1.05);
+    }
+    .floating-element {
+        animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+<div class="min-h-screen bg-white" x-data="landingPage()" x-init="init()">
     <!-- Hero Section -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-        <div class="text-center">
-            <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-                Learn from Experts
-                <span class="text-blue-600">Live</span>
-            </h1>
-            <p class="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-                Connect with mentors worldwide for real-time 1:1 learning sessions. 
-                Experience interactive education like never before.
-            </p>
+    <section class="hero-gradient text-white relative overflow-hidden">
+        <!-- Floating Elements -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="floating-element absolute top-20 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full"></div>
+            <div class="floating-element absolute top-40 right-20 w-32 h-32 bg-white bg-opacity-5 rounded-full" style="animation-delay: -2s;"></div>
+        </div>
+        
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Column - Content -->
+                <div class="text-center lg:text-left">
+                    <div class="mb-6">
+                        <span class="inline-block bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
+                            🚀 #1 Live Learning Platform
+                        </span>
+                    </div>
+                    
+                    <h1 class="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
+                        Learn from 
+                        <span class="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                            Experts Live
+                        </span>
+                    </h1>
+                    
+                    <p class="text-xl lg:text-2xl text-blue-100 mb-8 max-w-lg mx-auto lg:mx-0">
+                        Connect with world-class mentors through live video sessions. Master new skills, get personalized guidance, and accelerate your career growth.
+                    </p>
+                    
+                    <!-- Stats -->
+                    <div class="flex flex-wrap justify-center lg:justify-start gap-6 mb-8">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">10K+</div>
+                            <div class="text-sm text-blue-200">Active Learners</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">500+</div>
+                            <div class="text-sm text-blue-200">Expert Mentors</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">4.9★</div>
+                            <div class="text-sm text-blue-200">Average Rating</div>
+                        </div>
+                    </div>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="{% url 'register' %}" 
+                           class="group bg-white text-blue-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl flex items-center justify-center space-x-2">
+                            <span>Get Started</span>
+                            <i data-feather="arrow-right" class="h-5 w-5 group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                        <a href="{% url 'login' %}" 
+                           class="bg-transparent text-white px-8 py-4 rounded-full text-lg font-semibold border-2 border-white border-opacity-30 hover:border-opacity-100 hover:bg-white hover:bg-opacity-10 transition-all duration-300 backdrop-blur-sm">
+                            Login
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Interactive Preview -->
+                <div class="relative lg:mt-0 mt-12">
+                    <!-- Main Session Card -->
+                    <div class="bg-white rounded-2xl shadow-2xl p-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <!-- Live Session Header -->
+                        <div class="bg-gradient-to-r from-red-500 to-pink-500 rounded-xl p-4 mb-6 relative overflow-hidden">
+                            <div class="absolute top-2 right-2">
+                                <div class="flex items-center space-x-1 bg-white bg-opacity-20 px-2 py-1 rounded-full">
+                                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                                    <span class="text-xs text-white font-medium">LIVE</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3 text-white">
+                                <div class="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                    <i data-feather="video" class="h-6 w-6"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-lg">React Advanced Patterns</div>
+                                    <div class="text-sm opacity-90">Building Scalable Applications</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Participants -->
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                                    S
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">Sarah Johnson</div>
+                                    <div class="text-sm text-gray-600">Senior React Developer • Google</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                    M
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">Mike Chen</div>
+                                    <div class="text-sm text-gray-600">Frontend Developer • Learning</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 bg-gray-50" id="features">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                    Why Choose PeerLearn?
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Experience the future of learning with our premium platform designed for real results
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1: 1:1 Sessions -->
+                <div class="feature-card bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i data-feather="video" class="h-8 w-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">1:1 Sessions</h3>
+                    <p class="text-gray-600 text-center leading-relaxed">
+                        High-quality video calls with screen sharing, real-time collaboration, and crystal-clear audio for immersive learning experiences.
+                    </p>
+                </div>
+                
+                <!-- Feature 2: Real-Time Collaboration -->
+                <div class="feature-card bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i data-feather="users" class="h-8 w-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">Real-Time Collaboration</h3>
+                    <p class="text-gray-600 text-center leading-relaxed">
+                        Interactive features with live screen sharing, document collaboration, and instant messaging during sessions.
+                    </p>
+                </div>
+                
+                <!-- Feature 3: Expert Mentors -->
+                <div class="feature-card bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i data-feather="award" class="h-8 w-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">Expert Mentors</h3>
+                    <p class="text-gray-600 text-center leading-relaxed">
+                        Learn from verified industry professionals from top companies like Google, Apple, and Microsoft with proven track records.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                    How It Works
+                </h2>
+                <p class="text-xl text-gray-600">
+                    Start learning in just 3 simple steps
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <!-- Step 1: Sign Up -->
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
+                        1
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Sign Up</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Create your account, tell us your learning goals, and set up your personalized profile in under 2 minutes.
+                    </p>
+                </div>
+                
+                <!-- Step 2: Browse -->
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
+                        2
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Browse</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Discover expert mentors, filter by skills and availability, then book your perfect learning session.
+                    </p>
+                </div>
+                
+                <!-- Step 3: Connect -->
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-pink-500 to-red-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg">
+                        3
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Connect</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Join your video session, learn with real-time interaction, and track your progress towards your goals.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Mentors -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                    Featured Mentors
+                </h2>
+                <p class="text-xl text-gray-600">
+                    Profiles with names and expertise
+                </p>
+            </div>
+            
+            <!-- Mobile: Swipeable Carousel -->
+            <div class="lg:hidden">
+                <div class="flex space-x-6 overflow-x-auto pb-6" style="scroll-snap-type: x mandatory;">
+                    <template x-for="mentor in mentors" :key="mentor.id">
+                        <div class="mentor-card flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg overflow-hidden" style="scroll-snap-align: start;">
+                            <div class="p-6">
+                                <div :class="mentor.gradient" class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <span class="text-white text-3xl font-bold" x-text="mentor.initial"></span>
+                                </div>
+                                <h3 class="text-xl font-bold text-center text-gray-900 mb-2" x-text="mentor.name"></h3>
+                                <p class="text-center text-gray-600 mb-4" x-text="mentor.expertise"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            
+            <!-- Desktop: Grid Layout -->
+            <div class="hidden lg:grid grid-cols-3 gap-8">
+                <template x-for="mentor in mentors.slice(0, 3)" :key="mentor.id">
+                    <div class="mentor-card bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl">
+                        <div class="p-8">
+                            <div :class="mentor.gradient" class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <span class="text-white text-3xl font-bold" x-text="mentor.initial"></span>
+                            </div>
+                            <h3 class="text-xl font-bold text-center text-gray-900 mb-2" x-text="mentor.name"></h3>
+                            <p class="text-center text-gray-600 mb-4" x-text="mentor.expertise"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="font-bold mb-4">About</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">About PeerLearn</a></li>
+                        <li><a href="#" class="hover:text-white">How it Works</a></li>
+                        <li><a href="#" class="hover:text-white">Careers</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold mb-4">Contact</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">Support</a></li>
+                        <li><a href="#" class="hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold mb-4">Terms</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold mb-4">Privacy</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">Data Protection</a></li>
+                        <li><a href="#" class="hover:text-white">GDPR Compliance</a></li>
+                        <li><a href="#" class="hover:text-white">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+function landingPage() {
+    return {
+        mentors: [
+            {
+                id: 1,
+                name: 'Sarah Johnson',
+                expertise: 'React & Frontend Development',
+                initial: 'S',
+                gradient: 'bg-gradient-to-br from-blue-400 to-purple-500'
+            },
+            {
+                id: 2,
+                name: 'Mike Chen',
+                expertise: 'Machine Learning & AI',
+                initial: 'M',
+                gradient: 'bg-gradient-to-br from-green-400 to-blue-500'
+            },
+            {
+                id: 3,
+                name: 'Alex Rivera',
+                expertise: 'UI/UX Design',
+                initial: 'A',
+                gradient: 'bg-gradient-to-br from-purple-400 to-pink-500'
+            }
+        ],
+        
+        init() {
+            this.updateIcons();
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
             
             <!-- Role Selection Cards -->
             <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
@@ -194,4 +550,3 @@
         </div>
     </div>
 </div>
-{% endblock %}

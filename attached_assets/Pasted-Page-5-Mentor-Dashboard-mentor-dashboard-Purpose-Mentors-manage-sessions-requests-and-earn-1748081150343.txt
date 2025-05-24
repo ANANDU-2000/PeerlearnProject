@@ -1,0 +1,60 @@
+Page 5: Mentor Dashboard (/mentor/dashboard)
+•  Purpose: Mentors manage sessions, requests, and earnings.
+•  UI/UX:
+	•  Web: Clean tabbed interface.
+	•  Mobile: Scrollable subtabs with mentor-specific actions.
+•  Subtabs:
+	1.  My Sessions (/mentor/sessions)
+		•  What You See: Tabs (Draft | Scheduled | Past).
+		•  Subtabs & Clicks:
+			•  Draft: [Edit] → Edit modal | [Publish] → API call to /api/sessions/{id}/publish → Moves to Scheduled.
+			•  Scheduled: [I’m Ready] → “Waiting for Learner…” → [Start Class] → /room/{id}.
+		•  Real-Time Updates: Learner readiness via WebSockets.
+	2.  Requests (/mentor/requests)
+		•  What You See: List of learner requests.
+		•  Clicks & Buttons: [Accept] → Time picker → API call to /api/requests/{id}/accept → Adds to Scheduled.
+	3.  Earnings (/mentor/earnings)
+		•  What You See: Total earnings, payout history.
+		•  Clicks & Buttons: [Request Payout] → API call to /api/earnings/payout.
+	4.  Analytics (/mentor/analytics)
+		•  What You See: Metrics (Followers, Enrollments).
+		•  Clicks & Buttons: None; view-only.
+	5.  Profile (/mentor/profile)
+		•  What You See: Editable fields (Expertise, Bio).
+		•  Clicks & Buttons: [Save Changes] → API call to /api/users/{id}/update.
+	6.  Notifications (/mentor/notifications)
+		•  What You See: List of alerts (e.g., “New request”).
+		•  Clicks & Buttons: [Mark All Read] → API call to /api/notifications/read.
+•  Flow & Redirections: Subtabs navigate internally; actions lead to rooms or updates.
+•  Restrictions: Mentor role only.
+•  Database: Fetches from Session, Request, User tables.
+Page 4: Learner Dashboard (/learner/dashboard)
+•  Purpose: Central hub for learners to browse and manage sessions.
+•  UI/UX:
+	•  Web: Tabbed layout with cards.
+	•  Mobile: Scrollable subtabs, tappable cards.
+•  Subtabs:
+	1.  Browse Sessions (/learner/home)
+		•  What You See: Filters (Domain, Price, Date), session cards with mentor name, time, seats.
+		•  Clicks & Buttons:
+			•  Apply filters → Updates list instantly.
+			•  [View Details] on card → /sessions/{id}.
+		•  Real-Time Updates: Seat availability via WebSockets.
+	2.  My Sessions (/learner/sessions)
+		•  What You See: Toggle (Upcoming | Past), session list.
+		•  Clicks & Buttons:
+			•  Upcoming session (T–10 min) → [I’m Ready] → “Waiting for Mentor…” → [Join Class] → /room/{id}.
+		•  Real-Time Updates: Mentor readiness updates via WebSockets.
+	3.  Requests (/learner/requests)
+		•  What You See: List of sent requests.
+		•  Clicks & Buttons: [Cancel] → Confirmation → API call to /api/requests/{id}/cancel → List updates.
+	4.  Recommendations (/learner/home)
+		•  What You See: Carousel of suggested sessions.
+		•  Clicks & Buttons: [Book Now] → Booking modal → /sessions/{id}.
+		•  Real-Time Updates: Updates post-booking via WebSockets.
+	5.  Notifications (/learner/notifications)
+		•  What You See: List of alerts (e.g., “Session in 10 min”).
+		•  Clicks & Buttons: [Mark All Read] → API call to /api/notifications/read.
+•  Flow & Redirections: Subtabs switch seamlessly; actions lead to session details or rooms.
+•  Restrictions: Learner role only.
+•  Database: Fetches sessions (Session table), bookings (Booking table), requests (Request table).?
