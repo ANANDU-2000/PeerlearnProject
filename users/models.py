@@ -11,7 +11,8 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='learner')
     bio = models.TextField(blank=True, null=True)
-    expertise = models.JSONField(default=list, blank=True)  # List of skills/domains
+    skills = models.CharField(max_length=500, blank=True, help_text="Comma-separated skills for recommendation matching")
+    expertise = models.CharField(max_length=100, blank=True, help_text="Primary domain/area of expertise")
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

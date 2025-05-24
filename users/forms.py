@@ -7,11 +7,13 @@ class UserRegistrationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True)
     last_name = forms.CharField(max_length=30, required=True)
     role = forms.ChoiceField(choices=User.ROLE_CHOICES, required=True)
+    skills = forms.CharField(max_length=500, required=True, help_text="Skills for recommendation system")
+    expertise = forms.CharField(max_length=100, required=True, help_text="Domain expertise")
     bio = forms.CharField(widget=forms.Textarea, required=False)
     
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'bio', 'password1', 'password2')
+        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'skills', 'expertise', 'bio', 'password1', 'password2')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

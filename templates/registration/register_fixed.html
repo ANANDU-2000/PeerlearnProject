@@ -89,17 +89,51 @@
                 <div id="passwordMatch" class="mt-1 text-sm hidden"></div>
             </div>
 
+            <!-- Skills with Auto-suggestions -->
+            <div class="mb-4" id="skillsSection">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Skills & Technologies *</label>
+                <div class="relative">
+                    <input type="text" name="skills" id="skillsInput" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="e.g., React, Python, UI Design, Data Science..."
+                           autocomplete="off">
+                    <div id="skillsSuggestions" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden mt-1 max-h-48 overflow-y-auto"></div>
+                </div>
+                <div class="mt-2">
+                    <div id="selectedSkills" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
+            <!-- Domain/Expertise -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Domain of Interest *</label>
+                <select name="expertise" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <option value="">Select your domain</option>
+                    <option value="web-development">Web Development</option>
+                    <option value="mobile-development">Mobile Development</option>
+                    <option value="data-science">Data Science & Analytics</option>
+                    <option value="machine-learning">AI & Machine Learning</option>
+                    <option value="design">UI/UX Design</option>
+                    <option value="business">Business & Marketing</option>
+                    <option value="devops">DevOps & Cloud</option>
+                    <option value="cybersecurity">Cybersecurity</option>
+                    <option value="blockchain">Blockchain</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
             <!-- Bio -->
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Bio (Optional)</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Bio</label>
                 <textarea name="bio" rows="3"
                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Tell us about yourself..."></textarea>
+                          placeholder="Tell us about yourself and your experience..."></textarea>
             </div>
 
             <!-- Submit Button -->
             <button type="submit" 
-                    class="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg">
+                    class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg">
                 Create Account
             </button>
         </form>
@@ -187,6 +221,105 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.className = this.className.replace('border-green-500', 'border-gray-300');
             }
         });
+    });
+
+    // Skills auto-suggestions for recommendation system
+    const skillsInput = document.getElementById('skillsInput');
+    const skillsSuggestions = document.getElementById('skillsSuggestions');
+    const selectedSkillsDiv = document.getElementById('selectedSkills');
+    let selectedSkills = [];
+
+    const skillsData = [
+        // Programming Languages
+        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'TypeScript', 'Go', 'Rust', 'PHP', 'Ruby',
+        // Web Development
+        'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'Next.js', 'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS',
+        // Mobile Development
+        'React Native', 'Flutter', 'Swift', 'Kotlin', 'Xamarin', 'Ionic',
+        // Data Science & ML
+        'Machine Learning', 'Deep Learning', 'Data Science', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Scikit-learn',
+        // Databases
+        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Firebase',
+        // Cloud & DevOps
+        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'CI/CD',
+        // Design
+        'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Photoshop', 'Illustrator',
+        // Other
+        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
+    ];
+
+    skillsInput.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        if (value.length < 2) {
+            skillsSuggestions.classList.add('hidden');
+            return;
+        }
+
+        const matches = skillsData.filter(skill => 
+            skill.toLowerCase().includes(value) && 
+            !selectedSkills.includes(skill)
+        ).slice(0, 5);
+
+        if (matches.length > 0) {
+            skillsSuggestions.innerHTML = matches.map(skill => 
+                `<div class="p-2 hover:bg-blue-50 cursor-pointer skill-suggestion" data-skill="${skill}">${skill}</div>`
+            ).join('');
+            skillsSuggestions.classList.remove('hidden');
+        } else {
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    skillsSuggestions.addEventListener('click', function(e) {
+        if (e.target.classList.contains('skill-suggestion')) {
+            const skill = e.target.getAttribute('data-skill');
+            addSkill(skill);
+            skillsInput.value = '';
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    function addSkill(skill) {
+        if (!selectedSkills.includes(skill)) {
+            selectedSkills.push(skill);
+            updateSkillsDisplay();
+            updateSkillsInput();
+        }
+    }
+
+    function removeSkill(skill) {
+        selectedSkills = selectedSkills.filter(s => s !== skill);
+        updateSkillsDisplay();
+        updateSkillsInput();
+    }
+
+    function updateSkillsDisplay() {
+        selectedSkillsDiv.innerHTML = selectedSkills.map(skill => 
+            `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                ${skill}
+                <button type="button" onclick="removeSkill('${skill}')" class="ml-2 text-blue-600 hover:text-blue-800">×</button>
+            </span>`
+        ).join('');
+    }
+
+    function updateSkillsInput() {
+        const hiddenInput = document.querySelector('input[name="skills"]') || document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'skills';
+        hiddenInput.value = selectedSkills.join(',');
+        if (!document.querySelector('input[name="skills"]')) {
+            form.appendChild(hiddenInput);
+        }
+    }
+
+    // Make removeSkill globally available
+    window.removeSkill = removeSkill;
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!skillsInput.contains(e.target) && !skillsSuggestions.contains(e.target)) {
+            skillsSuggestions.classList.add('hidden');
+        }
     });
 });
 
