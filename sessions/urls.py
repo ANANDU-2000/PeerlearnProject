@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/sessions/<uuid:session_id>/start/', api_views.start_session, name='api_start_session'),
     path('api/sessions/<uuid:session_id>/end/', api_views.end_session, name='api_end_session'),
     path('api/sessions/<uuid:session_id>/publish/', api_views.publish_session, name='api_publish_session'),
+    path('api/sessions/create/', api_views.create_session_api, name='api_create_session'),
     path('api/sessions/<uuid:session_id>/feedback/', api_views.submit_feedback, name='api_submit_feedback'),
     
     # Request endpoints
