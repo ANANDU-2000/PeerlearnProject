@@ -29,7 +29,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50" x-data="mentorDashboard()" x-init="init()">
+<div class="min-h-screen bg-gray-50" x-data="{ sessionView: 'upcoming', showCreateModal: false }"
     
     <!-- Mentor Header -->
     <div class="mentor-bg text-white py-8">
@@ -40,7 +40,7 @@
                     <p class="mt-2 text-green-100">Share your expertise and help others grow</p>
                 </div>
                 <div class="mt-4 md:mt-0">
-                    <button @click="createSession()" 
+                    <button @click="showCreateModal = true" 
                             class="bg-white text-green-600 px-6 py-3 rounded-xl font-semibold hover:bg-green-50 transition-colors">
                         <i data-feather="plus" class="h-4 w-4 inline mr-2"></i>
                         Create Session
