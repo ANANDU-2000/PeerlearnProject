@@ -168,49 +168,221 @@
                 
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- First Name Field -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
-                            <input x-model="formData.firstName" 
-                                   type="text" 
-                                   placeholder="Enter your first name"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                First Name *
+                            </label>
+                            <div class="relative">
+                                <input x-model="formData.firstName" 
+                                       @input="validateField('firstName')"
+                                       @blur="validateField('firstName')"
+                                       type="text" 
+                                       placeholder="e.g., John"
+                                       :class="errors.firstName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'"
+                                       class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
+                                <div x-show="formData.firstName && !errors.firstName" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                                </div>
+                            </div>
+                            <div x-show="errors.firstName" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
+                                <i data-feather="alert-circle" class="h-3 w-3"></i>
+                                <span x-text="errors.firstName"></span>
+                            </div>
+                            <div x-show="!errors.firstName && suggestions.firstName" class="mt-1 text-blue-600 text-xs flex items-center space-x-1">
+                                <i data-feather="info" class="h-3 w-3"></i>
+                                <span x-text="suggestions.firstName"></span>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
-                            <input x-model="formData.lastName" 
-                                   type="text" 
-                                   placeholder="Enter your last name"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                        <input x-model="formData.email" 
-                               type="email" 
-                               placeholder="Enter your email address"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Create Password</label>
-                        <input x-model="formData.password" 
-                               @input="checkPasswordStrength()"
-                               type="password" 
-                               placeholder="Create a strong password"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         
-                        <!-- Real-time Password Strength Check -->
-                        <div x-show="formData.password" class="mt-2">
-                            <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <!-- Last Name Field -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Last Name *
+                            </label>
+                            <div class="relative">
+                                <input x-model="formData.lastName" 
+                                       @input="validateField('lastName')"
+                                       @blur="validateField('lastName')"
+                                       type="text" 
+                                       placeholder="e.g., Smith"
+                                       :class="errors.lastName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'"
+                                       class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
+                                <div x-show="formData.lastName && !errors.lastName" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                                </div>
+                            </div>
+                            <div x-show="errors.lastName" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
+                                <i data-feather="alert-circle" class="h-3 w-3"></i>
+                                <span x-text="errors.lastName"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Email Field with Live Checking -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Email Address *
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-feather="mail" class="h-5 w-5 text-gray-400"></i>
+                            </div>
+                            <input x-model="formData.email" 
+                                   @input="validateEmailLive()"
+                                   @blur="checkEmailExists()"
+                                   type="email" 
+                                   placeholder="john.smith@example.com"
+                                   :class="errors.email ? 'border-red-500 focus:ring-red-500' : emailStatus.valid ? 'border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-blue-500'"
+                                   class="w-full pl-12 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
+                            
+                            <!-- Loading/Status Icons -->
+                            <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <div x-show="emailStatus.checking" class="animate-spin">
+                                    <i data-feather="loader" class="h-5 w-5 text-blue-500"></i>
+                                </div>
+                                <div x-show="!emailStatus.checking && emailStatus.valid && !emailStatus.exists">
+                                    <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                                </div>
+                                <div x-show="!emailStatus.checking && emailStatus.exists">
+                                    <i data-feather="x" class="h-5 w-5 text-red-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Status Messages -->
+                        <div x-show="errors.email" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
+                            <i data-feather="alert-circle" class="h-3 w-3"></i>
+                            <span x-text="errors.email"></span>
+                        </div>
+                        <div x-show="emailStatus.exists" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
+                            <i data-feather="alert-triangle" class="h-3 w-3"></i>
+                            <span>This email is already registered. <a href="{% url 'login' %}" class="underline">Sign in instead?</a></span>
+                        </div>
+                        <div x-show="emailStatus.valid && !emailStatus.exists && !emailStatus.checking" class="mt-1 text-green-600 text-xs flex items-center space-x-1">
+                            <i data-feather="check-circle" class="h-3 w-3"></i>
+                            <span>Email is available</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Password Field with Eye Toggle -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Create Password *
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-feather="lock" class="h-5 w-5 text-gray-400"></i>
+                            </div>
+                            <input x-model="formData.password" 
+                                   @input="checkPasswordStrength()"
+                                   :type="showPassword ? 'text' : 'password'"
+                                   placeholder="Create a strong password"
+                                   :class="errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'"
+                                   class="w-full pl-12 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
+                            
+                            <!-- Eye Toggle Button -->
+                            <button type="button" 
+                                    @click="showPassword = !showPassword"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-gray-100 transition-colors">
+                                <i :data-feather="showPassword ? 'eye-off' : 'eye'" class="h-5 w-5 text-gray-500"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Password Strength Indicator -->
+                        <div x-show="formData.password" class="mt-3">
+                            <div class="flex justify-between text-xs text-gray-600 mb-2">
                                 <span>Password Strength</span>
-                                <span x-text="passwordStrength.text"></span>
+                                <span x-text="passwordStrength.text" :class="passwordStrength.textColor"></span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
                                 <div :class="passwordStrength.color" 
                                      :style="`width: ${passwordStrength.percentage}%`"
                                      class="h-2 rounded-full transition-all duration-300"></div>
                             </div>
+                            
+                            <!-- Password Requirements -->
+                            <div class="mt-3 space-y-1">
+                                <div class="flex items-center space-x-2 text-xs">
+                                    <i :data-feather="passwordChecks.length ? 'check' : 'x'" 
+                                       :class="passwordChecks.length ? 'text-green-500' : 'text-gray-400'"
+                                       class="h-3 w-3"></i>
+                                    <span :class="passwordChecks.length ? 'text-green-600' : 'text-gray-500'">
+                                        At least 8 characters
+                                    </span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-xs">
+                                    <i :data-feather="passwordChecks.uppercase ? 'check' : 'x'" 
+                                       :class="passwordChecks.uppercase ? 'text-green-500' : 'text-gray-400'"
+                                       class="h-3 w-3"></i>
+                                    <span :class="passwordChecks.uppercase ? 'text-green-600' : 'text-gray-500'">
+                                        One uppercase letter
+                                    </span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-xs">
+                                    <i :data-feather="passwordChecks.lowercase ? 'check' : 'x'" 
+                                       :class="passwordChecks.lowercase ? 'text-green-500' : 'text-gray-400'"
+                                       class="h-3 w-3"></i>
+                                    <span :class="passwordChecks.lowercase ? 'text-green-600' : 'text-gray-500'">
+                                        One lowercase letter
+                                    </span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-xs">
+                                    <i :data-feather="passwordChecks.number ? 'check' : 'x'" 
+                                       :class="passwordChecks.number ? 'text-green-500' : 'text-gray-400'"
+                                       class="h-3 w-3"></i>
+                                    <span :class="passwordChecks.number ? 'text-green-600' : 'text-gray-500'">
+                                        One number
+                                    </span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-xs">
+                                    <i :data-feather="passwordChecks.special ? 'check' : 'x'" 
+                                       :class="passwordChecks.special ? 'text-green-500' : 'text-gray-400'"
+                                       class="h-3 w-3"></i>
+                                    <span :class="passwordChecks.special ? 'text-green-600' : 'text-gray-500'">
+                                        One special character (!@#$%^&*)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div x-show="errors.password" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
+                            <i data-feather="alert-circle" class="h-3 w-3"></i>
+                            <span x-text="errors.password"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Confirm Password Field -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Confirm Password *
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-feather="lock" class="h-5 w-5 text-gray-400"></i>
+                            </div>
+                            <input x-model="formData.confirmPassword" 
+                                   @input="validatePasswordMatch()"
+                                   :type="showConfirmPassword ? 'text' : 'password'"
+                                   placeholder="Confirm your password"
+                                   :class="errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : passwordMatch ? 'border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-blue-500'"
+                                   class="w-full pl-12 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-all duration-200 bg-white">
+                            
+                            <!-- Eye Toggle for Confirm Password -->
+                            <button type="button" 
+                                    @click="showConfirmPassword = !showConfirmPassword"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-gray-100 transition-colors">
+                                <i :data-feather="showConfirmPassword ? 'eye-off' : 'eye'" class="h-5 w-5 text-gray-500"></i>
+                            </button>
+                        </div>
+                        
+                        <div x-show="formData.confirmPassword && passwordMatch" class="mt-1 text-green-600 text-xs flex items-center space-x-1">
+                            <i data-feather="check-circle" class="h-3 w-3"></i>
+                            <span>Passwords match</span>
+                        </div>
+                        <div x-show="errors.confirmPassword" class="mt-1 text-red-600 text-xs flex items-center space-x-1">
+                            <i data-feather="alert-circle" class="h-3 w-3"></i>
+                            <span x-text="errors.confirmPassword"></span>
                         </div>
                     </div>
                 </div>
@@ -399,16 +571,51 @@ function registrationWizard() {
             lastName: '',
             email: '',
             password: '',
+            confirmPassword: '',
             domains: [],
             skills: '',
             profileImage: null
         },
         
+        // Enhanced validation and UI state
+        errors: {
+            firstName: '',
+            lastName: '',
+            email: '',
+            password: '',
+            confirmPassword: ''
+        },
+        
+        suggestions: {
+            firstName: '',
+            lastName: '',
+            email: ''
+        },
+        
+        emailStatus: {
+            valid: false,
+            exists: false,
+            checking: false
+        },
+        
         passwordStrength: {
             percentage: 0,
             text: 'Weak',
+            textColor: 'text-red-600',
             color: 'bg-red-500'
         },
+        
+        passwordChecks: {
+            length: false,
+            uppercase: false,
+            lowercase: false,
+            number: false,
+            special: false
+        },
+        
+        showPassword: false,
+        showConfirmPassword: false,
+        passwordMatch: false,
         
         domains: [
             { value: 'web-development', name: 'Web Dev', icon: '🌐' },
@@ -444,37 +651,193 @@ function registrationWizard() {
             }
         },
         
+        // Enhanced field validation
+        validateField(fieldName) {
+            this.errors[fieldName] = '';
+            this.suggestions[fieldName] = '';
+            
+            const value = this.formData[fieldName];
+            
+            if (fieldName === 'firstName' || fieldName === 'lastName') {
+                if (!value || value.length < 2) {
+                    this.errors[fieldName] = 'Must be at least 2 characters';
+                } else if (!/^[a-zA-Z\s'-]+$/.test(value)) {
+                    this.errors[fieldName] = 'Only letters, spaces, hyphens and apostrophes allowed';
+                } else if (value.length > 50) {
+                    this.errors[fieldName] = 'Must be less than 50 characters';
+                } else {
+                    // Capitalize first letter suggestion
+                    const formatted = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+                    if (value !== formatted) {
+                        this.suggestions[fieldName] = `Suggestion: ${formatted}`;
+                    }
+                }
+            }
+        },
+        
+        // Live email validation
+        validateEmailLive() {
+            this.errors.email = '';
+            this.emailStatus.valid = false;
+            
+            const email = this.formData.email;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (!email) {
+                return;
+            }
+            
+            if (!emailRegex.test(email)) {
+                this.errors.email = 'Please enter a valid email address';
+                return;
+            }
+            
+            // Check for common typos in domains
+            const commonDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
+            const domain = email.split('@')[1];
+            
+            if (domain && !commonDomains.includes(domain.toLowerCase())) {
+                // Check for typos
+                for (let commonDomain of commonDomains) {
+                    if (this.levenshteinDistance(domain.toLowerCase(), commonDomain) <= 2) {
+                        this.suggestions.email = `Did you mean ${email.split('@')[0]}@${commonDomain}?`;
+                        break;
+                    }
+                }
+            }
+            
+            this.emailStatus.valid = true;
+        },
+        
+        // Check if email already exists in database
+        async checkEmailExists() {
+            if (!this.emailStatus.valid || !this.formData.email) return;
+            
+            this.emailStatus.checking = true;
+            
+            try {
+                const response = await fetch('/api/check-email/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({ email: this.formData.email })
+                });
+                
+                const data = await response.json();
+                this.emailStatus.exists = data.exists;
+            } catch (error) {
+                console.log('Email check temporarily unavailable');
+            } finally {
+                this.emailStatus.checking = false;
+            }
+        },
+        
+        // Enhanced password strength checking
+        checkPasswordStrength() {
+            const password = this.formData.password;
+            
+            // Reset checks
+            this.passwordChecks = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+            
+            // Calculate score
+            const checks = Object.values(this.passwordChecks);
+            const score = checks.filter(Boolean).length;
+            const percentage = (score / 5) * 100;
+            
+            this.passwordStrength.percentage = percentage;
+            
+            if (percentage < 40) {
+                this.passwordStrength.text = 'Weak';
+                this.passwordStrength.textColor = 'text-red-600';
+                this.passwordStrength.color = 'bg-red-500';
+            } else if (percentage < 60) {
+                this.passwordStrength.text = 'Fair';
+                this.passwordStrength.textColor = 'text-orange-600';
+                this.passwordStrength.color = 'bg-orange-500';
+            } else if (percentage < 80) {
+                this.passwordStrength.text = 'Good';
+                this.passwordStrength.textColor = 'text-yellow-600';
+                this.passwordStrength.color = 'bg-yellow-500';
+            } else {
+                this.passwordStrength.text = 'Strong';
+                this.passwordStrength.textColor = 'text-green-600';
+                this.passwordStrength.color = 'bg-green-500';
+            }
+            
+            // Validate password match if confirm password exists
+            this.validatePasswordMatch();
+        },
+        
+        // Password confirmation validation
+        validatePasswordMatch() {
+            if (!this.formData.confirmPassword) {
+                this.passwordMatch = false;
+                this.errors.confirmPassword = '';
+                return;
+            }
+            
+            if (this.formData.password !== this.formData.confirmPassword) {
+                this.passwordMatch = false;
+                this.errors.confirmPassword = 'Passwords do not match';
+            } else {
+                this.passwordMatch = true;
+                this.errors.confirmPassword = '';
+            }
+        },
+        
+        // Enhanced step 2 validation
         isStep2Valid() {
             return this.formData.firstName && 
                    this.formData.lastName && 
                    this.formData.email && 
                    this.formData.password && 
-                   this.formData.password.length >= 8;
+                   this.formData.confirmPassword &&
+                   !this.errors.firstName &&
+                   !this.errors.lastName &&
+                   !this.errors.email &&
+                   !this.errors.password &&
+                   !this.errors.confirmPassword &&
+                   this.emailStatus.valid &&
+                   !this.emailStatus.exists &&
+                   this.passwordMatch &&
+                   this.passwordStrength.percentage >= 60; // Require at least "Good" password
         },
         
-        checkPasswordStrength() {
-            const password = this.formData.password;
-            let score = 0;
+        // Helper function for email typo detection
+        levenshteinDistance(str1, str2) {
+            const matrix = [];
             
-            if (password.length >= 8) score++;
-            if (/[a-z]/.test(password)) score++;
-            if (/[A-Z]/.test(password)) score++;
-            if (/[0-9]/.test(password)) score++;
-            if (/[^A-Za-z0-9]/.test(password)) score++;
-            
-            const percentage = (score / 5) * 100;
-            this.passwordStrength.percentage = percentage;
-            
-            if (percentage < 40) {
-                this.passwordStrength.text = 'Weak';
-                this.passwordStrength.color = 'bg-red-500';
-            } else if (percentage < 80) {
-                this.passwordStrength.text = 'Good';
-                this.passwordStrength.color = 'bg-yellow-500';
-            } else {
-                this.passwordStrength.text = 'Strong';
-                this.passwordStrength.color = 'bg-green-500';
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
             }
+            
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+            
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            
+            return matrix[str2.length][str1.length];
         },
         
         handleImageUpload(event) {
