@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.views.generic import CreateView
@@ -47,6 +47,11 @@ class UserRegistrationView(CreateView):
         context = super().get_context_data(**kwargs)
         context['role'] = self.request.GET.get('role', 'learner')
         return context
+
+def logout_view(request):
+    """Handle logout for both GET and POST requests"""
+    logout(request)
+    return redirect('landing')
 
 @login_required
 def profile_view(request):
