@@ -29,7 +29,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50" x-data="{ sessionView: 'upcoming', showCreateModal: false }"
+<div class="min-h-screen bg-gray-50" x-data="mentorDashboard()" x-init="init()"
     
     <!-- Mentor Header -->
     <div class="mentor-bg text-white py-8">
