@@ -218,11 +218,9 @@
                                 </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Available Seats</span>
-                                    {% with available=session.max_participants|add:session.current_participants|add:"-"|stringformat:"d" %}
-                                        <span class="{% if session.current_participants >= session.max_participants|add:'-2' %}text-red-600{% else %}text-green-600{% endif %} font-medium">
-                                            {{ session.max_participants|add:session.current_participants|add:"-"|stringformat:"d" }}/{{ session.max_participants }}
-                                        </span>
-                                    {% endwith %}
+                                    <span class="{% if session.current_participants >= session.max_participants|add:'-2' %}text-red-600{% else %}text-green-600{% endif %} font-medium">
+                                        {{ session.max_participants|add:session.current_participants|add:'-' }}/{{ session.max_participants }}
+                                    </span>
                                 </div>
                             </div>
                             
@@ -275,47 +273,67 @@
                     </div>
                 </div>
                 
-                <!-- Upcoming Sessions with Real-time Status -->
+                <!-- Upcoming Sessions with Real Database Data -->
                 <div x-show="sessionView === 'upcoming'" class="space-y-4">
-                    <template x-for="session in mySessions.upcoming" :key="session.id">
-                        <div class="border border-gray-200 rounded-xl p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
-                                    <div class="flex items-center text-sm text-gray-600 mb-2">
-                                        <i data-feather="user" class="h-4 w-4 mr-1"></i>
-                                        <span x-text="session.mentor"></span>
+                    {% for booking in user_bookings %}
+                        {% if booking.session.schedule > now %}
+                            <div class="border border-gray-200 rounded-xl p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2">{{ booking.session.title }}</h4>
+                                        <div class="flex items-center text-sm text-gray-600 mb-2">
+                                            <i data-feather="user" class="h-4 w-4 mr-1"></i>
+                                            <span>{{ booking.session.mentor.first_name }} {{ booking.session.mentor.last_name }}</span>
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                            <span>{{ booking.session.schedule|date:"M d, Y H:i" }}</span>
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600 mt-1">
+                                            <i data-feather="clock" class="h-4 w-4 mr-1"></i>
+                                            <span>{{ booking.session.duration }} minutes</span>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
-                                        <span x-text="session.schedule"></span>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span x-show="session.timeToStart <= 10"
-                                          class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium mb-2">
-                                        Starting in <span x-text="session.timeToStart"></span> min
-                                    </span>
-                                    <div x-show="session.mentorReady && session.timeToStart <= 10">
-                                        <button @click="joinSession(session.id)"
-                                                class="ready-button bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">
-                                            Join Class
-                                        </button>
-                                    </div>
-                                    <div x-show="!session.mentorReady && session.timeToStart <= 10">
-                                        <button @click="markReady(session.id)"
-                                                :class="session.learnerReady ? 'bg-blue-600' : 'bg-gray-600'"
-                                                class="px-6 py-2 rounded-lg text-white font-semibold">
-                                            <span x-text="session.learnerReady ? 'I\'m Ready' : 'Mark Ready'"></span>
-                                        </button>
-                                        <p class="text-sm text-gray-600 mt-2 waiting-animation">
-                                            Waiting for mentor...
-                                        </p>
+                                    <div class="text-right">
+                                        {% if booking.session.status == 'live' %}
+                                            <a href="{% url 'session_room' booking.session.id %}"
+                                               class="ready-button bg-green-600 text-white px-6 py-2 rounded-lg font-semibold inline-block">
+                                                Join Class
+                                            </a>
+                                        {% elif booking.session.can_start %}
+                                            <span class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium mb-2">
+                                                Starting Soon
+                                            </span>
+                                            <div>
+                                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">
+                                                    I'm Ready
+                                                </button>
+                                                <p class="text-sm text-gray-600 mt-2 waiting-animation">
+                                                    Waiting for mentor...
+                                                </p>
+                                            </div>
+                                        {% else %}
+                                            <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                {{ booking.status|title }}
+                                            </span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="text-center py-12">
+                            <div class="w-24 h-24 mx-auto mb-4 text-gray-300">
+                                <i data-feather="calendar-x" class="w-full h-full"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No Upcoming Sessions</h3>
+                            <p class="text-gray-500 mb-4">You haven't booked any sessions yet.</p>
+                            <button @click="activeTab = 'browse'" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                                Browse Sessions
+                            </button>
                         </div>
-                    </template>
+                    {% endfor %}
                 </div>
                 
                 <!-- Past Sessions -->
