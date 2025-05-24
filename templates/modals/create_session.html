@@ -21,26 +21,43 @@
             </button>
         </div>
         
-        <form @submit.prevent="createSession()" x-data="sessionForm()">
+        <form method="post" action="{% url 'api_create_session' %}" x-data="sessionForm()"  enctype="multipart/form-data">
+            {% csrf_token %}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Left Column -->
                 <div class="space-y-6">
                     <!-- Session Title -->
                     <div>
                         <label class="block text-sm font-bold text-gray-900 mb-3">Session Title *</label>
-                        <input x-model="form.title" 
+                        <input name="title" 
                                type="text" 
                                placeholder="e.g., Advanced React Hooks & Performance Optimization"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                required>
                         <p class="text-xs text-gray-500 mt-1">Make it descriptive and engaging</p>
+                    </div>
+                    
+                    <!-- Skills with Auto-Suggestions -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Skills/Technologies *</label>
+                        <div class="relative">
+                            <input name="skills" 
+                                   id="skills-input"
+                                   type="text" 
+                                   placeholder="Start typing skills... e.g., React, Python, Machine Learning"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   autocomplete="off">
+                            <div id="skills-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 hidden max-h-48 overflow-y-auto"></div>
+                        </div>
+                        <div id="selected-skills" class="mt-2 flex flex-wrap gap-2"></div>
+                        <p class="text-xs text-gray-500 mt-1">Add relevant skills and technologies for better recommendations</p>
                     </div>
                     
                     <!-- Domain -->
                     <div>
                         <label class="block text-sm font-bold text-gray-900 mb-3">Domain *</label>
-                        <select x-model="form.domain" 
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        <select name="domain" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 required>
                             <option value="">Select your expertise domain</option>
                             <option value="web-development">🌐 Web Development</option>
@@ -48,13 +65,222 @@
                             <option value="data-science">📊 Data Science & Analytics</option>
                             <option value="machine-learning">🤖 Machine Learning & AI</option>
                             <option value="design">🎨 UI/UX Design</option>
-                            <option value="business">💼 Business & Marketing</option>
                             <option value="devops">⚙️ DevOps & Cloud</option>
-                            <option value="blockchain">🔗 Blockchain & Web3</option>
                             <option value="cybersecurity">🔒 Cybersecurity</option>
-                            <option value="other">🔧 Other</option>
+                            <option value="blockchain">⛓️ Blockchain & Web3</option>
+                            <option value="business">💼 Business & Strategy</option>
+                            <option value="marketing">📢 Digital Marketing</option>
                         </select>
                     </div>
+                    
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Session Description *</label>
+                        <textarea name="description" 
+                                  rows="4" 
+                                  placeholder="Describe what learners will gain from this session..."
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                  required></textarea>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Schedule -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Schedule *</label>
+                        <input name="schedule" 
+                               type="datetime-local" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               required>
+                    </div>
+                    
+                    <!-- Duration & Price -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-3">Duration (mins) *</label>
+                            <select name="duration" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>60 minutes</option>
+                                <option value="90">90 minutes</option>
+                                <option value="120">120 minutes</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-3">Price (INR) *</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                                <input name="price" 
+                                       type="number" 
+                                       placeholder="0"
+                                       min="0"
+                                       class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Max Participants -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Max Participants *</label>
+                        <input name="max_participants" 
+                               type="number" 
+                               placeholder="10"
+                               min="1"
+                               max="50"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               required>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-4 pt-6">
+                        <button type="button" @click="showCreateModal = false"
+                                class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">
+                            Cancel
+                        </button>
+                        <button type="submit" name="status" value="draft"
+                                class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium">
+                            Save as Draft
+                        </button>
+                        <button type="submit" name="status" value="scheduled"
+                                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-medium">
+                            Create & Publish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Skills Auto-Suggestions JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const skillsInput = document.getElementById('skills-input');
+    const suggestionsContainer = document.getElementById('skills-suggestions');
+    const selectedSkillsContainer = document.getElementById('selected-skills');
+    let selectedSkills = [];
+    
+    // Comprehensive skills database
+    const skillsDatabase = [
+        // Programming Languages
+        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift',
+        'Kotlin', 'TypeScript', 'R', 'MATLAB', 'SQL', 'HTML', 'CSS', 'Dart', 'Scala', 'Perl',
+        
+        // Web Development
+        'React', 'Angular', 'Vue.js', 'Node.js', 'Express.js', 'Django', 'Flask', 'Laravel',
+        'Spring Boot', 'Next.js', 'Nuxt.js', 'Svelte', 'jQuery', 'Bootstrap', 'Tailwind CSS',
+        'SASS', 'LESS', 'Webpack', 'Vite', 'REST API', 'GraphQL', 'WebRTC', 'Socket.io',
+        
+        // Mobile Development
+        'React Native', 'Flutter', 'Android Development', 'iOS Development', 'Xamarin',
+        'Ionic', 'PhoneGap', 'Cordova', 'Unity', 'Unreal Engine',
+        
+        // Data Science & AI
+        'Machine Learning', 'Deep Learning', 'Neural Networks', 'TensorFlow', 'PyTorch',
+        'Scikit-learn', 'Pandas', 'NumPy', 'Matplotlib', 'Seaborn', 'Jupyter', 'Data Analysis',
+        'Data Visualization', 'Natural Language Processing', 'Computer Vision', 'OpenCV',
+        
+        // Cloud & DevOps
+        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'GitHub',
+        'GitLab', 'CI/CD', 'Terraform', 'Ansible', 'Chef', 'Puppet', 'Linux', 'Ubuntu',
+        
+        // Databases
+        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Elasticsearch', 'Firebase', 'SQLite',
+        'Oracle', 'SQL Server', 'Cassandra', 'DynamoDB', 'Neo4j',
+        
+        // Design & UI/UX
+        'Figma', 'Adobe XD', 'Sketch', 'Photoshop', 'Illustrator', 'InDesign', 'Canva',
+        'UI Design', 'UX Design', 'Wireframing', 'Prototyping', 'User Research',
+        
+        // Business & Marketing
+        'Digital Marketing', 'SEO', 'SEM', 'Social Media Marketing', 'Content Marketing',
+        'Email Marketing', 'Analytics', 'Google Analytics', 'Facebook Ads', 'Google Ads',
+        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Strategy'
+    ];
+    
+    skillsInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        
+        if (query.length < 2) {
+            suggestionsContainer.classList.add('hidden');
+            return;
+        }
+        
+        const matches = skillsDatabase
+            .filter(skill => 
+                skill.toLowerCase().includes(query) && 
+                !selectedSkills.includes(skill)
+            )
+            .slice(0, 6);
+        
+        if (matches.length > 0) {
+            suggestionsContainer.innerHTML = matches
+                .map(skill => `
+                    <div class="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                         onclick="addSkill('${skill}')">
+                        ${skill}
+                    </div>
+                `).join('');
+            suggestionsContainer.classList.remove('hidden');
+        } else {
+            suggestionsContainer.classList.add('hidden');
+        }
+    });
+    
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!skillsInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+            suggestionsContainer.classList.add('hidden');
+        }
+    });
+    
+    window.addSkill = function(skill) {
+        if (!selectedSkills.includes(skill)) {
+            selectedSkills.push(skill);
+            updateSelectedSkills();
+            skillsInput.value = '';
+            suggestionsContainer.classList.add('hidden');
+        }
+    };
+    
+    window.removeSkill = function(skill) {
+        selectedSkills = selectedSkills.filter(s => s !== skill);
+        updateSelectedSkills();
+    };
+    
+    function updateSelectedSkills() {
+        selectedSkillsContainer.innerHTML = selectedSkills
+            .map(skill => `
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    ${skill}
+                    <button type="button" onclick="removeSkill('${skill}')" class="ml-2 text-blue-600 hover:text-blue-800">
+                        ×
+                    </button>
+                </span>
+            `).join('');
+        
+        // Update hidden input for form submission
+        const hiddenInput = document.querySelector('input[name="skills"]') || createHiddenSkillsInput();
+        hiddenInput.value = selectedSkills.join(',');
+    }
+    
+    function createHiddenSkillsInput() {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'skills';
+        skillsInput.parentNode.appendChild(input);
+        return input;
+    }
+    
+    // Set minimum date for schedule input
+    const scheduleInput = document.querySelector('input[name="schedule"]');
+    if (scheduleInput) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        scheduleInput.min = now.toISOString().slice(0, 16);
+    }
+});
+</script>
                     
                     <!-- Skills & Technologies -->
                     <div>
