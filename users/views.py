@@ -184,4 +184,4 @@ def learner_dashboard(request):
         }
     }
     
-    return render(request, 'dashboard/learner_advanced.html', context)
+    return render(request, 'dashboard/learner_complete.html', context)
