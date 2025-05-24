@@ -1,14 +1,28 @@
 from django.urls import path
-from . import views
+from . import views, api_views
 
 urlpatterns = [
+    # Web views
     path('', views.session_list, name='session_list'),
     path('<uuid:session_id>/', views.session_detail, name='session_detail'),
-    path('<uuid:session_id>/book/', views.book_session, name='book_session'),
     path('<uuid:session_id>/room/', views.session_room, name='session_room'),
-    path('<uuid:session_id>/start/', views.start_session, name='start_session'),
-    path('<uuid:session_id>/end/', views.end_session, name='end_session'),
     path('<uuid:session_id>/feedback/', views.submit_feedback, name='submit_feedback'),
     path('create/', views.create_session, name='create_session'),
-    path('api/list/', views.session_api_list, name='session_api_list'),
+    
+    # API endpoints
+    path('api/sessions/', api_views.get_sessions_api, name='get_sessions_api'),
+    path('api/sessions/create/', api_views.create_session_api, name='create_session_api'),
+    path('api/sessions/<uuid:session_id>/book/', api_views.book_session, name='api_book_session'),
+    path('api/sessions/<uuid:session_id>/start/', api_views.start_session, name='api_start_session'),
+    path('api/sessions/<uuid:session_id>/end/', api_views.end_session, name='api_end_session'),
+    path('api/sessions/<uuid:session_id>/publish/', api_views.publish_session, name='api_publish_session'),
+    path('api/sessions/<uuid:session_id>/feedback/', api_views.submit_feedback, name='api_submit_feedback'),
+    
+    # Request endpoints
+    path('api/requests/create/', api_views.create_session_request, name='api_create_request'),
+    path('api/requests/<uuid:request_id>/accept/', api_views.accept_request, name='api_accept_request'),
+    
+    # Notification endpoints
+    path('api/notifications/', api_views.get_notifications_api, name='get_notifications_api'),
+    path('api/notifications/read/', api_views.mark_notifications_read, name='mark_notifications_read'),
 ]
