@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile Settings - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .stats-card {
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .skill-tag {
+        transition: all 0.2s ease;
+    }
+    .skill-tag:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" 
+     x-data="profileManager()" 
+     x-init="init()">
+    
+    <!-- Profile Header -->
+    <div class="profile-header text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex items-center space-x-6">
+                    <!-- Profile Image -->
+                    <div class="relative">
+                        <div class="w-32 h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-4xl font-bold backdrop-blur-sm">
+                            {% if user.profile_image %}
+                                <img src="{{ user.profile_image.url }}" alt="Profile" class="w-32 h-32 rounded-full object-cover">
+                            {% else %}
+                                <span>{{ user.first_name|first|default:user.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <button @click="showImageUpload = true" 
+                                class="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-colors">
+                            <i data-feather="camera" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Profile Info -->
+                    <div>
+                        <h1 class="text-4xl font-bold">{{ user.get_full_name|default:user.username }}</h1>
+                        <p class="text-xl text-blue-100 mt-2">@{{ user.username }}</p>
+                        <div class="flex items-center space-x-4 mt-4">
+                            <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium capitalize">
+                                {{ user.role }}
+                            </span>
+                            <span class="text-blue-100">Member since {{ user.date_joined|date:"M Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="mt-8 lg:mt-0">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
+                            <div class="text-2xl font-bold">{{ profile_stats.sessions_count|default:0 }}</div>
+                            <div class="text-xs text-blue-100">{% if user.is_mentor %}Sessions Created{% else %}Sessions Attended{% endif %}</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
+                            <div class="text-2xl font-bold">{{ profile_stats.rating|default:0.0|floatformat:1 }}</div>
+                            <div class="text-xs text-blue-100">Average Rating</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
+                            <div class="text-2xl font-bold">{{ profile_stats.followers|default:0 }}</div>
+                            <div class="text-xs text-blue-100">Followers</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
+                            <div class="text-2xl font-bold">{{ profile_stats.hours|default:0 }}</div>
+                            <div class="text-xs text-blue-100">Total Hours</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="border-b border-gray-200 bg-white rounded-t-xl shadow-sm -mt-4 relative z-10">
+            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                <template x-for="tab in tabs" :key="tab.id">
+                    <button @click="activeTab = tab.id" 
+                            :class="activeTab === tab.id ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2">
+                        <i :data-feather="tab.icon" class="h-4 w-4"></i>
+                        <span x-text="tab.name"></span>
+                    </button>
+                </template>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-b-xl shadow-sm border-t-0 p-8">
+            
+            <!-- Basic Information Tab -->
+            <div x-show="activeTab === 'basic'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Basic Information</h2>
+                    <button @click="toggleEdit('basic')" 
+                            :class="editMode.basic ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'"
+                            class="px-4 py-2 text-white rounded-lg transition-colors">
+                        <span x-text="editMode.basic ? 'Save Changes' : 'Edit Profile'"></span>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        <template x-if="editMode.basic">
+                            <input x-model="formData.firstName" 
+                                   type="text" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </template>
+                        <template x-if="!editMode.basic">
+                            <p class="text-gray-900 py-3" x-text="formData.firstName"></p>
+                        </template>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        <template x-if="editMode.basic">
+                            <input x-model="formData.lastName" 
+                                   type="text" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </template>
+                        <template x-if="!editMode.basic">
+                            <p class="text-gray-900 py-3" x-text="formData.lastName"></p>
+                        </template>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <template x-if="editMode.basic">
+                            <input x-model="formData.email" 
+                                   type="email" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </template>
+                        <template x-if="!editMode.basic">
+                            <p class="text-gray-900 py-3" x-text="formData.email"></p>
+                        </template>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                        <p class="text-gray-500 py-3">@{{ user.username }} <span class="text-xs">(cannot be changed)</span></p>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                        <template x-if="editMode.basic">
+                            <textarea x-model="formData.bio" 
+                                      rows="4" 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+                        </template>
+                        <template x-if="!editMode.basic">
+                            <p class="text-gray-900 py-3" x-text="formData.bio || 'No bio provided'"></p>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills & Expertise Tab -->
+            <div x-show="activeTab === 'expertise'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">
+                        <span x-text="'{{ user.role }}' === 'mentor' ? 'Teaching Expertise' : 'Learning Interests'"></span>
+                    </h2>
+                    <button @click="toggleEdit('expertise')" 
+                            :class="editMode.expertise ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'"
+                            class="px-4 py-2 text-white rounded-lg transition-colors">
+                        <span x-text="editMode.expertise ? 'Save Changes' : 'Edit Expertise'"></span>
+                    </button>
+                </div>
+                
+                <!-- Domains -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4">
+                        <span x-text="'{{ user.role }}' === 'mentor' ? 'Teaching Domains' : 'Interest Areas'"></span>
+                    </h3>
+                    
+                    <template x-if="editMode.expertise">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <template x-for="domain in availableDomains" :key="domain.value">
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" 
+                                           :value="domain.value"
+                                           x-model="formData.domains"
+                                           class="sr-only peer">
+                                    <div :class="formData.domains.includes(domain.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'"
+                                         class="border-2 rounded-lg p-3 text-center transition-all">
+                                        <div class="text-xl mb-1" x-text="domain.icon"></div>
+                                        <div class="text-xs font-medium" x-text="domain.name"></div>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </template>
+                    
+                    <template x-if="!editMode.expertise">
+                        <div class="flex flex-wrap gap-3">
+                            <template x-for="domain in formData.domains" :key="domain">
+                                <span class="skill-tag bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                                      x-text="getDomainName(domain)"></span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Skills -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Specific Skills</h3>
+                    
+                    <template x-if="editMode.expertise">
+                        <div>
+                            <input x-model="formData.skills" 
+                                   type="text" 
+                                   placeholder="Enter skills separated by commas..."
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Separate multiple skills with commas</p>
+                        </div>
+                    </template>
+                    
+                    <template x-if="!editMode.expertise">
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="skill in getSkillsArray()" :key="skill">
+                                <span class="skill-tag bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm"
+                                      x-text="skill.trim()"></span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div x-show="activeTab === 'settings'">
+                <h2 class="text-2xl font-bold mb-6">Account Settings</h2>
+                
+                <div class="space-y-6">
+                    <!-- Privacy Settings -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4">Privacy Settings</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Profile Visibility</h4>
+                                    <p class="text-sm text-gray-600">Allow others to find and view your profile</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input x-model="settings.profileVisible" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Email Notifications</h4>
+                                    <p class="text-sm text-gray-600">Receive email updates about sessions and platform news</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input x-model="settings.emailNotifications" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button @click="saveSettings()" 
+                                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Upload Modal -->
+    <div x-show="showImageUpload" 
+         x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Update Profile Picture</h3>
+            <div class="space-y-4">
+                <input type="file" accept="image/*" @change="handleImageUpload($event)" 
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <div class="flex space-x-3">
+                    <button @click="showImageUpload = false" 
+                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button @click="uploadImage()" 
+                            class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function profileManager() {
+    return {
+        activeTab: 'basic',
+        showImageUpload: false,
+        
+        editMode: {
+            basic: false,
+            expertise: false
+        },
+        
+        tabs: [
+            { id: 'basic', name: 'Basic Info', icon: 'user' },
+            { id: 'expertise', name: 'Expertise', icon: 'book' },
+            { id: 'settings', name: 'Settings', icon: 'settings' }
+        ],
+        
+        formData: {
+            firstName: '{{ user.first_name }}',
+            lastName: '{{ user.last_name }}',
+            email: '{{ user.email }}',
+            bio: '{{ user.bio|default:"" }}',
+            domains: {{ user.expertise|default:"[]"|safe }},
+            skills: ''
+        },
+        
+        settings: {
+            profileVisible: true,
+            emailNotifications: true
+        },
+        
+        availableDomains: [
+            { value: 'web-development', name: 'Web Dev', icon: '🌐' },
+            { value: 'mobile-development', name: 'Mobile', icon: '📱' },
+            { value: 'data-science', name: 'Data Science', icon: '📊' },
+            { value: 'machine-learning', name: 'AI/ML', icon: '🤖' },
+            { value: 'design', name: 'Design', icon: '🎨' },
+            { value: 'business', name: 'Business', icon: '💼' },
+            { value: 'devops', name: 'DevOps', icon: '⚙️' },
+            { value: 'blockchain', name: 'Blockchain', icon: '🔗' },
+            { value: 'cybersecurity', name: 'Security', icon: '🔒' },
+            { value: 'other', name: 'Other', icon: '🔧' }
+        ],
+        
+        init() {
+            this.updateIcons();
+        },
+        
+        toggleEdit(section) {
+            this.editMode[section] = !this.editMode[section];
+            if (!this.editMode[section]) {
+                this.saveProfile(section);
+            }
+        },
+        
+        saveProfile(section) {
+            // Save profile changes
+            this.showNotification('Profile updated successfully!', 'success');
+        },
+        
+        saveSettings() {
+            // Save settings
+            this.showNotification('Settings saved successfully!', 'success');
+        },
+        
+        getDomainName(value) {
+            const domain = this.availableDomains.find(d => d.value === value);
+            return domain ? domain.name : value;
+        },
+        
+        getSkillsArray() {
+            return this.formData.skills ? this.formData.skills.split(',') : [];
+        },
+        
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                console.log('Image selected:', file);
+            }
+        },
+        
+        uploadImage() {
+            this.showImageUpload = false;
+            this.showNotification('Profile picture updated!', 'success');
+        },
+        
+        showNotification(message, type = 'info') {
+            console.log(`${type}: ${message}`);
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

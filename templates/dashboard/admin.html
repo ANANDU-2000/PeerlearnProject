@@ -1,0 +1,505 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+    }
+    .metric-card {
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    .status-online { background-color: #10b981; }
+    .status-warning { background-color: #f59e0b; }
+    .status-error { background-color: #ef4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" 
+     x-data="adminDashboard()" 
+     x-init="init()">
+    
+    <!-- Admin Header -->
+    <div class="admin-header text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">Admin Dashboard</h1>
+                    <p class="mt-2 text-blue-100">Platform management and analytics</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                        <div class="flex items-center space-x-2">
+                            <div class="status-indicator status-online"></div>
+                            <span class="text-sm font-medium">System Online</span>
+                        </div>
+                    </div>
+                    <button @click="refreshData()" 
+                            class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-colors">
+                        <i data-feather="refresh-cw" class="h-4 w-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Overview -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Total Users</p>
+                        <p class="text-3xl font-bold text-gray-900" x-text="metrics.totalUsers"></p>
+                        <p class="text-sm text-green-600">+12% this month</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i data-feather="users" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Active Sessions</p>
+                        <p class="text-3xl font-bold text-gray-900" x-text="metrics.activeSessions"></p>
+                        <p class="text-sm text-green-600">+8% this week</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i data-feather="video" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Revenue</p>
+                        <p class="text-3xl font-bold text-gray-900" x-text="`$${metrics.revenue.toLocaleString()}`"></p>
+                        <p class="text-sm text-green-600">+24% this month</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i data-feather="dollar-sign" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Support Tickets</p>
+                        <p class="text-3xl font-bold text-gray-900" x-text="metrics.supportTickets"></p>
+                        <p class="text-sm text-yellow-600">3 urgent</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <i data-feather="help-circle" class="h-6 w-6 text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="border-b border-gray-200 bg-white rounded-t-xl shadow-sm">
+            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                <template x-for="tab in tabs" :key="tab.id">
+                    <button @click="activeTab = tab.id" 
+                            :class="activeTab === tab.id ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2">
+                        <i :data-feather="tab.icon" class="h-4 w-4"></i>
+                        <span x-text="tab.name"></span>
+                        <span x-show="tab.badge > 0" 
+                              x-text="tab.badge"
+                              class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"></span>
+                    </button>
+                </template>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-b-xl shadow-sm border-t-0">
+            
+            <!-- Users Management -->
+            <div x-show="activeTab === 'users'" class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">User Management</h2>
+                    <div class="flex space-x-4">
+                        <select x-model="userFilters.role" @change="filterUsers()" 
+                                class="px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="">All Roles</option>
+                            <option value="mentor">Mentors</option>
+                            <option value="learner">Learners</option>
+                        </select>
+                        <input x-model="userFilters.search" 
+                               @input="filterUsers()"
+                               type="text" 
+                               placeholder="Search users..."
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <template x-for="user in filteredUsers" :key="user.id">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-medium">
+                                                <span x-text="user.name.charAt(0).toUpperCase()"></span>
+                                            </div>
+                                            <div>
+                                                <div class="font-medium text-gray-900" x-text="user.name"></div>
+                                                <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="user.role === 'mentor' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'"
+                                              class="px-2 py-1 text-xs font-medium rounded-full capitalize"
+                                              x-text="user.role"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                              class="px-2 py-1 text-xs font-medium rounded-full capitalize"
+                                              x-text="user.status"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(user.created_at)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button @click="viewUser(user)" class="text-blue-600 hover:text-blue-900">View</button>
+                                            <button @click="toggleUserStatus(user)" 
+                                                    :class="user.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
+                                                    x-text="user.status === 'active' ? 'Deactivate' : 'Activate'"></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sessions Management -->
+            <div x-show="activeTab === 'sessions'" class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Session Management</h2>
+                    <select x-model="sessionFilter" @change="filterSessions()" 
+                            class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="">All Sessions</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="live">Live</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                
+                <div class="space-y-4">
+                    <template x-for="session in filteredSessions" :key="session.id">
+                        <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <h3 class="text-lg font-semibold" x-text="session.title"></h3>
+                                        <span :class="getSessionStatusClass(session.status)" 
+                                              class="px-2 py-1 text-xs font-medium rounded-full"
+                                              x-text="session.status.toUpperCase()"></span>
+                                    </div>
+                                    <p class="text-gray-600 mb-2" x-text="`Mentor: ${session.mentor_name}`"></p>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                        <span x-text="formatDateTime(session.schedule)"></span>
+                                        <span x-text="`${session.duration} minutes`"></span>
+                                        <span x-text="`${session.participants}/${session.max_participants} participants`"></span>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button @click="viewSession(session)" class="text-blue-600 hover:text-blue-900">View</button>
+                                    <button @click="cancelSession(session)" 
+                                            x-show="session.status !== 'completed' && session.status !== 'cancelled'"
+                                            class="text-red-600 hover:text-red-900">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Payments Tab -->
+            <div x-show="activeTab === 'payments'" class="p-6">
+                <h2 class="text-xl font-bold mb-6">Payment Management</h2>
+                
+                <!-- Payment Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100 text-sm">Total Revenue</p>
+                                <p class="text-2xl font-bold">$24,890</p>
+                            </div>
+                            <i data-feather="trending-up" class="h-8 w-8"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-sm">Pending Payouts</p>
+                                <p class="text-2xl font-bold">$3,450</p>
+                            </div>
+                            <i data-feather="clock" class="h-8 w-8"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100 text-sm">Platform Fee</p>
+                                <p class="text-2xl font-bold">$2,489</p>
+                            </div>
+                            <i data-feather="percent" class="h-8 w-8"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-semibold mb-4">Recent Transactions</h3>
+                    <div class="space-y-3">
+                        <template x-for="transaction in recentTransactions" :key="transaction.id">
+                            <div class="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                        <i data-feather="dollar-sign" class="h-4 w-4 text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium" x-text="transaction.description"></p>
+                                        <p class="text-sm text-gray-600" x-text="formatDate(transaction.date)"></p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-green-600" x-text="`$${transaction.amount}`"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health Tab -->
+            <div x-show="activeTab === 'health'" class="p-6">
+                <h2 class="text-xl font-bold mb-6">System Health Metrics</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium">Server Status</h3>
+                            <div class="status-indicator status-online"></div>
+                        </div>
+                        <div class="text-2xl font-bold text-green-600">Online</div>
+                        <p class="text-sm text-gray-600">Uptime: 99.9%</p>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium">Database</h3>
+                            <div class="status-indicator status-online"></div>
+                        </div>
+                        <div class="text-2xl font-bold text-green-600">Healthy</div>
+                        <p class="text-sm text-gray-600">Response: 12ms</p>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium">WebRTC</h3>
+                            <div class="status-indicator status-online"></div>
+                        </div>
+                        <div class="text-2xl font-bold text-green-600">Active</div>
+                        <p class="text-sm text-gray-600">8 live sessions</p>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium">Storage</h3>
+                            <div class="status-indicator status-warning"></div>
+                        </div>
+                        <div class="text-2xl font-bold text-yellow-600">78%</div>
+                        <p class="text-sm text-gray-600">Used space</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function adminDashboard() {
+    return {
+        activeTab: 'users',
+        
+        metrics: {
+            totalUsers: 1247,
+            activeSessions: 23,
+            revenue: 24890,
+            supportTickets: 12
+        },
+        
+        tabs: [
+            { id: 'users', name: 'Users', icon: 'users', badge: 0 },
+            { id: 'sessions', name: 'Sessions', icon: 'video', badge: 0 },
+            { id: 'requests', name: 'Requests', icon: 'inbox', badge: 5 },
+            { id: 'payments', name: 'Payments', icon: 'credit-card', badge: 0 },
+            { id: 'feedback', name: 'Feedback', icon: 'star', badge: 3 },
+            { id: 'settings', name: 'Settings', icon: 'settings', badge: 0 },
+            { id: 'health', name: 'Health', icon: 'activity', badge: 1 }
+        ],
+        
+        // User management
+        userFilters: {
+            role: '',
+            search: ''
+        },
+        
+        users: [
+            {
+                id: 1,
+                name: 'Sarah Johnson',
+                email: 'sarah@example.com',
+                role: 'mentor',
+                status: 'active',
+                created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 2,
+                name: 'Mike Chen',
+                email: 'mike@example.com',
+                role: 'learner',
+                status: 'active',
+                created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+            }
+        ],
+        
+        filteredUsers: [],
+        
+        // Session management
+        sessionFilter: '',
+        sessions: [
+            {
+                id: 1,
+                title: 'Advanced React Patterns',
+                mentor_name: 'Sarah Johnson',
+                status: 'scheduled',
+                schedule: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                duration: 90,
+                participants: 5,
+                max_participants: 10
+            }
+        ],
+        
+        filteredSessions: [],
+        
+        // Transactions
+        recentTransactions: [
+            {
+                id: 1,
+                description: 'Session payment - React Patterns',
+                amount: 75,
+                date: new Date().toISOString()
+            }
+        ],
+        
+        init() {
+            this.filteredUsers = this.users;
+            this.filteredSessions = this.sessions;
+            this.updateIcons();
+        },
+        
+        filterUsers() {
+            this.filteredUsers = this.users.filter(user => {
+                const matchesRole = !this.userFilters.role || user.role === this.userFilters.role;
+                const matchesSearch = !this.userFilters.search || 
+                    user.name.toLowerCase().includes(this.userFilters.search.toLowerCase()) ||
+                    user.email.toLowerCase().includes(this.userFilters.search.toLowerCase());
+                
+                return matchesRole && matchesSearch;
+            });
+        },
+        
+        filterSessions() {
+            this.filteredSessions = this.sessions.filter(session => {
+                return !this.sessionFilter || session.status === this.sessionFilter;
+            });
+        },
+        
+        toggleUserStatus(user) {
+            user.status = user.status === 'active' ? 'inactive' : 'active';
+            this.showNotification(`User ${user.status === 'active' ? 'activated' : 'deactivated'} successfully`, 'success');
+        },
+        
+        cancelSession(session) {
+            if (confirm(`Are you sure you want to cancel "${session.title}"?`)) {
+                session.status = 'cancelled';
+                this.showNotification('Session cancelled successfully', 'success');
+            }
+        },
+        
+        refreshData() {
+            this.showNotification('Data refreshed successfully', 'success');
+        },
+        
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        },
+        
+        formatDateTime(dateString) {
+            return new Date(dateString).toLocaleString();
+        },
+        
+        getSessionStatusClass(status) {
+            const classes = {
+                'scheduled': 'bg-blue-100 text-blue-800',
+                'live': 'bg-red-100 text-red-800',
+                'completed': 'bg-green-100 text-green-800',
+                'cancelled': 'bg-gray-100 text-gray-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+        
+        showNotification(message, type = 'info') {
+            console.log(`${type}: ${message}`);
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
