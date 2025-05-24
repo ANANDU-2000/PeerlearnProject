@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views, api_views
+from .create_session_api import create_session_api
 
 urlpatterns = [
     # Web views
@@ -12,12 +13,11 @@ urlpatterns = [
     
     # API endpoints
     path('api/sessions/', api_views.get_sessions_api, name='get_sessions_api'),
-    path('api/sessions/create/', api_views.create_session_api, name='create_session_api'),
+    path('api/sessions/create/', create_session_api, name='api_create_session'),
     path('api/sessions/<uuid:session_id>/book/', api_views.book_session, name='api_book_session'),
     path('api/sessions/<uuid:session_id>/start/', api_views.start_session, name='api_start_session'),
     path('api/sessions/<uuid:session_id>/end/', api_views.end_session, name='api_end_session'),
     path('api/sessions/<uuid:session_id>/publish/', api_views.publish_session, name='api_publish_session'),
-    path('api/sessions/create/', api_views.create_session_api, name='api_create_session'),
     path('api/sessions/<uuid:session_id>/feedback/', api_views.submit_feedback, name='api_submit_feedback'),
     
     # Request endpoints
