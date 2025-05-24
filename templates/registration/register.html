@@ -1,26 +1,551 @@
 {% extends 'base.html' %}
 
-{% block title %}Register - PeerLearn{% endblock %}
+{% block title %}Join PeerLearn - Registration{% endblock %}
+
+{% block extra_head %}
+<style>
+    .wizard-bg {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    }
+    .wizard-step {
+        transition: all 0.3s ease;
+    }
+    .wizard-step.hidden {
+        opacity: 0;
+        transform: translateX(20px);
+        pointer-events: none;
+    }
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    .form-card {
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+    .role-card {
+        transition: all 0.3s ease;
+    }
+    .role-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .domain-selector {
+        transition: all 0.2s ease;
+    }
+    .domain-selector:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div>
-            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
-                <i data-feather="user-plus" class="h-6 w-6 text-green-600"></i>
-            </div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Create your account
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Or
-                <a href="{% url 'login' %}" class="font-medium text-blue-600 hover:text-blue-500">
-                    sign in to your existing account
-                </a>
-            </p>
+<div class="min-h-screen wizard-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" 
+     x-data="registrationWizard()" 
+     x-init="init()">
+    
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-96 h-96 bg-white bg-opacity-5 rounded-full"></div>
+        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-white bg-opacity-10 rounded-full"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-2xl w-full">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">Join PeerLearn</h1>
+            <p class="text-blue-100 text-lg">Create your account in 4 simple steps</p>
         </div>
         
-        <form class="mt-8 space-y-6" method="post">
+        <!-- Progress Bar -->
+        <div class="mb-8 bg-white bg-opacity-20 rounded-full p-1 backdrop-blur-sm">
+            <div class="relative">
+                <div class="flex items-center justify-between">
+                    <template x-for="(step, index) in steps" :key="step.id">
+                        <div class="flex items-center" :class="index < steps.length - 1 ? 'flex-1' : ''">
+                            <div :class="currentStep >= index + 1 ? 'bg-white text-blue-600' : 'bg-blue-300 text-blue-600'"
+                                 class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors z-10 relative bg-white">
+                                <span x-text="index + 1"></span>
+                            </div>
+                            <div x-show="index < steps.length - 1" class="flex-1 mx-3">
+                                <div class="h-2 bg-blue-300 rounded-full">
+                                    <div :class="currentStep > index + 1 ? 'w-full' : 'w-0'"
+                                         class="progress-bar h-2 bg-white rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Step Labels -->
+                <div class="flex justify-between mt-3">
+                    <template x-for="step in steps" :key="step.id">
+                        <div class="text-xs text-white font-medium text-center" x-text="step.name"></div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wizard Container -->
+        <div class="form-card rounded-2xl shadow-2xl p-8 border border-white border-opacity-20">
+            
+            <!-- Step 1: Role Selection -->
+            <div x-show="currentStep === 1" class="wizard-step">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-gray-900">Are you a Learner or Mentor?</h3>
+                    <p class="mt-2 text-gray-600">Choose your path to get started</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div @click="selectRole('learner')" 
+                         :class="formData.role === 'learner' ? 'ring-4 ring-blue-500 bg-blue-50 border-blue-500' : 'hover:bg-gray-50 border-gray-200'"
+                         class="role-card cursor-pointer border-2 rounded-xl p-6">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-feather="book-open" class="h-8 w-8 text-blue-600"></i>
+                            </div>
+                            <h4 class="text-xl font-semibold text-gray-900 mb-3">Learn from Experts</h4>
+                            <p class="text-gray-600 text-sm mb-4">Connect with mentors and expand your knowledge through personalized sessions</p>
+                            <div class="space-y-2 text-left">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
+                                    Browse expert mentors
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
+                                    Book 1-on-1 sessions
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
+                                    Request custom sessions
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div @click="selectRole('mentor')" 
+                         :class="formData.role === 'mentor' ? 'ring-4 ring-blue-500 bg-blue-50 border-blue-500' : 'hover:bg-gray-50 border-gray-200'"
+                         class="role-card cursor-pointer border-2 rounded-xl p-6">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-feather="users" class="h-8 w-8 text-blue-600"></i>
+                            </div>
+                            <h4 class="text-xl font-semibold text-gray-900 mb-3">Teach and Mentor</h4>
+                            <p class="text-gray-600 text-sm mb-4">Share your expertise and help others grow while earning income</p>
+                            <div class="space-y-2 text-left">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
+                                    Create live sessions
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
+                                    Set your own rates
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i data-feather="check" class="h-4 w-4 text-green-500 mr-2"></i>
+                                    Build your reputation
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-end">
+                    <button @click="nextStep()" 
+                            :disabled="!formData.role"
+                            :class="formData.role ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
+                            class="px-8 py-3 text-white font-semibold rounded-xl transition-colors">
+                        Next
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Basic Information -->
+            <div x-show="currentStep === 2" class="wizard-step">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-gray-900">Basic Information</h3>
+                    <p class="mt-2 text-gray-600">Tell us about yourself</p>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
+                            <input x-model="formData.firstName" 
+                                   type="text" 
+                                   placeholder="Enter your first name"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
+                            <input x-model="formData.lastName" 
+                                   type="text" 
+                                   placeholder="Enter your last name"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                        <input x-model="formData.email" 
+                               type="email" 
+                               placeholder="Enter your email address"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Create Password</label>
+                        <input x-model="formData.password" 
+                               @input="checkPasswordStrength()"
+                               type="password" 
+                               placeholder="Create a strong password"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        
+                        <!-- Real-time Password Strength Check -->
+                        <div x-show="formData.password" class="mt-2">
+                            <div class="flex justify-between text-xs text-gray-600 mb-1">
+                                <span>Password Strength</span>
+                                <span x-text="passwordStrength.text"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div :class="passwordStrength.color" 
+                                     :style="`width: ${passwordStrength.percentage}%`"
+                                     class="h-2 rounded-full transition-all duration-300"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-between">
+                    <button @click="previousStep()" 
+                            class="px-6 py-3 text-gray-600 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                        Back
+                    </button>
+                    <button @click="nextStep()" 
+                            :disabled="!isStep2Valid()"
+                            :class="isStep2Valid() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
+                            class="px-8 py-3 text-white font-semibold rounded-xl transition-colors">
+                        Next
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Expertise & Profile Image -->
+            <div x-show="currentStep === 3" class="wizard-step">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-gray-900">
+                        <span x-text="formData.role === 'mentor' ? 'Your Teaching Expertise' : 'Your Learning Interests'"></span>
+                    </h3>
+                    <p class="mt-2 text-gray-600" 
+                       x-text="formData.role === 'mentor' ? 'What domains do you want to teach?' : 'What do you want to learn?'"></p>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Domain Selection -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <span x-text="formData.role === 'mentor' ? 'Teaching Domains' : 'Interest Areas'"></span>
+                        </label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <template x-for="domain in domains" :key="domain.value">
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" 
+                                           :value="domain.value"
+                                           x-model="formData.domains"
+                                           class="sr-only peer">
+                                    <div :class="formData.domains.includes(domain.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'"
+                                         class="domain-selector border-2 rounded-lg p-3 text-center transition-all">
+                                        <div class="text-2xl mb-1" x-text="domain.icon"></div>
+                                        <div class="text-sm font-medium" x-text="domain.name"></div>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Skills -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <span x-text="formData.role === 'mentor' ? 'Your Skills & Technologies' : 'Skills You Want to Learn'"></span>
+                        </label>
+                        <input x-model="formData.skills" 
+                               type="text" 
+                               placeholder="e.g., React, Python, UI Design, Data Analysis..."
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    </div>
+                    
+                    <!-- Profile Image Upload -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Profile Picture</label>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-2xl font-bold">
+                                <span x-text="formData.firstName ? formData.firstName.charAt(0).toUpperCase() : '?'"></span>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" 
+                                       @change="handleImageUpload($event)"
+                                       accept="image/*"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors">
+                                <p class="text-xs text-gray-500 mt-1">Upload image → Real-time preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-between">
+                    <button @click="previousStep()" 
+                            class="px-6 py-3 text-gray-600 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                        Back
+                    </button>
+                    <button @click="nextStep()" 
+                            :disabled="formData.domains.length === 0"
+                            :class="formData.domains.length > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
+                            class="px-8 py-3 text-white font-semibold rounded-xl transition-colors">
+                        Next
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Verify & Complete -->
+            <div x-show="currentStep === 4" class="wizard-step">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-gray-900">Review Details</h3>
+                    <p class="mt-2 text-gray-600">Please review your information before creating your account</p>
+                </div>
+                
+                <div class="bg-blue-50 rounded-xl p-6 mb-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl font-bold">
+                                <span x-text="formData.firstName ? formData.firstName.charAt(0).toUpperCase() : '?'"></span>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold" x-text="`${formData.firstName} ${formData.lastName}`"></h4>
+                                <p class="text-gray-600" x-text="formData.email"></p>
+                                <span :class="formData.role === 'mentor' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'"
+                                      class="px-2 py-1 text-xs font-medium rounded-full capitalize"
+                                      x-text="formData.role"></span>
+                            </div>
+                        </div>
+                        
+                        <div x-show="formData.domains.length > 0">
+                            <h5 class="font-medium text-gray-900 mb-2">
+                                <span x-text="formData.role === 'mentor' ? 'Teaching Areas' : 'Interest Areas'"></span>
+                            </h5>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="domain in formData.domains" :key="domain">
+                                    <span class="bg-white text-blue-800 px-2 py-1 text-xs font-medium rounded-full border"
+                                          x-text="getDomainName(domain)"></span>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <div x-show="formData.skills">
+                            <h5 class="font-medium text-gray-900 mb-1">Skills</h5>
+                            <p class="text-gray-600 text-sm" x-text="formData.skills"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-between">
+                    <button @click="previousStep()" 
+                            class="px-6 py-3 text-gray-600 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                        Back
+                    </button>
+                    <button @click="submitRegistration()" 
+                            :disabled="isSubmitting"
+                            :class="!isSubmitting ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
+                            class="px-8 py-3 text-white font-bold rounded-xl transition-colors shadow-lg">
+                        <span x-show="!isSubmitting">Finish → API call to /api/auth/register → Redirects to /login</span>
+                        <span x-show="isSubmitting" class="flex items-center space-x-2">
+                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Creating Account...</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login Link -->
+        <div class="mt-6 text-center">
+            <span class="text-sm text-white">
+                Already have an account?
+                <a href="{% url 'login' %}" class="font-medium text-blue-100 hover:text-white underline">
+                    Sign in here
+                </a>
+            </span>
+        </div>
+    </div>
+</div>
+
+<script>
+function registrationWizard() {
+    return {
+        currentStep: 1,
+        isSubmitting: false,
+        
+        steps: [
+            { id: 1, name: 'Role' },
+            { id: 2, name: 'Info' },
+            { id: 3, name: 'Profile' },
+            { id: 4, name: 'Complete' }
+        ],
+        
+        formData: {
+            role: '',
+            firstName: '',
+            lastName: '',
+            email: '',
+            password: '',
+            domains: [],
+            skills: '',
+            profileImage: null
+        },
+        
+        passwordStrength: {
+            percentage: 0,
+            text: 'Weak',
+            color: 'bg-red-500'
+        },
+        
+        domains: [
+            { value: 'web-development', name: 'Web Dev', icon: '🌐' },
+            { value: 'mobile-development', name: 'Mobile', icon: '📱' },
+            { value: 'data-science', name: 'Data Science', icon: '📊' },
+            { value: 'machine-learning', name: 'AI/ML', icon: '🤖' },
+            { value: 'design', name: 'Design', icon: '🎨' },
+            { value: 'business', name: 'Business', icon: '💼' },
+            { value: 'devops', name: 'DevOps', icon: '⚙️' },
+            { value: 'blockchain', name: 'Blockchain', icon: '🔗' },
+            { value: 'cybersecurity', name: 'Security', icon: '🔒' },
+            { value: 'other', name: 'Other', icon: '🔧' }
+        ],
+        
+        init() {
+            this.updateIcons();
+        },
+        
+        selectRole(role) {
+            this.formData.role = role;
+        },
+        
+        nextStep() {
+            if (this.currentStep < 4) {
+                this.currentStep++;
+                this.updateIcons();
+            }
+        },
+        
+        previousStep() {
+            if (this.currentStep > 1) {
+                this.currentStep--;
+            }
+        },
+        
+        isStep2Valid() {
+            return this.formData.firstName && 
+                   this.formData.lastName && 
+                   this.formData.email && 
+                   this.formData.password && 
+                   this.formData.password.length >= 8;
+        },
+        
+        checkPasswordStrength() {
+            const password = this.formData.password;
+            let score = 0;
+            
+            if (password.length >= 8) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+            
+            const percentage = (score / 5) * 100;
+            this.passwordStrength.percentage = percentage;
+            
+            if (percentage < 40) {
+                this.passwordStrength.text = 'Weak';
+                this.passwordStrength.color = 'bg-red-500';
+            } else if (percentage < 80) {
+                this.passwordStrength.text = 'Good';
+                this.passwordStrength.color = 'bg-yellow-500';
+            } else {
+                this.passwordStrength.text = 'Strong';
+                this.passwordStrength.color = 'bg-green-500';
+            }
+        },
+        
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.formData.profileImage = file;
+                // Real-time image preview updates instantly
+            }
+        },
+        
+        getDomainName(value) {
+            const domain = this.domains.find(d => d.value === value);
+            return domain ? domain.name : value;
+        },
+        
+        async submitRegistration() {
+            this.isSubmitting = true;
+            
+            try {
+                // API call to /api/auth/register
+                const formData = new FormData();
+                formData.append('role', this.formData.role);
+                formData.append('first_name', this.formData.firstName);
+                formData.append('last_name', this.formData.lastName);
+                formData.append('email', this.formData.email);
+                formData.append('password1', this.formData.password);
+                formData.append('password2', this.formData.password);
+                formData.append('expertise', JSON.stringify(this.formData.domains));
+                formData.append('skills', this.formData.skills);
+                
+                if (this.formData.profileImage) {
+                    formData.append('profile_image', this.formData.profileImage);
+                }
+                
+                const response = await fetch('{% url "register" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    // Redirects to /login
+                    window.location.href = '{% url "login" %}';
+                } else {
+                    alert('Registration failed. Please try again.');
+                }
+            } catch (error) {
+                alert('Registration failed. Please try again.');
+            } finally {
+                this.isSubmitting = false;
+            }
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+
+        <form class="mt-8 space-y-6" method="post" style="display: none;">
             {% csrf_token %}
             
             <!-- Role Selection -->
