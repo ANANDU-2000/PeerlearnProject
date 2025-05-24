@@ -1,0 +1,779 @@
+{% extends 'base.html' %}
+
+{% block title %}Learner Dashboard - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .notification-badge {
+        @apply absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center;
+    }
+    .tab-active {
+        @apply border-blue-500 text-blue-600 bg-blue-50;
+    }
+    .session-card {
+        @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02] cursor-pointer;
+    }
+    .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50" 
+     x-data="learnerDashboard()" 
+     x-init="init()"
+     @session-updated.window="handleSessionUpdate($event.detail)"
+     @notification.window="showNotification($event.detail)">
+    
+    <!-- Real-time Session Alert Banner -->
+    <div x-show="sessionAlert.show" 
+         x-transition:enter="transform ease-out duration-300"
+         x-transition:enter-start="-translate-y-full"
+         x-transition:enter-end="translate-y-0"
+         class="fixed top-0 left-0 right-0 bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-3 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 bg-white rounded-full pulse-animation"></div>
+                <i data-feather="video" class="h-5 w-5"></i>
+                <span x-text="sessionAlert.message" class="font-medium"></span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button @click="joinSession(sessionAlert.sessionId)" 
+                        class="bg-white text-green-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-sm">
+                    Join Now
+                </button>
+                <button @click="sessionAlert.show = false" class="text-white hover:text-gray-200 transition-colors">
+                    <i data-feather="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Enhanced Header with Live Activity -->
+        <div class="mb-8 bg-white rounded-3xl shadow-lg border border-gray-100 p-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -translate-y-32 translate-x-32 opacity-50"></div>
+            <div class="relative z-10">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                            Welcome back, {{ user.first_name|default:user.username }}! 👋
+                        </h1>
+                        <p class="mt-3 text-lg text-gray-600">Ready to expand your knowledge today?</p>
+                        <div class="mt-4 flex items-center space-x-6">
+                            <div class="flex items-center space-x-2">
+                                <div class="relative">
+                                    <div class="h-3 w-3 bg-green-400 rounded-full"></div>
+                                    <div class="absolute inset-0 h-3 w-3 bg-green-400 rounded-full animate-ping"></div>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700" x-text="`${onlineUsers} mentors online`"></span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="relative">
+                                    <div class="h-3 w-3 bg-red-400 rounded-full"></div>
+                                    <div class="absolute inset-0 h-3 w-3 bg-red-400 rounded-full animate-ping"></div>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700" x-text="`${liveSessions} live sessions`"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="mt-6 lg:mt-0 flex space-x-4">
+                        <button @click="activeTab = 'browse'" 
+                                class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md flex items-center space-x-2">
+                            <i data-feather="search" class="h-5 w-5"></i>
+                            <span>Find Sessions</span>
+                        </button>
+                        <button @click="showRequestModal = true" 
+                                class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all shadow-md flex items-center space-x-2">
+                            <i data-feather="plus" class="h-5 w-5"></i>
+                            <span>Request Session</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Navigation (visible on mobile only) -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40">
+            <div class="grid grid-cols-5 h-16">
+                <template x-for="tab in tabs" :key="tab.id">
+                    <button @click="activeTab = tab.id" 
+                            :class="activeTab === tab.id ? 'text-blue-600 bg-blue-50' : 'text-gray-500'"
+                            class="flex flex-col items-center justify-center space-y-1 relative transition-colors">
+                        <div class="relative">
+                            <i :data-feather="tab.icon" class="h-5 w-5"></i>
+                            <span x-show="tab.badge > 0" 
+                                  x-text="tab.badge" 
+                                  class="absolute -top-2 -right-2 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"></span>
+                        </div>
+                        <span class="text-xs font-medium" x-text="tab.name"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <!-- Desktop Tab Navigation -->
+        <div class="mb-6 hidden lg:block">
+            <div class="border-b border-gray-200 bg-white rounded-t-3xl shadow-sm">
+                <nav class="flex space-x-8 px-8" aria-label="Tabs">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button @click="activeTab = tab.id" 
+                                :class="activeTab === tab.id ? 'tab-active border-b-2' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="whitespace-nowrap py-6 px-1 border-b-2 font-semibold text-sm flex items-center space-x-3 relative transition-all">
+                            <i :data-feather="tab.icon" class="h-5 w-5"></i>
+                            <span x-text="tab.name"></span>
+                            <span x-show="tab.badge > 0" 
+                                  x-text="tab.badge" 
+                                  class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"></span>
+                        </button>
+                    </template>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab Content Container -->
+        <div class="bg-white rounded-b-3xl lg:rounded-3xl shadow-lg border-t-0 mb-20 lg:mb-8">
+            
+            <!-- Browse Sessions Tab -->
+            <div x-show="activeTab === 'browse'" class="p-6 lg:p-8">
+                <!-- Advanced Search & Filters -->
+                <div class="mb-8 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="relative">
+                            <i data-feather="search" class="absolute left-4 top-4 h-5 w-5 text-gray-400"></i>
+                            <input x-model="filters.search" 
+                                   @input="applyFilters()"
+                                   type="text" 
+                                   placeholder="Search sessions, mentors..." 
+                                   class="pl-12 w-full h-12 rounded-xl border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                        </div>
+                        <select x-model="filters.domain" 
+                                @change="applyFilters()"
+                                class="h-12 rounded-xl border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                            <option value="">All Domains</option>
+                            <option value="web-development">🌐 Web Development</option>
+                            <option value="data-science">📊 Data Science</option>
+                            <option value="design">🎨 Design</option>
+                            <option value="business">💼 Business</option>
+                            <option value="mobile">📱 Mobile Dev</option>
+                        </select>
+                        <select x-model="filters.duration" 
+                                @change="applyFilters()"
+                                class="h-12 rounded-xl border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                            <option value="">Any Duration</option>
+                            <option value="30">⚡ 30 minutes</option>
+                            <option value="60">🕐 1 hour</option>
+                            <option value="120">⏰ 2 hours</option>
+                        </select>
+                        <button @click="clearFilters()" 
+                                class="h-12 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all font-medium shadow-sm">
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sessions Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <template x-for="session in filteredSessions" :key="session.id">
+                        <div class="session-card bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+                             @click="viewSessionDetail(session.id)">
+                            <!-- Session Header Image -->
+                            <div class="h-48 bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-500 relative overflow-hidden">
+                                <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+                                <div class="absolute top-4 right-4">
+                                    <template x-if="session.status === 'live'">
+                                        <div class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1 animate-pulse">
+                                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                                            <span>LIVE</span>
+                                        </div>
+                                    </template>
+                                    <template x-if="session.is_trending">
+                                        <div class="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">
+                                            🔥 TRENDING
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="absolute bottom-4 left-4 right-4">
+                                    <h3 class="text-white font-bold text-xl mb-1" x-text="session.title"></h3>
+                                    <p class="text-blue-100 text-sm flex items-center space-x-2">
+                                        <i data-feather="user" class="h-4 w-4"></i>
+                                        <span x-text="session.mentor_name"></span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6">
+                                <!-- Session Metadata -->
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                        <div class="flex items-center space-x-1">
+                                            <i data-feather="calendar" class="h-4 w-4"></i>
+                                            <span x-text="formatDate(session.schedule)"></span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <i data-feather="clock" class="h-4 w-4"></i>
+                                            <span x-text="`${session.duration}m`"></span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <template x-for="i in 5" :key="i">
+                                            <i data-feather="star" 
+                                               :class="i <= session.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'"
+                                               class="h-4 w-4"></i>
+                                        </template>
+                                        <span class="text-sm text-gray-600 ml-1" x-text="`(${session.rating})`"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Progress Bar -->
+                                <div class="mb-4">
+                                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                                        <span>Participants</span>
+                                        <span x-text="`${session.current_participants}/${session.max_participants}`"></span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300" 
+                                             :style="`width: ${(session.current_participants / session.max_participants) * 100}%`"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Button -->
+                                <button @click.stop="bookSession(session.id)" 
+                                        :disabled="session.is_full || session.is_booked"
+                                        :class="session.is_booked ? 'bg-green-100 text-green-700 border-green-200' : session.is_full ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 border-transparent'"
+                                        class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 border-2 flex items-center justify-center space-x-2">
+                                    <template x-if="session.is_booked">
+                                        <div class="flex items-center space-x-2">
+                                            <i data-feather="check" class="h-4 w-4"></i>
+                                            <span>Booked</span>
+                                        </div>
+                                    </template>
+                                    <template x-if="session.is_full && !session.is_booked">
+                                        <div class="flex items-center space-x-2">
+                                            <i data-feather="users" class="h-4 w-4"></i>
+                                            <span>Session Full</span>
+                                        </div>
+                                    </template>
+                                    <template x-if="!session.is_full && !session.is_booked">
+                                        <div class="flex items-center space-x-2">
+                                            <i data-feather="calendar-plus" class="h-4 w-4"></i>
+                                            <span>Book Session</span>
+                                        </div>
+                                    </template>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Empty State -->
+                <template x-if="filteredSessions.length === 0">
+                    <div class="text-center py-16">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-feather="search" class="h-12 w-12 text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
+                        <p class="text-gray-600 mb-6">Try adjusting your filters or check back later for new sessions.</p>
+                        <button @click="clearFilters()" 
+                                class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors">
+                            Clear Filters
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- My Sessions Tab -->
+            <div x-show="activeTab === 'sessions'" class="p-6 lg:p-8">
+                <!-- Session Status Filter -->
+                <div class="flex flex-wrap gap-3 mb-8">
+                    <template x-for="status in sessionStatuses" :key="status.id">
+                        <button @click="activeSessionStatus = status.id"
+                                :class="activeSessionStatus === status.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                                class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-2">
+                            <i :data-feather="status.icon" class="h-4 w-4"></i>
+                            <span x-text="status.name"></span>
+                            <span x-show="status.count > 0" 
+                                  x-text="status.count"
+                                  :class="activeSessionStatus === status.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                  class="px-2 py-1 rounded-full text-xs font-bold"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Sessions List -->
+                <div class="space-y-6">
+                    <template x-for="session in getSessionsByStatus(activeSessionStatus)" :key="session.id">
+                        <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 lg:p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex flex-col lg:flex-row lg:items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-4 mb-3">
+                                        <h3 class="text-xl font-bold text-gray-900" x-text="session.title"></h3>
+                                        <span :class="getStatusClass(session.status)" 
+                                              x-text="session.status.toUpperCase()"
+                                              class="px-3 py-1 rounded-full text-xs font-bold"></span>
+                                    </div>
+                                    <p class="text-gray-700 font-medium mb-2 flex items-center space-x-2">
+                                        <i data-feather="user" class="h-4 w-4"></i>
+                                        <span x-text="`Mentor: ${session.mentor_name}`"></span>
+                                    </p>
+                                    <div class="flex items-center space-x-6 text-sm text-gray-600 mb-4">
+                                        <div class="flex items-center space-x-1">
+                                            <i data-feather="calendar" class="h-4 w-4"></i>
+                                            <span x-text="formatDateTime(session.schedule)"></span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <i data-feather="clock" class="h-4 w-4"></i>
+                                            <span x-text="`${session.duration} minutes`"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Countdown Timer for Upcoming Sessions -->
+                                    <div x-show="session.status === 'scheduled' && isSessionSoon(session.schedule)" 
+                                         class="bg-yellow-100 border-l-4 border-yellow-400 rounded-lg p-4 mb-4">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                                                <i data-feather="clock" class="h-4 w-4 text-white"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-yellow-800 font-semibold">Session starts in:</p>
+                                                <p x-text="getTimeUntil(session.schedule)" 
+                                                   class="font-mono text-2xl font-bold text-yellow-900"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="mt-6 lg:mt-0 lg:ml-8 flex flex-wrap gap-3">
+                                    <template x-if="session.status === 'scheduled' && canJoinSession(session.schedule)">
+                                        <button @click="showReadyModal(session)" 
+                                                class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors flex items-center space-x-2 font-semibold shadow-md">
+                                            <i data-feather="video" class="h-4 w-4"></i>
+                                            <span>Get Ready</span>
+                                        </button>
+                                    </template>
+                                    
+                                    <template x-if="session.status === 'live'">
+                                        <button @click="joinSession(session.id)" 
+                                                class="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2 font-semibold shadow-md animate-pulse">
+                                            <div class="w-3 h-3 bg-white rounded-full"></div>
+                                            <i data-feather="video" class="h-4 w-4"></i>
+                                            <span>Join Live</span>
+                                        </button>
+                                    </template>
+                                    
+                                    <template x-if="session.status === 'completed' && !session.feedback_given">
+                                        <button @click="showFeedbackModal(session)" 
+                                                class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center space-x-2 font-semibold shadow-md">
+                                            <i data-feather="star" class="h-4 w-4"></i>
+                                            <span>Rate Session</span>
+                                        </button>
+                                    </template>
+                                    
+                                    <button @click="viewSessionDetail(session.id)" 
+                                            class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl hover:bg-gray-200 transition-colors font-medium">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Empty State -->
+                <template x-if="getSessionsByStatus(activeSessionStatus).length === 0">
+                    <div class="text-center py-16">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-feather="calendar" class="h-12 w-12 text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
+                        <p class="text-gray-600 mb-6" x-text="`You don't have any ${activeSessionStatus} sessions yet.`"></p>
+                        <button @click="activeTab = 'browse'" 
+                                class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors">
+                            Browse Sessions
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Add more tabs here following the same pattern... -->
+        </div>
+
+        <!-- Learning Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium">Sessions Attended</p>
+                        <p class="text-3xl font-bold mt-1" x-text="stats.attended_sessions || 0"></p>
+                        <p class="text-blue-200 text-xs mt-1">+2 this week</p>
+                    </div>
+                    <div class="w-16 h-16 bg-blue-400 bg-opacity-30 rounded-full flex items-center justify-center">
+                        <i data-feather="video" class="h-8 w-8 text-blue-100"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm font-medium">Hours Learned</p>
+                        <p class="text-3xl font-bold mt-1" x-text="`${stats.total_hours || 0}h`"></p>
+                        <p class="text-green-200 text-xs mt-1">+3.5h this week</p>
+                    </div>
+                    <div class="w-16 h-16 bg-green-400 bg-opacity-30 rounded-full flex items-center justify-center">
+                        <i data-feather="clock" class="h-8 w-8 text-green-100"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Mentors Met</p>
+                        <p class="text-3xl font-bold mt-1" x-text="stats.unique_mentors || 0"></p>
+                        <p class="text-purple-200 text-xs mt-1">+1 this week</p>
+                    </div>
+                    <div class="w-16 h-16 bg-purple-400 bg-opacity-30 rounded-full flex items-center justify-center">
+                        <i data-feather="users" class="h-8 w-8 text-purple-100"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button (Mobile) -->
+    <div class="fixed bottom-20 right-4 lg:hidden z-30">
+        <button @click="showRequestModal = true" 
+                class="w-14 h-14 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center">
+            <i data-feather="plus" class="h-6 w-6"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+function learnerDashboard() {
+    return {
+        activeTab: 'browse',
+        activeSessionStatus: 'upcoming',
+        showRequestModal: false,
+        
+        // Real-time data
+        onlineUsers: 127,
+        liveSessions: 8,
+        
+        // Session alert
+        sessionAlert: {
+            show: false,
+            message: '',
+            sessionId: null
+        },
+        
+        // Tabs configuration
+        tabs: [
+            { id: 'browse', name: 'Browse', icon: 'search', badge: 0 },
+            { id: 'sessions', name: 'My Sessions', icon: 'calendar', badge: 2 },
+            { id: 'requests', name: 'Requests', icon: 'send', badge: 1 },
+            { id: 'recommendations', name: 'For You', icon: 'heart', badge: 0 },
+            { id: 'notifications', name: 'Alerts', icon: 'bell', badge: 3 }
+        ],
+        
+        // Session status tabs
+        sessionStatuses: [
+            { id: 'upcoming', name: 'Upcoming', icon: 'clock', count: 2 },
+            { id: 'live', name: 'Live Now', icon: 'video', count: 0 },
+            { id: 'past', name: 'Completed', icon: 'check-circle', count: 8 }
+        ],
+        
+        // Filters
+        filters: {
+            search: '',
+            domain: '',
+            duration: ''
+        },
+        
+        // Sample data - replace with real API calls
+        sessions: [
+            {
+                id: 1,
+                title: 'Advanced React Patterns & Performance',
+                mentor_name: 'Sarah Chen',
+                schedule: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+                duration: 90,
+                current_participants: 7,
+                max_participants: 12,
+                rating: 5,
+                status: 'scheduled',
+                is_full: false,
+                is_booked: false,
+                is_trending: true,
+                domain: 'web-development'
+            },
+            {
+                id: 2,
+                title: 'Machine Learning with Python',
+                mentor_name: 'Dr. Michael Zhang',
+                schedule: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                duration: 120,
+                current_participants: 15,
+                max_participants: 15,
+                rating: 4,
+                status: 'scheduled',
+                is_full: true,
+                is_booked: false,
+                domain: 'data-science'
+            },
+            {
+                id: 3,
+                title: 'Live: Building RESTful APIs',
+                mentor_name: 'Alex Rodriguez',
+                schedule: new Date().toISOString(),
+                duration: 60,
+                current_participants: 8,
+                max_participants: 10,
+                rating: 5,
+                status: 'live',
+                is_full: false,
+                is_booked: true,
+                domain: 'web-development'
+            }
+        ],
+        
+        userSessions: [
+            {
+                id: 1,
+                title: 'Advanced React Patterns & Performance',
+                mentor_name: 'Sarah Chen',
+                schedule: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+                duration: 90,
+                status: 'scheduled',
+                feedback_given: false
+            },
+            {
+                id: 4,
+                title: 'JavaScript ES6+ Features',
+                mentor_name: 'Emma Wilson',
+                schedule: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                duration: 75,
+                status: 'completed',
+                feedback_given: false
+            }
+        ],
+        
+        stats: {
+            attended_sessions: 12,
+            total_hours: 28,
+            unique_mentors: 8
+        },
+        
+        filteredSessions: [],
+        
+        init() {
+            this.filteredSessions = this.sessions;
+            this.connectWebSocket();
+            this.setupNotificationChecks();
+            this.updateIcons();
+            
+            // Simulate session starting soon
+            setTimeout(() => {
+                this.showSessionAlert('Your session "Advanced React Patterns" starts in 10 minutes!', 1);
+            }, 3000);
+        },
+        
+        connectWebSocket() {
+            // WebSocket connection for real-time updates
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/dashboard/`;
+            
+            this.socket = new WebSocket(wsUrl);
+            
+            this.socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                this.handleWebSocketMessage(data);
+            };
+            
+            this.socket.onopen = () => {
+                console.log('Dashboard WebSocket connected');
+            };
+            
+            this.socket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        },
+        
+        handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'session_starting':
+                    this.showSessionAlert(data.message, data.session_id);
+                    break;
+                case 'session_update':
+                    this.handleSessionUpdate(data);
+                    break;
+                case 'live_stats':
+                    this.onlineUsers = data.online_users;
+                    this.liveSessions = data.live_sessions;
+                    break;
+            }
+        },
+        
+        showSessionAlert(message, sessionId) {
+            this.sessionAlert = {
+                show: true,
+                message: message,
+                sessionId: sessionId
+            };
+        },
+        
+        applyFilters() {
+            this.filteredSessions = this.sessions.filter(session => {
+                const matchesSearch = !this.filters.search || 
+                    session.title.toLowerCase().includes(this.filters.search.toLowerCase()) ||
+                    session.mentor_name.toLowerCase().includes(this.filters.search.toLowerCase());
+                
+                const matchesDomain = !this.filters.domain || session.domain === this.filters.domain;
+                const matchesDuration = !this.filters.duration || session.duration <= parseInt(this.filters.duration);
+                
+                return matchesSearch && matchesDomain && matchesDuration;
+            });
+        },
+        
+        clearFilters() {
+            this.filters = { search: '', domain: '', duration: '' };
+            this.applyFilters();
+        },
+        
+        getSessionsByStatus(status) {
+            return this.userSessions.filter(session => {
+                if (status === 'upcoming') return ['scheduled'].includes(session.status);
+                if (status === 'live') return session.status === 'live';
+                if (status === 'past') return ['completed', 'cancelled'].includes(session.status);
+                return false;
+            });
+        },
+        
+        bookSession(sessionId) {
+            // API call to book session
+            fetch(`/sessions/${sessionId}/book/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken(),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.showNotification('🎉 Session booked successfully!', 'success');
+                    // Update UI
+                    const session = this.sessions.find(s => s.id === sessionId);
+                    if (session) {
+                        session.is_booked = true;
+                        session.current_participants++;
+                    }
+                } else {
+                    this.showNotification(data.error || 'Failed to book session', 'error');
+                }
+            })
+            .catch(error => {
+                this.showNotification('Failed to book session', 'error');
+            });
+        },
+        
+        joinSession(sessionId) {
+            window.location.href = `/sessions/${sessionId}/room/`;
+        },
+        
+        viewSessionDetail(sessionId) {
+            window.location.href = `/sessions/${sessionId}/`;
+        },
+        
+        formatDateTime(dateString) {
+            return new Date(dateString).toLocaleString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+        
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric'
+            });
+        },
+        
+        getTimeUntil(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffMs = date - now;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            
+            if (diffHours > 0) return `${diffHours}h ${diffMins % 60}m`;
+            return `${diffMins}m`;
+        },
+        
+        isSessionSoon(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffMs = date - now;
+            return diffMs > 0 && diffMs <= 30 * 60 * 1000; // 30 minutes
+        },
+        
+        canJoinSession(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffMs = date - now;
+            return diffMs <= 10 * 60 * 1000 && diffMs > -60 * 1000; // 10 min before to 1 min after
+        },
+        
+        getStatusClass(status) {
+            const classes = {
+                'scheduled': 'bg-blue-100 text-blue-800',
+                'live': 'bg-red-100 text-red-800',
+                'completed': 'bg-green-100 text-green-800',
+                'cancelled': 'bg-gray-100 text-gray-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+        
+        showNotification(message, type = 'info') {
+            // Integration with your notification system
+            console.log(`${type}: ${message}`);
+        },
+        
+        setupNotificationChecks() {
+            // Check for session reminders every minute
+            setInterval(() => {
+                this.userSessions.forEach(session => {
+                    if (this.isSessionSoon(session.schedule) && !session.reminded) {
+                        this.showSessionAlert(
+                            `Your session "${session.title}" starts soon!`,
+                            session.id
+                        );
+                        session.reminded = true;
+                    }
+                });
+            }, 60000);
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+    }
+}
+</script>
+{% endblock %}
