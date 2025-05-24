@@ -184,46 +184,99 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Comprehensive skills database for recommendation system
     const skillsDatabase = [
-        // Programming Languages
-        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'TypeScript', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin',
-        // Web Technologies
-        'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'Next.js', 'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS',
+        // Programming Languages - Most Common
+        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'TypeScript', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin', 'Dart',
+        
+        // Web Frontend
+        'React', 'Vue.js', 'Angular', 'HTML', 'CSS', 'SASS', 'SCSS', 'Bootstrap', 'Tailwind CSS', 'jQuery', 'Webpack', 'Vite',
+        
+        // Web Backend  
+        'Node.js', 'Express.js', 'Next.js', 'Django', 'Flask', 'FastAPI', 'Spring Boot', 'Laravel', 'Ruby on Rails',
+        
         // Mobile Development
-        'React Native', 'Flutter', 'Xamarin', 'Ionic', 'Android Development', 'iOS Development',
-        // Data Science & ML
-        'Machine Learning', 'Deep Learning', 'Data Science', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Scikit-learn',
-        'Data Analysis', 'Statistics', 'R Programming', 'Jupyter', 'Matplotlib', 'Seaborn',
-        // Databases
-        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Firebase', 'DynamoDB', 'Elasticsearch',
+        'React Native', 'Flutter', 'Xamarin', 'Ionic', 'Android Development', 'iOS Development', 'Cordova',
+        
+        // Data Science & AI/ML
+        'Machine Learning', 'Deep Learning', 'Data Science', 'Artificial Intelligence', 'Neural Networks',
+        'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Scikit-learn', 'Keras', 'OpenCV',
+        'Data Analysis', 'Statistics', 'R Programming', 'Jupyter', 'Matplotlib', 'Seaborn', 'Plotly',
+        
+        // Databases & Storage
+        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Firebase', 'DynamoDB', 'Elasticsearch', 'Oracle', 'SQL Server',
+        
         // Cloud & DevOps
-        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'CI/CD', 'Terraform',
-        // Design
-        'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Photoshop', 'Illustrator', 'Sketch',
-        // Other Skills
-        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication', 'Teaching', 'Mentoring'
+        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'GitHub', 'GitLab',
+        'CI/CD', 'Terraform', 'Ansible', 'Linux', 'Ubuntu', 'CentOS',
+        
+        // Design & Creative
+        'UI Design', 'UX Design', 'Graphic Design', 'Web Design', 'Figma', 'Adobe XD', 'Sketch', 
+        'Photoshop', 'Illustrator', 'InDesign', 'After Effects', 'Canva',
+        
+        // Business & Soft Skills
+        'Project Management', 'Agile', 'Scrum', 'Kanban', 'Leadership', 'Communication', 'Teaching', 'Mentoring',
+        'Public Speaking', 'Team Management', 'Strategy', 'Marketing', 'Sales', 'Customer Service',
+        
+        // Specialized Technologies
+        'Blockchain', 'Cryptocurrency', 'Smart Contracts', 'Solidity', 'Cybersecurity', 'Ethical Hacking',
+        'Game Development', 'Unity', 'Unreal Engine', 'Blender', '3D Modeling', 'Animation',
+        
+        // Testing & Quality
+        'Unit Testing', 'Integration Testing', 'Test Automation', 'Selenium', 'Jest', 'Cypress', 'Quality Assurance',
+        
+        // Others
+        'API Development', 'REST API', 'GraphQL', 'Microservices', 'Socket.io', 'WebRTC', 'PWA',
+        'SEO', 'Google Analytics', 'Digital Marketing', 'Content Writing', 'Technical Writing'
     ];
 
     skillsInput.addEventListener('input', function() {
         const value = this.value.toLowerCase().trim();
-        if (value.length < 2) {
+        if (value.length < 1) {
             skillsSuggestions.classList.add('hidden');
             return;
         }
 
-        const matches = skillsDatabase.filter(skill => 
-            skill.toLowerCase().includes(value) && 
-            !selectedSkills.includes(skill)
-        ).slice(0, 8);
+        // Smart matching - handles typos and partial matches
+        const matches = skillsDatabase.filter(skill => {
+            const skillLower = skill.toLowerCase();
+            const valueLower = value.toLowerCase();
+            
+            // Check if skill is already selected
+            if (selectedSkills.includes(skill)) return false;
+            
+            // Exact start match (highest priority)
+            if (skillLower.startsWith(valueLower)) return true;
+            
+            // Contains match
+            if (skillLower.includes(valueLower)) return true;
+            
+            // Fuzzy matching for typos (simple Levenshtein-like)
+            if (value.length >= 3) {
+                const words = skillLower.split(' ');
+                return words.some(word => 
+                    word.includes(valueLower) || 
+                    (word.length >= 3 && valueLower.includes(word.substring(0, 3)))
+                );
+            }
+            
+            return false;
+        }).slice(0, 8);
 
         if (matches.length > 0) {
             skillsSuggestions.innerHTML = matches.map(skill => 
-                `<div class="p-3 hover:bg-blue-50 cursor-pointer skill-suggestion border-b border-gray-100 last:border-b-0" data-skill="${skill}">
+                `<div class="p-3 hover:bg-blue-50 cursor-pointer skill-suggestion border-b border-gray-100 last:border-b-0 transition-colors" data-skill="${skill}">
                     <div class="font-medium text-gray-900">${skill}</div>
+                    <div class="text-xs text-gray-500">Click to add</div>
                 </div>`
             ).join('');
             skillsSuggestions.classList.remove('hidden');
         } else {
-            skillsSuggestions.classList.add('hidden');
+            // Show "Type to search" message when no matches
+            skillsSuggestions.innerHTML = `
+                <div class="p-3 text-gray-500 text-sm">
+                    Type skills like "react", "python", "design"...
+                </div>
+            `;
+            skillsSuggestions.classList.remove('hidden');
         }
     });
 
