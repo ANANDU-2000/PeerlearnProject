@@ -15,6 +15,47 @@ class UserRegistrationForm(UserCreationForm):
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'role', 'skills', 'expertise', 'bio', 'password1', 'password2')
     
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email:
+            email = email.lower().strip()
+            if User.objects.filter(email=email).exists():
+                raise forms.ValidationError("This email address is already registered.")
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username:
+            username = username.lower().strip()
+            if User.objects.filter(username=username).exists():
+                raise forms.ValidationError("This username is already taken.")
+        return username
+
+    def clean_skills(self):
+        skills = self.cleaned_data.get('skills', '')
+        if not skills or not skills.strip():
+            raise forms.ValidationError("Please add at least one skill for recommendations.")
+        
+        # Clean skills for ML recommendation system
+        skills_list = [skill.strip().title() for skill in skills.split(',') if skill.strip()]
+        if len(skills_list) == 0:
+            raise forms.ValidationError("Please add at least one skill.")
+        
+        return ','.join(skills_list)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.email = self.cleaned_data['email'].lower()
+        user.role = self.cleaned_data['role']
+        user.bio = self.cleaned_data.get('bio', '')
+        user.skills = self.cleaned_data.get('skills', '')
+        user.expertise = self.cleaned_data.get('expertise', '')
+        if commit:
+            user.save()
+        return user
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Add Tailwind CSS classes
