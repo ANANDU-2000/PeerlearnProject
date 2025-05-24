@@ -1,0 +1,704 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .admin-bg {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    }
+    .metric-card {
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .tab-content {
+        transition: opacity 0.3s ease;
+    }
+    .status-indicator {
+        animation: pulse 2s infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="adminDashboard()" x-init="init()">
+    
+    <!-- Admin Header -->
+    <div class="admin-bg text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Admin Dashboard</h1>
+                    <p class="mt-2 text-blue-100">Platform management and monitoring</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator w-3 h-3 bg-green-400 rounded-full"></div>
+                        <span class="text-sm">System Healthy</span>
+                    </div>
+                    <div class="text-sm">
+                        <span class="text-blue-100">Last Updated:</span>
+                        <span x-text="lastUpdated"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Metrics Overview -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i data-feather="users" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Users</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="metrics.totalUsers"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i data-feather="video" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Sessions</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="metrics.activeSessions"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <i data-feather="clock" class="h-6 w-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Pending Requests</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="metrics.pendingRequests"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <i data-feather="dollar-sign" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Revenue (30d)</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="metrics.revenue"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-xl shadow-lg mb-6">
+            <!-- Web Navigation -->
+            <div class="hidden md:block border-b border-gray-200">
+                <nav class="flex space-x-8" aria-label="Tabs">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button @click="activeTab = tab.id"
+                                :class="activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <i :data-feather="tab.icon" class="h-4 w-4"></i>
+                                <span x-text="tab.name"></span>
+                                <span x-show="tab.badge" 
+                                      x-text="tab.badge"
+                                      class="ml-2 bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full"></span>
+                            </div>
+                        </button>
+                    </template>
+                </nav>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div class="md:hidden p-4">
+                <select x-model="activeTab" class="w-full rounded-lg border-gray-300">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <option :value="tab.id" x-text="tab.name"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="bg-white rounded-xl shadow-lg">
+            
+            <!-- 1. Users Management -->
+            <div x-show="activeTab === 'users'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">User Management</h3>
+                    <div class="flex space-x-3">
+                        <input type="text" x-model="searchUsers" @input="filterUsers()"
+                               placeholder="Search users..."
+                               class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <select x-model="userFilter" @change="filterUsers()"
+                                class="px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="all">All Users</option>
+                            <option value="mentor">Mentors</option>
+                            <option value="learner">Learners</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="user in filteredUsers" :key="user.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-blue-600" x-text="user.initials"></span>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900" x-text="user.name"></div>
+                                                <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="user.role === 'mentor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'"
+                                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize"
+                                              x-text="user.role"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize"
+                                              x-text="user.status"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="user.joined"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button @click="deactivateUser(user.id)"
+                                                :disabled="user.status === 'inactive'"
+                                                :class="user.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-gray-400 cursor-not-allowed'"
+                                                class="mr-3">
+                                            Deactivate
+                                        </button>
+                                        <button @click="viewUser(user.id)"
+                                                class="text-blue-600 hover:text-blue-900">
+                                            View
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. Sessions Management -->
+            <div x-show="activeTab === 'sessions'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Session Management</h3>
+                    <div class="flex space-x-3">
+                        <select x-model="sessionFilter" @change="filterSessions()"
+                                class="px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="all">All Sessions</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="live">Live</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="session in filteredSessions" :key="session.id">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <h4 class="font-medium text-gray-900" x-text="session.title"></h4>
+                                <span :class="getSessionStatusColor(session.status)"
+                                      class="px-2 py-1 text-xs font-medium rounded-full capitalize"
+                                      x-text="session.status"></span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3" x-text="session.mentor"></p>
+                            <div class="flex justify-between items-center text-sm text-gray-500 mb-3">
+                                <span x-text="session.schedule"></span>
+                                <span x-text="`${session.participants}/${session.maxParticipants}`"></span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button @click="cancelSession(session.id)"
+                                        x-show="session.status !== 'cancelled' && session.status !== 'completed'"
+                                        class="flex-1 bg-red-600 text-white px-3 py-2 rounded text-xs hover:bg-red-700">
+                                    Cancel
+                                </button>
+                                <button @click="viewSession(session.id)"
+                                        class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs hover:bg-blue-700">
+                                    View
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 3. Requests (View-only) -->
+            <div x-show="activeTab === 'requests'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Session Requests</h3>
+                <div class="space-y-4">
+                    <template x-for="request in requests" :key="request.id">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-900" x-text="request.topic"></h4>
+                                    <p class="text-sm text-gray-600 mt-1" x-text="request.description"></p>
+                                    <div class="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                                        <span x-text="`By: ${request.learner}`"></span>
+                                        <span x-text="request.created"></span>
+                                        <span x-text="`${request.duration} min`"></span>
+                                    </div>
+                                </div>
+                                <span :class="getRequestStatusColor(request.status)"
+                                      class="px-2 py-1 text-xs font-medium rounded-full capitalize"
+                                      x-text="request.status"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 4. Payments -->
+            <div x-show="activeTab === 'payments'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Payment Transactions</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Session</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="payment in payments" :key="payment.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="payment.id"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="payment.session"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="`$${payment.amount}`"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="payment.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                              x-text="payment.status"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="payment.date"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 5. Feedback -->
+            <div x-show="activeTab === 'feedback'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">User Feedback</h3>
+                <div class="space-y-4">
+                    <template x-for="feedback in feedbackList" :key="feedback.id">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex items-center">
+                                        <template x-for="i in 5" :key="i">
+                                            <i :data-feather="i <= feedback.rating ? 'star' : 'star'"
+                                               :class="i <= feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'"
+                                               class="h-4 w-4"></i>
+                                        </template>
+                                    </div>
+                                    <span class="text-sm text-gray-600" x-text="`${feedback.rating}/5`"></span>
+                                </div>
+                                <span class="text-sm text-gray-500" x-text="feedback.date"></span>
+                            </div>
+                            <p class="text-gray-900 mb-2" x-text="feedback.comment"></p>
+                            <div class="text-sm text-gray-500">
+                                <span x-text="`Session: ${feedback.session}`"></span> • 
+                                <span x-text="`By: ${feedback.user}`"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 6. ML Dashboard -->
+            <div x-show="activeTab === 'ml'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Recommendation Metrics</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-3">Algorithm Performance</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Click-through Rate</span>
+                                <span class="text-sm font-medium" x-text="`${mlMetrics.ctr}%`"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Conversion Rate</span>
+                                <span class="text-sm font-medium" x-text="`${mlMetrics.conversion}%`"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Accuracy Score</span>
+                                <span class="text-sm font-medium" x-text="`${mlMetrics.accuracy}%`"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-3">Popular Topics</h4>
+                        <div class="space-y-2">
+                            <template x-for="topic in mlMetrics.popularTopics" :key="topic.name">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600" x-text="topic.name"></span>
+                                    <span class="text-sm font-medium" x-text="topic.count"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. System Settings -->
+            <div x-show="activeTab === 'settings'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">System Configuration</h3>
+                <div class="space-y-6">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-3">Platform Settings</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">User Registration</label>
+                                    <p class="text-xs text-gray-500">Allow new users to register</p>
+                                </div>
+                                <input type="checkbox" x-model="settings.registration" class="rounded">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Email Notifications</label>
+                                    <p class="text-xs text-gray-500">Send email notifications to users</p>
+                                </div>
+                                <input type="checkbox" x-model="settings.emailNotifications" class="rounded">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Session Recording</label>
+                                    <p class="text-xs text-gray-500">Allow session recording</p>
+                                </div>
+                                <input type="checkbox" x-model="settings.recording" class="rounded">
+                            </div>
+                        </div>
+                        <button @click="saveSettings()" 
+                                class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Health Metrics -->
+            <div x-show="activeTab === 'health'" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">System Health</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-900">Database</h4>
+                            <span :class="health.database === 'healthy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                  class="px-2 py-1 text-xs font-medium rounded-full"
+                                  x-text="health.database"></span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p x-text="`Response Time: ${health.dbResponseTime}ms`"></p>
+                            <p x-text="`Connections: ${health.dbConnections}`"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-900">WebSocket</h4>
+                            <span :class="health.websocket === 'healthy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                  class="px-2 py-1 text-xs font-medium rounded-full"
+                                  x-text="health.websocket"></span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p x-text="`Active Connections: ${health.wsConnections}`"></p>
+                            <p x-text="`Message Rate: ${health.wsMessageRate}/sec`"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-900">Storage</h4>
+                            <span :class="health.storage === 'healthy' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                  class="px-2 py-1 text-xs font-medium rounded-full"
+                                  x-text="health.storage"></span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p x-text="`Used: ${health.storageUsed}GB`"></p>
+                            <p x-text="`Available: ${health.storageAvailable}GB`"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function adminDashboard() {
+    return {
+        activeTab: 'users',
+        lastUpdated: new Date().toLocaleTimeString(),
+        
+        // Search and filters
+        searchUsers: '',
+        userFilter: 'all',
+        sessionFilter: 'all',
+        
+        // Data
+        metrics: {
+            totalUsers: '1,247',
+            activeSessions: '23',
+            pendingRequests: '8',
+            revenue: '$12,459'
+        },
+        
+        tabs: [
+            { id: 'users', name: 'Users', icon: 'users', badge: null },
+            { id: 'sessions', name: 'Sessions', icon: 'video', badge: '23' },
+            { id: 'requests', name: 'Requests', icon: 'clock', badge: '8' },
+            { id: 'payments', name: 'Payments', icon: 'dollar-sign', badge: null },
+            { id: 'feedback', name: 'Feedback', icon: 'message-circle', badge: null },
+            { id: 'ml', name: 'ML Dashboard', icon: 'trending-up', badge: null },
+            { id: 'settings', name: 'Settings', icon: 'settings', badge: null },
+            { id: 'health', name: 'Health', icon: 'activity', badge: null }
+        ],
+        
+        users: [
+            { id: 1, name: 'John Smith', email: 'john@example.com', role: 'mentor', status: 'active', joined: '2024-01-15', initials: 'JS' },
+            { id: 2, name: 'Sarah Johnson', email: 'sarah@example.com', role: 'learner', status: 'active', joined: '2024-01-20', initials: 'SJ' },
+            { id: 3, name: 'Mike Chen', email: 'mike@example.com', role: 'mentor', status: 'inactive', joined: '2024-01-10', initials: 'MC' }
+        ],
+        
+        sessions: [
+            { id: 1, title: 'React Fundamentals', mentor: 'John Smith', status: 'scheduled', schedule: '2024-01-25 14:00', participants: 5, maxParticipants: 10 },
+            { id: 2, title: 'Python Data Science', mentor: 'Mike Chen', status: 'live', schedule: '2024-01-24 16:00', participants: 8, maxParticipants: 12 },
+            { id: 3, title: 'UI/UX Design', mentor: 'John Smith', status: 'completed', schedule: '2024-01-23 10:00', participants: 6, maxParticipants: 8 }
+        ],
+        
+        requests: [
+            { id: 1, topic: 'Advanced React Hooks', description: 'Need help with custom hooks and state management', learner: 'Sarah Johnson', status: 'pending', created: '2024-01-24', duration: 60 },
+            { id: 2, topic: 'Machine Learning Basics', description: 'Introduction to ML concepts and algorithms', learner: 'Alex Brown', status: 'accepted', created: '2024-01-23', duration: 90 }
+        ],
+        
+        payments: [
+            { id: 'PAY_001', session: 'React Fundamentals', amount: 49.99, status: 'completed', date: '2024-01-24' },
+            { id: 'PAY_002', session: 'Python Data Science', amount: 79.99, status: 'pending', date: '2024-01-24' }
+        ],
+        
+        feedbackList: [
+            { id: 1, rating: 5, comment: 'Excellent session! Very clear explanations.', session: 'React Fundamentals', user: 'Sarah Johnson', date: '2024-01-23' },
+            { id: 2, rating: 4, comment: 'Good content, would like more examples.', session: 'UI/UX Design', user: 'Alex Brown', date: '2024-01-22' }
+        ],
+        
+        mlMetrics: {
+            ctr: 8.7,
+            conversion: 12.4,
+            accuracy: 89.2,
+            popularTopics: [
+                { name: 'React', count: 245 },
+                { name: 'Python', count: 189 },
+                { name: 'Data Science', count: 156 },
+                { name: 'UI/UX', count: 134 }
+            ]
+        },
+        
+        settings: {
+            registration: true,
+            emailNotifications: true,
+            recording: false
+        },
+        
+        health: {
+            database: 'healthy',
+            websocket: 'healthy',
+            storage: 'warning',
+            dbResponseTime: 45,
+            dbConnections: 12,
+            wsConnections: 234,
+            wsMessageRate: 127,
+            storageUsed: 145,
+            storageAvailable: 67
+        },
+        
+        filteredUsers: [],
+        filteredSessions: [],
+        
+        init() {
+            this.filteredUsers = this.users;
+            this.filteredSessions = this.sessions;
+            this.updateIcons();
+            this.startRealTimeUpdates();
+        },
+        
+        filterUsers() {
+            let filtered = this.users;
+            
+            if (this.searchUsers) {
+                filtered = filtered.filter(user => 
+                    user.name.toLowerCase().includes(this.searchUsers.toLowerCase()) ||
+                    user.email.toLowerCase().includes(this.searchUsers.toLowerCase())
+                );
+            }
+            
+            if (this.userFilter !== 'all') {
+                filtered = filtered.filter(user => user.role === this.userFilter || user.status === this.userFilter);
+            }
+            
+            this.filteredUsers = filtered;
+        },
+        
+        filterSessions() {
+            this.filteredSessions = this.sessionFilter === 'all' 
+                ? this.sessions 
+                : this.sessions.filter(session => session.status === this.sessionFilter);
+        },
+        
+        async deactivateUser(userId) {
+            if (confirm('Are you sure you want to deactivate this user?')) {
+                try {
+                    const response = await fetch(`/api/users/${userId}/deactivate/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.getCSRFToken(),
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const user = this.users.find(u => u.id === userId);
+                        if (user) user.status = 'inactive';
+                        this.filterUsers();
+                        this.showNotification('User deactivated successfully', 'success');
+                    }
+                } catch (error) {
+                    this.showNotification('Failed to deactivate user', 'error');
+                }
+            }
+        },
+        
+        async cancelSession(sessionId) {
+            if (confirm('Are you sure you want to cancel this session?')) {
+                try {
+                    const response = await fetch(`/api/sessions/${sessionId}/cancel/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.getCSRFToken(),
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const session = this.sessions.find(s => s.id === sessionId);
+                        if (session) session.status = 'cancelled';
+                        this.filterSessions();
+                        this.showNotification('Session cancelled successfully', 'success');
+                    }
+                } catch (error) {
+                    this.showNotification('Failed to cancel session', 'error');
+                }
+            }
+        },
+        
+        saveSettings() {
+            // API call to save settings
+            this.showNotification('Settings saved successfully', 'success');
+        },
+        
+        getSessionStatusColor(status) {
+            const colors = {
+                'scheduled': 'bg-blue-100 text-blue-800',
+                'live': 'bg-green-100 text-green-800',
+                'completed': 'bg-gray-100 text-gray-800',
+                'cancelled': 'bg-red-100 text-red-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        },
+        
+        getRequestStatusColor(status) {
+            const colors = {
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'accepted': 'bg-green-100 text-green-800',
+                'rejected': 'bg-red-100 text-red-800',
+                'completed': 'bg-gray-100 text-gray-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        },
+        
+        startRealTimeUpdates() {
+            setInterval(() => {
+                this.lastUpdated = new Date().toLocaleTimeString();
+                // Update metrics in real-time
+            }, 30000);
+        },
+        
+        showNotification(message, type) {
+            // Simple toast notification
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        },
+        
+        viewUser(userId) {
+            // Navigate to user detail view
+            window.location.href = `/admin/users/${userId}/`;
+        },
+        
+        viewSession(sessionId) {
+            // Navigate to session detail view
+            window.location.href = `/sessions/${sessionId}/`;
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
