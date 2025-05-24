@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PeerLearn - Learn from Experts Live{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full">
+    <!-- Navigation -->
+    {% if user.is_authenticated %}
+    <nav class="bg-white shadow-sm border-b border-gray-200" x-data="{ mobileMenuOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo and main nav -->
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{% url 'landing' %}" class="text-2xl font-bold text-blue-600">PeerLearn</a>
+                    </div>
+                    
+                    <!-- Desktop Navigation -->
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        {% if user.is_mentor %}
+                            <a href="{% url 'mentor_dashboard' %}" class="border-transparent text-gray-900 hover:text-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Dashboard
+                            </a>
+                            <a href="{% url 'create_session' %}" class="border-transparent text-gray-900 hover:text-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Create Session
+                            </a>
+                        {% else %}
+                            <a href="{% url 'learner_dashboard' %}" class="border-transparent text-gray-900 hover:text-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Dashboard
+                            </a>
+                            <a href="{% url 'session_list' %}" class="border-transparent text-gray-900 hover:text-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Browse Sessions
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Right side -->
+                <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                    <!-- Notifications -->
+                    <button type="button" class="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <span class="sr-only">View notifications</span>
+                        <i data-feather="bell" class="h-6 w-6"></i>
+                    </button>
+                    
+                    <!-- Profile dropdown -->
+                    <div class="ml-3 relative" x-data="{ open: false }">
+                        <div>
+                            <button @click="open = !open" type="button" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="user-menu-button">
+                                <span class="sr-only">Open user menu</span>
+                                <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                                    <span class="text-white text-sm font-medium">{{ user.first_name|first|default:user.username|first }}</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <div x-show="open" @click.away="open = false" x-cloak class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                            <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="sm:hidden flex items-center">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+                        <span class="sr-only">Open main menu</span>
+                        <i data-feather="menu" class="h-6 w-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div x-show="mobileMenuOpen" x-cloak class="sm:hidden">
+            <div class="pt-2 pb-3 space-y-1">
+                {% if user.is_mentor %}
+                    <a href="{% url 'mentor_dashboard' %}" class="bg-blue-50 border-blue-500 text-blue-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
+                    <a href="{% url 'create_session' %}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Create Session</a>
+                {% else %}
+                    <a href="{% url 'learner_dashboard' %}" class="bg-blue-50 border-blue-500 text-blue-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
+                    <a href="{% url 'session_list' %}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Browse Sessions</a>
+                {% endif %}
+            </div>
+            <div class="pt-4 pb-3 border-t border-gray-200">
+                <div class="flex items-center px-4">
+                    <div class="flex-shrink-0">
+                        <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                            <span class="text-white font-medium">{{ user.first_name|first|default:user.username|first }}</span>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-base font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
+                    </div>
+                </div>
+                <div class="mt-3 space-y-1">
+                    <a href="{% url 'profile' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Profile</a>
+                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Sign out</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+    
+    <!-- Messages -->
+    {% if messages %}
+    <div class="fixed top-20 right-4 z-50 space-y-2" x-data="{ messages: [] }" x-init="
+        {% for message in messages %}
+        messages.push({
+            id: Date.now() + Math.random(),
+            type: '{{ message.tags }}',
+            text: '{{ message|escapejs }}'
+        });
+        {% endfor %}
+        messages.forEach((msg, index) => {
+            setTimeout(() => {
+                messages.splice(index, 1);
+            }, 5000);
+        });
+    ">
+        <template x-for="message in messages" :key="message.id">
+            <div x-show="message" 
+                 x-transition:enter="transform ease-out duration-300 transition"
+                 x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+                 x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+                <div class="p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <template x-if="message.type === 'success'">
+                                <i data-feather="check-circle" class="h-6 w-6 text-green-400"></i>
+                            </template>
+                            <template x-if="message.type === 'error'">
+                                <i data-feather="x-circle" class="h-6 w-6 text-red-400"></i>
+                            </template>
+                            <template x-if="message.type === 'warning'">
+                                <i data-feather="alert-triangle" class="h-6 w-6 text-yellow-400"></i>
+                            </template>
+                            <template x-if="message.type === 'info'">
+                                <i data-feather="info" class="h-6 w-6 text-blue-400"></i>
+                            </template>
+                        </div>
+                        <div class="ml-3 w-0 flex-1 pt-0.5">
+                            <p class="text-sm font-medium text-gray-900" x-text="message.text"></p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 flex">
+                            <button @click="messages = messages.filter(m => m.id !== message.id)" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <span class="sr-only">Close</span>
+                                <i data-feather="x" class="h-5 w-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main class="{% if user.is_authenticated %}pt-0{% else %}pt-0{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer (only on landing page) -->
+    {% if not user.is_authenticated %}
+    <footer class="bg-gray-800">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-center space-x-6">
+                <a href="#" class="text-gray-400 hover:text-gray-300">
+                    <span class="sr-only">About</span>
+                    About
+                </a>
+                <a href="#" class="text-gray-400 hover:text-gray-300">
+                    <span class="sr-only">Contact</span>
+                    Contact
+                </a>
+                <a href="#" class="text-gray-400 hover:text-gray-300">
+                    <span class="sr-only">Privacy</span>
+                    Privacy
+                </a>
+                <a href="#" class="text-gray-400 hover:text-gray-300">
+                    <span class="sr-only">Terms</span>
+                    Terms
+                </a>
+            </div>
+            <div class="mt-8">
+                <p class="text-center text-base text-gray-400">
+                    &copy; 2024 PeerLearn. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+    
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

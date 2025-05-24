@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - PeerLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
+                <i data-feather="user-plus" class="h-6 w-6 text-green-600"></i>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Create your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Or
+                <a href="{% url 'login' %}" class="font-medium text-blue-600 hover:text-blue-500">
+                    sign in to your existing account
+                </a>
+            </p>
+        </div>
+        
+        <form class="mt-8 space-y-6" method="post">
+            {% csrf_token %}
+            
+            <!-- Role Selection -->
+            <div class="space-y-4">
+                <label class="text-base font-medium text-gray-900">I want to:</label>
+                <div class="space-y-2">
+                    <div class="flex items-center">
+                        <input id="role_learner" 
+                               name="{{ form.role.name }}" 
+                               type="radio" 
+                               value="learner" 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                               {% if form.role.value == 'learner' %}checked{% endif %}>
+                        <label for="role_learner" class="ml-3 block text-sm font-medium text-gray-700">
+                            Learn from experts
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="role_mentor" 
+                               name="{{ form.role.name }}" 
+                               type="radio" 
+                               value="mentor" 
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                               {% if form.role.value == 'mentor' %}checked{% endif %}>
+                        <label for="role_mentor" class="ml-3 block text-sm font-medium text-gray-700">
+                            Teach and mentor others
+                        </label>
+                    </div>
+                </div>
+                {% if form.role.errors %}
+                <div class="text-red-600 text-sm">{{ form.role.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Personal Information -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">First Name</label>
+                        <input id="{{ form.first_name.id_for_label }}" 
+                               name="{{ form.first_name.name }}" 
+                               type="text" 
+                               required 
+                               class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
+                               value="{{ form.first_name.value|default:'' }}">
+                        {% if form.first_name.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <input id="{{ form.last_name.id_for_label }}" 
+                               name="{{ form.last_name.name }}" 
+                               type="text" 
+                               required 
+                               class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
+                               value="{{ form.last_name.value|default:'' }}">
+                        {% if form.last_name.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input id="{{ form.username.id_for_label }}" 
+                           name="{{ form.username.name }}" 
+                           type="text" 
+                           required 
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
+                           value="{{ form.username.value|default:'' }}">
+                    {% if form.username.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input id="{{ form.email.id_for_label }}" 
+                           name="{{ form.email.name }}" 
+                           type="email" 
+                           required 
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
+                           value="{{ form.email.value|default:'' }}">
+                    {% if form.email.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-gray-700">Bio (Optional)</label>
+                    <textarea id="{{ form.bio.id_for_label }}" 
+                              name="{{ form.bio.name }}" 
+                              rows="3" 
+                              class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" 
+                              placeholder="Tell us about yourself...">{{ form.bio.value|default:'' }}</textarea>
+                    {% if form.bio.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.bio.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Password -->
+            <div class="space-y-4">
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input id="{{ form.password1.id_for_label }}" 
+                           name="{{ form.password1.name }}" 
+                           type="password" 
+                           required 
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                    {% if form.password1.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <input id="{{ form.password2.id_for_label }}" 
+                           name="{{ form.password2.name }}" 
+                           type="password" 
+                           required 
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                    {% if form.password2.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i data-feather="user-plus" class="h-5 w-5 text-green-500 group-hover:text-green-400"></i>
+                    </span>
+                    Create Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

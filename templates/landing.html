@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Hero Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+                Learn from Experts
+                <span class="text-blue-600">Live</span>
+            </h1>
+            <p class="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
+                Connect with mentors worldwide for real-time 1:1 learning sessions. 
+                Experience interactive education like never before.
+            </p>
+            
+            <!-- Role Selection Cards -->
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
+                <!-- Learner Card -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                            <i data-feather="users" class="h-10 w-10 text-blue-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">I want to Learn</h3>
+                        <p class="text-gray-600 mb-6">
+                            Book sessions with expert mentors, join live video calls, 
+                            and accelerate your learning journey.
+                        </p>
+                        <ul class="text-left space-y-2 mb-8">
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Browse expert mentors
+                            </li>
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Book 1:1 live sessions
+                            </li>
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Interactive learning tools
+                            </li>
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Personalized recommendations
+                            </li>
+                        </ul>
+                        <a href="{% url 'register' %}?role=learner" 
+                           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 inline-block">
+                            Get Started as Learner
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Mentor Card -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+                    <div class="text-center">
+                        <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                            <i data-feather="award" class="h-10 w-10 text-green-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">I want to Teach</h3>
+                        <p class="text-gray-600 mb-6">
+                            Share your expertise, create engaging sessions, 
+                            and earn while helping others grow.
+                        </p>
+                        <ul class="text-left space-y-2 mb-8">
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Create live sessions
+                            </li>
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Set your own schedule
+                            </li>
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Interactive teaching tools
+                            </li>
+                            <li class="flex items-center text-gray-600">
+                                <i data-feather="check" class="h-5 w-5 text-green-500 mr-2"></i>
+                                Analytics & insights
+                            </li>
+                        </ul>
+                        <a href="{% url 'register' %}?role=mentor" 
+                           class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 inline-block">
+                            Get Started as Mentor
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login Link -->
+            <div class="text-center">
+                <p class="text-gray-600">
+                    Already have an account? 
+                    <a href="{% url 'login' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                        Sign in here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="bg-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">How PeerLearn Works</h2>
+                <p class="text-xl text-gray-600">Simple steps to start your learning journey</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="text-center">
+                    <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-blue-600">1</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Sign Up</h3>
+                    <p class="text-gray-600">
+                        Choose your role as a learner or mentor and create your profile
+                    </p>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="text-center">
+                    <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-blue-600">2</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Browse & Connect</h3>
+                    <p class="text-gray-600">
+                        Find experts in your field or create sessions to share your knowledge
+                    </p>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="text-center">
+                    <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-blue-600">3</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Learn Live</h3>
+                    <p class="text-gray-600">
+                        Join real-time video sessions with interactive tools and chat
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Grid -->
+    <div class="bg-gray-50 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Powerful Features</h2>
+                <p class="text-xl text-gray-600">Everything you need for effective online learning</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="bg-blue-100 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i data-feather="video" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">HD Video Calls</h3>
+                    <p class="text-gray-600">Crystal clear video and audio for immersive learning</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="bg-green-100 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i data-feather="share-2" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Screen Sharing</h3>
+                    <p class="text-gray-600">Share screens for collaborative learning and teaching</p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="bg-purple-100 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i data-feather="message-circle" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Live Chat</h3>
+                    <p class="text-gray-600">Real-time messaging during sessions</p>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <div class="bg-yellow-100 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i data-feather="calendar" class="h-6 w-6 text-yellow-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Flexible Scheduling</h3>
+                    <p class="text-gray-600">Book sessions that fit your schedule</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
