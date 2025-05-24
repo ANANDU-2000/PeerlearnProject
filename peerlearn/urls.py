@@ -4,16 +4,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
-from sessions import views as session_views
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='landing.html'), name='landing'),
     path('', include('users.urls')),
     path('sessions/', include('sessions.urls')),
     path('recommendations/', include('recommendations.urls')),
-    # Session room routes - direct mapping
-    path('room/<uuid:session_id>/', session_views.session_room, name='session_room_direct'),
 ]
 
 if settings.DEBUG:
