@@ -1,131 +1,142 @@
 {% extends 'base.html' %}
 
-{% block title %}Join PeerLearn - Registration{% endblock %}
+{% block title %}Join PeerLearn - Advanced Registration{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+    <div class="max-w-lg w-full bg-white rounded-2xl shadow-2xl p-8">
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Join PeerLearn</h1>
-            <p class="text-gray-600">Create your account to get started</p>
+            <p class="text-gray-600">Advanced Registration with Skills Matching</p>
         </div>
 
-        <form method="post" id="registrationForm">
+        <form method="post" action="{% url 'register' %}">
             {% csrf_token %}
             
             <!-- Role Selection -->
             <div class="mb-6">
                 <label class="block text-sm font-semibold text-gray-700 mb-3">I want to:</label>
-                <div class="space-y-3">
-                    <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
+                <div class="grid grid-cols-1 gap-3">
+                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
                         <input type="radio" name="role" value="learner" required 
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                         <div class="ml-3">
-                            <div class="font-medium text-gray-900">Learn from Experts</div>
-                            <div class="text-sm text-gray-600">Connect with mentors and expand your knowledge</div>
+                            <div class="font-semibold text-gray-900">🎓 Learn from Experts</div>
+                            <div class="text-sm text-gray-500">Connect with mentors and expand your knowledge</div>
                         </div>
                     </label>
-                    <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
+                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all">
                         <input type="radio" name="role" value="mentor" required
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                         <div class="ml-3">
-                            <div class="font-medium text-gray-900">Teach and Mentor</div>
-                            <div class="text-sm text-gray-600">Share your expertise and help others grow</div>
+                            <div class="font-semibold text-gray-900">👨‍🏫 Teach and Mentor</div>
+                            <div class="text-sm text-gray-500">Share your expertise and help others grow</div>
                         </div>
                     </label>
                 </div>
             </div>
 
-            <!-- Personal Information -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <!-- Name Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
-                    <input type="text" name="first_name" required
+                    <input type="text" name="first_name" required 
                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                           placeholder="John">
+                           placeholder="Your first name">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Last Name *</label>
-                    <input type="text" name="last_name" required
+                    <input type="text" name="last_name" required 
                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                           placeholder="Smith">
+                           placeholder="Your last name">
                 </div>
             </div>
 
+            <!-- Username -->
             <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-                <input type="email" name="email" required
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Username *</label>
+                <input type="text" name="username" required 
                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                       placeholder="john@example.com">
+                       placeholder="Choose a username">
             </div>
 
+            <!-- Email -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                <input type="email" name="email" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                       placeholder="your@email.com">
+            </div>
+
+            <!-- Skills with Auto-suggestions -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">🔧 Skills & Technologies *</label>
+                <div class="relative">
+                    <input type="text" id="skillsInput" autocomplete="off"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Type skills like React, Python, Design...">
+                    <div id="skillsSuggestions" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden mt-1 max-h-48 overflow-y-auto"></div>
+                </div>
+                <input type="hidden" name="skills" id="skillsHidden">
+                <div id="selectedSkills" class="mt-2 flex flex-wrap gap-2"></div>
+                <p class="text-xs text-gray-500 mt-1">Essential for recommendation matching system</p>
+            </div>
+
+            <!-- Domain/Expertise -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">🎯 Primary Domain *</label>
+                <select name="expertise" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <option value="">Select your primary expertise domain</option>
+                    <option value="web-development">🌐 Web Development</option>
+                    <option value="mobile-development">📱 Mobile Development</option>
+                    <option value="data-science">📊 Data Science & Analytics</option>
+                    <option value="machine-learning">🤖 AI & Machine Learning</option>
+                    <option value="design">🎨 UI/UX Design</option>
+                    <option value="business">💼 Business & Marketing</option>
+                    <option value="devops">⚙️ DevOps & Cloud</option>
+                    <option value="cybersecurity">🔒 Cybersecurity</option>
+                    <option value="blockchain">⛓️ Blockchain</option>
+                    <option value="other">🔧 Other</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Used for mentor-learner matching</p>
+            </div>
+
+            <!-- Password -->
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
                 <div class="relative">
-                    <input type="password" name="password1" required id="password"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    <input type="password" name="password1" id="password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pr-12"
                            placeholder="Create a strong password">
                     <button type="button" onclick="togglePassword()" 
-                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                        <svg id="eyeIcon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <svg id="eyeIcon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                     </button>
                 </div>
                 <div id="passwordStrength" class="mt-2 hidden">
-                    <div class="text-xs text-gray-600 mb-1">Password Strength: <span id="strengthText">Weak</span></div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div id="strengthBar" class="h-2 rounded-full transition-all duration-300 bg-red-500" style="width: 0%"></div>
+                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="strengthBar" class="h-full transition-all duration-300"></div>
                     </div>
+                    <p id="strengthText" class="text-sm mt-1"></p>
                 </div>
             </div>
 
-            <div class="mb-6">
+            <!-- Confirm Password -->
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password *</label>
-                <input type="password" name="password2" required id="confirmPassword"
+                <input type="password" name="password2" id="confirmPassword" required 
                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                        placeholder="Confirm your password">
                 <div id="passwordMatch" class="mt-1 text-sm hidden"></div>
             </div>
 
-            <!-- Skills with Auto-suggestions -->
-            <div class="mb-4" id="skillsSection">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Skills & Technologies *</label>
-                <div class="relative">
-                    <input type="text" name="skills" id="skillsInput" required
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                           placeholder="e.g., React, Python, UI Design, Data Science..."
-                           autocomplete="off">
-                    <div id="skillsSuggestions" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden mt-1 max-h-48 overflow-y-auto"></div>
-                </div>
-                <div class="mt-2">
-                    <div id="selectedSkills" class="flex flex-wrap gap-2"></div>
-                </div>
-            </div>
-
-            <!-- Domain/Expertise -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Domain of Interest *</label>
-                <select name="expertise" required 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                    <option value="">Select your domain</option>
-                    <option value="web-development">Web Development</option>
-                    <option value="mobile-development">Mobile Development</option>
-                    <option value="data-science">Data Science & Analytics</option>
-                    <option value="machine-learning">AI & Machine Learning</option>
-                    <option value="design">UI/UX Design</option>
-                    <option value="business">Business & Marketing</option>
-                    <option value="devops">DevOps & Cloud</option>
-                    <option value="cybersecurity">Cybersecurity</option>
-                    <option value="blockchain">Blockchain</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-
             <!-- Bio -->
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Bio</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Bio (Optional)</label>
                 <textarea name="bio" rows="3"
                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           placeholder="Tell us about yourself and your experience..."></textarea>
@@ -133,24 +144,104 @@
 
             <!-- Submit Button -->
             <button type="submit" 
-                    class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg">
-                Create Account
+                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg">
+                🚀 Create Advanced Account
             </button>
         </form>
 
         <div class="mt-6 text-center">
             <span class="text-sm text-gray-600">
                 Already have an account? 
-                <a href="{% url 'login' %}" class="font-medium text-blue-600 hover:text-blue-800">Sign in here</a>
+                <a href="{% url 'login' %}" class="text-blue-600 font-semibold hover:text-blue-700">Sign in</a>
             </span>
         </div>
     </div>
 </div>
 
 <script>
-// Real-time field validation
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('registrationForm');
+    // Skills auto-suggestions system for recommendation matching
+    const skillsInput = document.getElementById('skillsInput');
+    const skillsSuggestions = document.getElementById('skillsSuggestions');
+    const selectedSkillsDiv = document.getElementById('selectedSkills');
+    const skillsHidden = document.getElementById('skillsHidden');
+    let selectedSkills = [];
+
+    const skillsDatabase = [
+        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'TypeScript', 'Go', 'Rust', 'PHP', 'Ruby',
+        'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'Next.js', 'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS',
+        'React Native', 'Flutter', 'Swift', 'Kotlin', 'Xamarin', 'Ionic',
+        'Machine Learning', 'Deep Learning', 'Data Science', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Scikit-learn',
+        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Firebase',
+        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'CI/CD',
+        'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Photoshop', 'Illustrator',
+        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
+    ];
+
+    skillsInput.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        if (value.length < 2) {
+            skillsSuggestions.classList.add('hidden');
+            return;
+        }
+
+        const matches = skillsDatabase.filter(skill => 
+            skill.toLowerCase().includes(value) && 
+            !selectedSkills.includes(skill)
+        ).slice(0, 5);
+
+        if (matches.length > 0) {
+            skillsSuggestions.innerHTML = matches.map(skill => 
+                `<div class="p-3 hover:bg-blue-50 cursor-pointer skill-suggestion border-b border-gray-100 last:border-b-0" data-skill="${skill}">
+                    <div class="font-medium text-gray-900">${skill}</div>
+                </div>`
+            ).join('');
+            skillsSuggestions.classList.remove('hidden');
+        } else {
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    skillsSuggestions.addEventListener('click', function(e) {
+        if (e.target.closest('.skill-suggestion')) {
+            const skill = e.target.closest('.skill-suggestion').getAttribute('data-skill');
+            addSkill(skill);
+            skillsInput.value = '';
+            skillsSuggestions.classList.add('hidden');
+        }
+    });
+
+    function addSkill(skill) {
+        if (!selectedSkills.includes(skill)) {
+            selectedSkills.push(skill);
+            updateSkillsDisplay();
+            updateHiddenInput();
+        }
+    }
+
+    function removeSkill(skill) {
+        selectedSkills = selectedSkills.filter(s => s !== skill);
+        updateSkillsDisplay();
+        updateHiddenInput();
+    }
+
+    function updateSkillsDisplay() {
+        selectedSkillsDiv.innerHTML = selectedSkills.map(skill => 
+            `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                ${skill}
+                <button type="button" onclick="removeSkill('${skill}')" class="ml-2 text-blue-600 hover:text-blue-800 font-bold">×</button>
+            </span>`
+        ).join('');
+    }
+
+    function updateHiddenInput() {
+        skillsHidden.value = selectedSkills.join(',');
+    }
+
+    // Make removeSkill globally available
+    window.removeSkill = removeSkill;
+
+    // Password strength checking
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirmPassword');
     const passwordStrength = document.getElementById('passwordStrength');
@@ -158,7 +249,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const strengthText = document.getElementById('strengthText');
     const passwordMatch = document.getElementById('passwordMatch');
 
-    // Password strength checking
     password.addEventListener('input', function() {
         const value = this.value;
         passwordStrength.classList.remove('hidden');
@@ -174,33 +264,34 @@ document.addEventListener('DOMContentLoaded', function() {
         strengthBar.style.width = percentage + '%';
         
         if (percentage < 40) {
-            strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-red-500';
+            strengthBar.className = 'h-full transition-all duration-300 bg-red-500';
             strengthText.textContent = 'Weak';
-            strengthText.className = 'text-red-600 font-medium';
+            strengthText.className = 'text-red-600 font-medium text-sm mt-1';
         } else if (percentage < 80) {
-            strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-yellow-500';
+            strengthBar.className = 'h-full transition-all duration-300 bg-yellow-500';
             strengthText.textContent = 'Good';
-            strengthText.className = 'text-yellow-600 font-medium';
+            strengthText.className = 'text-yellow-600 font-medium text-sm mt-1';
         } else {
-            strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-green-500';
+            strengthBar.className = 'h-full transition-all duration-300 bg-green-500';
             strengthText.textContent = 'Strong';
-            strengthText.className = 'text-green-600 font-medium';
+            strengthText.className = 'text-green-600 font-medium text-sm mt-1';
         }
+        
+        checkPasswordMatch();
     });
 
-    // Password confirmation
     function checkPasswordMatch() {
         if (confirmPassword.value) {
             if (password.value === confirmPassword.value) {
-                passwordMatch.textContent = '✓ Passwords match';
+                passwordMatch.textContent = 'Passwords match!';
                 passwordMatch.className = 'mt-1 text-sm text-green-600';
                 passwordMatch.classList.remove('hidden');
-                confirmPassword.className = 'w-full px-4 py-3 border border-green-500 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors';
+                confirmPassword.className = 'w-full px-4 py-3 border border-green-500 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors';
             } else {
-                passwordMatch.textContent = '✗ Passwords do not match';
+                passwordMatch.textContent = 'Passwords do not match';
                 passwordMatch.className = 'mt-1 text-sm text-red-600';
                 passwordMatch.classList.remove('hidden');
-                confirmPassword.className = 'w-full px-4 py-3 border border-red-500 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors';
+                confirmPassword.className = 'w-full px-4 py-3 border border-red-500 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors';
             }
         } else {
             passwordMatch.classList.add('hidden');
@@ -208,112 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    password.addEventListener('input', checkPasswordMatch);
     confirmPassword.addEventListener('input', checkPasswordMatch);
-
-    // Field validation on input
-    const inputs = form.querySelectorAll('input[required]');
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.className = this.className.replace('border-gray-300', 'border-green-500');
-            } else {
-                this.className = this.className.replace('border-green-500', 'border-gray-300');
-            }
-        });
-    });
-
-    // Skills auto-suggestions for recommendation system
-    const skillsInput = document.getElementById('skillsInput');
-    const skillsSuggestions = document.getElementById('skillsSuggestions');
-    const selectedSkillsDiv = document.getElementById('selectedSkills');
-    let selectedSkills = [];
-
-    const skillsData = [
-        // Programming Languages
-        'JavaScript', 'Python', 'Java', 'C++', 'C#', 'TypeScript', 'Go', 'Rust', 'PHP', 'Ruby',
-        // Web Development
-        'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'Next.js', 'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS',
-        // Mobile Development
-        'React Native', 'Flutter', 'Swift', 'Kotlin', 'Xamarin', 'Ionic',
-        // Data Science & ML
-        'Machine Learning', 'Deep Learning', 'Data Science', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Scikit-learn',
-        // Databases
-        'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'SQLite', 'Firebase',
-        // Cloud & DevOps
-        'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'Git', 'CI/CD',
-        // Design
-        'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Photoshop', 'Illustrator',
-        // Other
-        'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
-    ];
-
-    skillsInput.addEventListener('input', function() {
-        const value = this.value.toLowerCase();
-        if (value.length < 2) {
-            skillsSuggestions.classList.add('hidden');
-            return;
-        }
-
-        const matches = skillsData.filter(skill => 
-            skill.toLowerCase().includes(value) && 
-            !selectedSkills.includes(skill)
-        ).slice(0, 5);
-
-        if (matches.length > 0) {
-            skillsSuggestions.innerHTML = matches.map(skill => 
-                `<div class="p-2 hover:bg-blue-50 cursor-pointer skill-suggestion" data-skill="${skill}">${skill}</div>`
-            ).join('');
-            skillsSuggestions.classList.remove('hidden');
-        } else {
-            skillsSuggestions.classList.add('hidden');
-        }
-    });
-
-    skillsSuggestions.addEventListener('click', function(e) {
-        if (e.target.classList.contains('skill-suggestion')) {
-            const skill = e.target.getAttribute('data-skill');
-            addSkill(skill);
-            skillsInput.value = '';
-            skillsSuggestions.classList.add('hidden');
-        }
-    });
-
-    function addSkill(skill) {
-        if (!selectedSkills.includes(skill)) {
-            selectedSkills.push(skill);
-            updateSkillsDisplay();
-            updateSkillsInput();
-        }
-    }
-
-    function removeSkill(skill) {
-        selectedSkills = selectedSkills.filter(s => s !== skill);
-        updateSkillsDisplay();
-        updateSkillsInput();
-    }
-
-    function updateSkillsDisplay() {
-        selectedSkillsDiv.innerHTML = selectedSkills.map(skill => 
-            `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
-                ${skill}
-                <button type="button" onclick="removeSkill('${skill}')" class="ml-2 text-blue-600 hover:text-blue-800">×</button>
-            </span>`
-        ).join('');
-    }
-
-    function updateSkillsInput() {
-        const hiddenInput = document.querySelector('input[name="skills"]') || document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'skills';
-        hiddenInput.value = selectedSkills.join(',');
-        if (!document.querySelector('input[name="skills"]')) {
-            form.appendChild(hiddenInput);
-        }
-    }
-
-    // Make removeSkill globally available
-    window.removeSkill = removeSkill;
 
     // Hide suggestions when clicking outside
     document.addEventListener('click', function(e) {
@@ -326,19 +312,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Toggle password visibility
 function togglePassword() {
     const password = document.getElementById('password');
-    const eyeIcon = document.getElementById('eyeIcon');
     
     if (password.type === 'password') {
         password.type = 'text';
-        eyeIcon.innerHTML = `
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
-        `;
     } else {
         password.type = 'password';
-        eyeIcon.innerHTML = `
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-        `;
     }
 }
 </script>
