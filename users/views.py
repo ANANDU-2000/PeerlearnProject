@@ -21,7 +21,7 @@ class CustomLoginView(LoginView):
 class UserRegistrationView(CreateView):
     model = User
     form_class = UserRegistrationForm
-    template_name = 'registration/register_simple.html'
+    template_name = 'registration/register_fixed.html'
     
     def get_initial(self):
         initial = super().get_initial()
