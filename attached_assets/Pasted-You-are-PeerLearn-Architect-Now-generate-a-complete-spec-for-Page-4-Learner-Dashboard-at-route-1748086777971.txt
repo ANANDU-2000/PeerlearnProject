@@ -1,0 +1,84 @@
+You are PeerLearn Architect. Now generate a *complete spec* for *Page 4: Learner Dashboard* at route /learner/dashboard, implementing *all* the advanced features and UI/UX details described below.  Follow the exact spec‐template:
+
+1. *Route & Access*  
+   - URL: /learner/dashboard  
+   - Methods: GET (page load), WebSocket channel /ws/learner/<user_id>/  
+   - Auth/Role Guard: @login_required + user.role == 'learner'  
+
+2. *Template Layout* (Django + Tailwind + vanilla JS)  
+   - *Desktop*:  
+     - Top nav: logo left, search bar center, bell‑icon (unread count) + avatar dropdown right.  
+     - Sidebar (left): vertical menu (Home, My Sessions, Requests, Profile, Logout).  
+     - Main area:  
+       - *Section A*: “Featured Mentors” horizontally scrollable carousel of premium cards.  
+       - *Section B*: “Browse Sessions” grid of smaller 3‑column cards.  
+       - *Section C*: “Upcoming Sessions” list with countdown timers and action buttons.  
+   - *Mobile*:  
+     - Bottom tab bar (Home, Sessions, Requests, Notifications, Profile).  
+     - Vertical stack: Mentor carousel, Browse grid collapsible, Upcoming accordion.  
+
+3. *HTML Elements & Styling*  
+   - *Mentor Cards* (carousel):  
+     - Size: 200×240px, rounded corners, drop shadow, premium hover glow.  
+     - Fields: avatar, name, expertise tags, “Request Session” button.  
+     - Status badge:  
+       - *Green* = available now  
+       - *Red* = live/urgent  
+       - *Blue* = busy/soon  
+   - *Browse Cards*:  
+     - Smaller: 160×200px, 4 per row desktop, 2 per row mobile.  
+     - Fields: mentor name, topic, price, next slot time.  
+     - [View Details] button.  
+   - *Upcoming Sessions*:  
+     - List items: session title, mentor name, countdown timer (HH:MM:SS),  
+       - Buttons: [I’m Ready] → [Join Class] (enabled at T–2 min)  
+       - Auto‑disable + “Expired” label if T+5 min passes.  
+   - *Notifications Bell*:  
+     - Badge with unread count, dropdown list on click showing last 5 alerts (session starting, mentor ready, request accepted, “time over”).  
+
+4. *User Actions & Flows*  
+   - *Featured Mentor “Request Session”*  
+     - Click → open modal “Request Custom Session” (topic, duration, preferred times) → Submit →  
+       • WebSocket send request.create → backend saves Request → push mentor.requests → UI toast “Request sent”  
+   - *Browse “View Details”*  
+     - Click → AJAX fetch /api/sessions/{id} → render slide‑in panel with full details & [Book Now]  
+   - *Upcoming “I’m Ready” → “Join Class”*  
+     - At T–10 min show banner “Session in 10 min” with [I’m Ready].  
+     - Click [I’m Ready] → WebSocket send learner.ready → backend records readiness → mentor dashboard gets notification → UI shows “Waiting for mentor…”  
+     - Mentor clicks ready → WebSocket mentor.ready → learner’s [Join Class] button enables.  
+     - Click [Join Class] → redirect /room/{id} → close WebSocket /ws/learner/...  
+
+5. *WebSocket Events*  
+   - Channel: /ws/learner/<user_id>/  
+   - Incoming:  
+     • mentor.ready → enable Join button + show toast “Mentor is ready”  
+     • session.update → seat count updates on browse cards  
+     • request.status → update request card (accepted/rejected)  
+   - Outgoing:  
+     • learner.ready  
+     • request.create  
+
+6. *Database Interaction*  
+   - On page load:  
+     • Query Mentor (featured & top‑rated)  
+     • Query Session (browse filters)  
+     • Query Booking (upcoming for this learner)  
+     • Query Request (pending)  
+   - On request.create: insert into Request table  
+   - On learner.ready: update Booking.status to READY  
+   - On real‑time session.update: SELECT updated seat counts  
+
+7. *Notifications & Alerts*  
+   - In‑page banner at top for time‑sensitive events (session starting, expired)  
+   - Toaster (bottom‑right) for request submissions, mentor ready, errors  
+   - Bell‑icon stores unread alerts in Notification table; clicking marks read  
+
+8. *Guards & Redirects*  
+   - If no upcoming sessions, collapse “Upcoming” and show “Browse more sessions.”  
+   - If Booking.status == EXPIRED, auto‑move to past sessions and push “Session expired” alert.  
+
+9. *End‑of‑Flow*  
+   - After request submit → modal closes → toast + carousel badge increments.  
+   - After join → redirect to /room/{id} and close WebSocket.  
+
+10. *Manage.py & Initialization*
