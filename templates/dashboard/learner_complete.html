@@ -117,28 +117,63 @@
             <!-- Web Navigation -->
             <div class="hidden md:block border-b border-gray-200">
                 <nav class="flex space-x-8" aria-label="Tabs">
-                    <template x-for="tab in tabs" :key="tab.id">
-                        <button @click="activeTab = tab.id"
-                                :class="activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
-                            <div class="flex items-center space-x-2">
-                                <i :data-feather="tab.icon" class="h-4 w-4"></i>
-                                <span x-text="tab.name"></span>
-                                <span x-show="tab.badge" 
-                                      x-text="tab.badge"
-                                      class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full"></span>
-                            </div>
-                        </button>
-                    </template>
+                    <button @click="activeTab = 'browse'"
+                            :class="activeTab === 'browse' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="search" class="h-4 w-4"></i>
+                            <span>Browse Sessions</span>
+                        </div>
+                    </button>
+                    <button @click="activeTab = 'sessions'"
+                            :class="activeTab === 'sessions' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="video" class="h-4 w-4"></i>
+                            <span>My Sessions</span>
+                            {% if user_bookings %}
+                                <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ user_bookings|length }}</span>
+                            {% endif %}
+                        </div>
+                    </button>
+                    <button @click="activeTab = 'requests'"
+                            :class="activeTab === 'requests' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="clock" class="h-4 w-4"></i>
+                            <span>Requests</span>
+                            {% if user_requests %}
+                                <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ user_requests|length }}</span>
+                            {% endif %}
+                        </div>
+                    </button>
+                    <button @click="activeTab = 'recommendations'"
+                            :class="activeTab === 'recommendations' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="star" class="h-4 w-4"></i>
+                            <span>Recommendations</span>
+                        </div>
+                    </button>
+                    <button @click="activeTab = 'notifications'"
+                            :class="activeTab === 'notifications' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="bell" class="h-4 w-4"></i>
+                            <span>Notifications</span>
+                        </div>
+                    </button>
                 </nav>
             </div>
             
             <!-- Mobile Navigation -->
             <div class="md:hidden p-4">
                 <select x-model="activeTab" class="w-full rounded-lg border-gray-300">
-                    <template x-for="tab in tabs" :key="tab.id">
-                        <option :value="tab.id" x-text="tab.name"></option>
-                    </template>
+                    <option value="browse">Browse Sessions</option>
+                    <option value="sessions">My Sessions</option>
+                    <option value="requests">Requests</option>
+                    <option value="recommendations">Recommendations</option>
+                    <option value="notifications">Notifications</option>
                 </select>
             </div>
         </div>
