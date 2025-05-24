@@ -123,7 +123,7 @@
     
     <!-- Messages -->
     {% if messages %}
-    <div class="fixed top-20 right-4 z-50 space-y-2" x-data="{ messages: [] }" x-init="
+    <div class="fixed top-20 right-4 left-4 sm:right-4 sm:left-auto z-50 space-y-2" x-data="{ messages: [] }" x-init="
         {% for message in messages %}
         messages.push({
             id: Date.now() + Math.random(),
@@ -145,7 +145,7 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+                 class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden mx-auto sm:mx-0">
                 <div class="p-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">

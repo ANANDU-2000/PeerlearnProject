@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50" x-data="learnerDashboard()" x-init="init()">
+<div class="min-h-screen bg-gray-50" x-data="{ activeTab: 'browse', sessionView: 'upcoming', showRequestModal: false }"
     
     <!-- Learner Header -->
     <div class="learner-bg text-white py-8">
@@ -46,7 +46,7 @@
                     <p class="mt-2 text-blue-100">Ready to learn something new today?</p>
                 </div>
                 <div class="mt-4 md:mt-0">
-                    <button @click="openRequestModal()" 
+                    <button @click="showRequestModal = true" 
                             class="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors">
                         <i data-feather="plus" class="h-4 w-4 inline mr-2"></i>
                         Request Session
@@ -586,59 +586,13 @@ function learnerDashboard() {
         priceFilter: '',
         dateFilter: '',
         
-        // Data
-        stats: {
-            attended: 12,
-            upcoming: 3,
-            hours: 45,
-            level: 'Intermediate'
-        },
-        
+        // Real data from Django context
         tabs: [
             { id: 'browse', name: 'Browse Sessions', icon: 'search', badge: null },
-            { id: 'sessions', name: 'My Sessions', icon: 'video', badge: '3' },
-            { id: 'requests', name: 'Requests', icon: 'clock', badge: '2' },
+            { id: 'sessions', name: 'My Sessions', icon: 'video', badge: '{{ user_bookings|length }}' },
+            { id: 'requests', name: 'Requests', icon: 'clock', badge: '{{ user_requests|length }}' },
             { id: 'recommendations', name: 'Recommendations', icon: 'star', badge: null },
-            { id: 'notifications', name: 'Notifications', icon: 'bell', badge: '5' }
-        ],
-        
-        allSessions: [
-            {
-                id: 1,
-                title: 'React Fundamentals',
-                description: 'Learn the basics of React including components, state, and props',
-                mentor: 'John Smith',
-                price: 'Free',
-                schedule: 'Jan 25, 2:00 PM',
-                duration: 60,
-                availableSeats: 8,
-                maxParticipants: 15,
-                domain: 'web-development'
-            },
-            {
-                id: 2,
-                title: 'Python Data Analysis',
-                description: 'Master data analysis with Python using pandas and numpy',
-                mentor: 'Sarah Johnson',
-                price: '$49',
-                schedule: 'Jan 26, 4:00 PM',
-                duration: 90,
-                availableSeats: 3,
-                maxParticipants: 12,
-                domain: 'data-science'
-            },
-            {
-                id: 3,
-                title: 'UI/UX Design Principles',
-                description: 'Essential design principles for creating user-friendly interfaces',
-                mentor: 'Mike Chen',
-                price: '$79',
-                schedule: 'Jan 27, 10:00 AM',
-                duration: 120,
-                availableSeats: 0,
-                maxParticipants: 10,
-                domain: 'design'
-            }
+            { id: 'notifications', name: 'Notifications', icon: 'bell', badge: '0' }
         ],
         
         mySessions: {
