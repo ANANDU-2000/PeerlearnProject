@@ -85,7 +85,7 @@ def book_session(request, session_id):
     
     if session.is_full:
         messages.error(request, 'Session is full.')
-        return redirect('session_detail', session_id=session_id)
+        return redirect('learner_dashboard')
     
     booking, created = Booking.objects.get_or_create(
         learner=request.user,
@@ -94,11 +94,11 @@ def book_session(request, session_id):
     )
     
     if created:
-        messages.success(request, 'Session booked successfully!')
+        messages.success(request, f'Successfully booked "{session.title}"! Check your My Sessions tab.')
     else:
         messages.info(request, 'You are already booked for this session.')
     
-    return redirect('session_detail', session_id=session_id)
+    return redirect('learner_dashboard')
 
 @login_required
 def create_session(request):
