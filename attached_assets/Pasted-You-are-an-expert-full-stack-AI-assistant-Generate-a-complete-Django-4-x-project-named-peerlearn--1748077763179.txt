@@ -1,0 +1,106 @@
+You are an expert full‑stack AI assistant. Generate a complete Django 4.x+ project named peerlearn (SQLite only) with real‑time video/audio chat via WebRTC, robust mentor/learner flows, and modern responsive UI.
+
+---  
+### 1. Project & Dependencies  
+- Create Django project peerlearn, apps: users, sessions, recommendations.  
+- Install & configure Channels, daphne, Tailwind (via PostCSS plugin), Alpine.js, and django-environ for config.  
+- In settings.py:  
+  - DATABASES = SQLite.  
+  - ASGI_APPLICATION='peerlearn.asgi.application'.  
+  - CHANNEL_LAYERS using InMemory for dev (Redis for prod).  
+  - Static/Media setups for Tailwind build output.
+
+---  
+### 2. Authentication & Roles  
+- Custom User model extending AbstractUser with role = CharField(choices=['mentor','learner']).  
+- Registration & login pages:  
+  - /register/?role=mentor & /register/?role=learner pre‑select role.  
+  - After sign‑up redirect:  
+    - Mentors → /dashboard/mentor/  
+    - Learners → /dashboard/learner/
+
+---  
+### 3. Landing Page  
+- Single responsive hero with:  
+  - App title/tagline  
+  - Role‑select cards (Mentor vs Learner)  
+  - “Get Started” buttons linking to the respective register URLs  
+- Minimal navbar with login/register links.
+
+---  
+### 4. Mentor Dashboard (/dashboard/mentor/)  
+- Three tabs: *Today, **Upcoming, **Past* sessions.  
+- “Create Session” button opens modal/form to set: title, description, schedule (DateTime), duration, max participants.  
+- Session cards show:  
+  - Status badge (Scheduled, LIVE NOW, Completed, Cancelled)  
+  - Booked vs max count  
+  - Countdown timer (auto‑updates via Alpine.js JS)  
+  - Action buttons:  
+    - *Go Live* (mentor only, enabled within 15 min of start or force)  
+    - *Join Room* when live  
+    - *Edit/Cancel* on scheduled  
+    - *View Analytics* on completed  
+- All booking counts and status badges update in real‑time via a WebSocket “sessions” consumer.
+
+---  
+### 5. Learner Dashboard (/dashboard/learner/)  
+- *My Bookings* list: upcoming/past.  
+- *Browse Sessions*: filter by date/status, view available sessions, book in one click.  
+- Booking confirmations push live WebSocket notifications.  
+- Trending/Recommended sessions panel (pulls from recommendations app).
+
+---  
+### 6. Models & APIs  
+- Session model:  
+  - id=UUIDField(primary_key), mentor=FK(User), schedule, duration, max_participants, status.  
+- Booking model: learner FK + session FK + timestamps + status.  
+- REST endpoints (Django REST Framework) for:  
+  - Listing/filtering sessions, creating bookings, feedback.
+
+---  
+### 7. WebRTC Room (/sessions/<uuid>/join/)  
+- Template with two <video> elements: local (#local-video) & remote (#main-video).  
+- Alpine.js component x-data="webRTCRoom()" that:  
+  1. Opens WebSocket to /ws/sessions/<uuid>/ (Channels consumer) for signaling.  
+  2. Calls getUserMedia({video: true, audio: true}), streams to local video.  
+  3. Creates RTCPeerConnection with multiple public STUN servers.  
+  4. Exchanges SDP offers/answers & ICE candidates over the WS.  
+  5. On ontrack adds to a MediaStream for the remote <video>.  
+  6. Opens a data channel for in‑session chat and mute/unmute toggles.  
+  7. Implements “Toggle Video/Audio”, “Share Screen” (replaceTrack), and “Toggle Layout” UI.  
+  8. Cleanly tears down on page unload.
+
+---  
+### 8. Channels Consumers  
+- sessions/consumers.py:  
+  - SessionConsumer: handle join, offer, answer, ice_candidate, leave types.  
+  - Broadcast to group session_<uuid> so both peers get messages.  
+- dashboard/consumers.py: pushes live session status and booking updates.
+
+---  
+### 9. Recommendations Engine  
+- In recommendations/models.py track simple popularity counts.  
+- Async cron task or Django command to recompute “top 5 trending” sessions daily.  
+- Expose via REST and show on learner dashboard.
+
+---  
+### 10. UI/UX & Mobile  
+- Build all lists and cards with Tailwind CSS utility classes.  
+- Responsive breakpoints: single‑column on mobile, multi‑column on desktop.  
+- Hamburger nav on small screens.  
+- Alpine.js for tabs, modals, countdown logic.
+
+---  
+### 11. Final Touches  
+- README.md with full setup:  
+  bash
+  pip install -r requirements.txt 
+  npm install
+  npm run dev  # builds Tailwind
+  python manage.py migrate 
+  python manage.py runserver
+    
+- .env.example for secrets.  
+- Dockerfile for production (optional).  
+
+Now generate *all* project files—models, views, templates, JS, routing, consumers—*in order*, fully runnable on Replit with zero manual tweaks.

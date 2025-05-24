@@ -1,0 +1,59 @@
+OVERALL INSTRUCTIONS
+For *each* page/subpage in the *exact user journey order* (see list below), output a *complete spec* covering:
+
+1. *URL & Access*: route, HTTP methods, auth & role guard  
+2. *Template Layout*: Django template structure, blocks, mobile‑responsive Tailwind wireframe  
+3. *HTML Elements*: tabs, buttons, inputs, modals, banners, carousels  
+4. *View Logic*: Django views (class‑based), querysets, context data  
+5. *Forms & Serializers*: ModelForms or DRF serializers, validation  
+6. *WebSocket Events*: channel names, Consumers (connect/receive/send), front‑end JS listeners  
+7. *WebRTC Flow*: simple‑peer init, offer/answer, ICE exchange via Channels, TURN/STUN config, auto reconnect  
+8. *Database*: models touched (User, Session, Booking, Request, Feedback, Notification, RoomToken), queries, transactions  
+9. *Notifications*: in‑page banners (Tailwind alert), toast (vanilla JS), bell‑icon badge, service‑worker push setup  
+10. *Guards & Redirects*: login_required, user_passes_test (role), error messages  
+11. *Client JS Actions*: click → fetch or WebSocket send → DOM update → success/error UI  
+12. *Manage.py & Initialization*: migrations, runserver, tailwind build/watch, channel layers
+
+USER JOURNEY PAGES (in order)
+A. Public  
+  1. Landing “/”  
+  2. Login “/login”  
+  3. Registration wizard “/register” (Role → Info → Profile → Confirm)
+
+B. Learner  
+  4. Learner Dashboard “/learner/dashboard”  
+     • Subtabs: Browse, My Sessions, Requests, Recommendations, Notifications  
+  5. Session Detail “/sessions/<id>”  
+  6. Request Form “/requests/new”
+
+C. Mentor  
+  7. Mentor Dashboard “/mentor/dashboard”  
+     • Subtabs: Drafts, Scheduled, Past, Requests, Earnings, Analytics, Profile, Notifications  
+  8. Session Edit “/mentor/sessions/<id>”
+
+D. Admin  
+  9. Admin Dashboard “/admin/dashboard”  
+     • Subtabs: Users, Sessions, Requests, Payments, Feedback, ML Metrics, Settings, Health
+
+E. Live Room  
+  10. Room “/room/<id>”  
+     • Lobby (ready check via WebSockets)  
+     • In‑Session (WebRTC video grid + chat + screen share + record button)  
+     • Post‑Session Feedback modal
+
+F. Account  
+  11. Profile “/profile”  
+  12. Logout action
+
+AFTER EACH PAGE
+— Insert at end of each page spec:
+    # manage.py commands
+    python manage.py makemigrations
+    python manage.py migrate
+    python manage.py runserver
+    # Tailwind
+    npx tailwindcss -i static/css/input.css -o static/css/output.css --watch
+
+Then pause and wait for “NEXT” before spec’ing the next page.
+
+This single prompt will generate *all templates, **views, **models, **URLs, **Consumers, **JS, **WebRTC handlers, and **manage.py* scripts necessary to build PeerLearn on Django + SQLite3. Paste into Replit Core AI and run—then reply NEXT to step through each page.
