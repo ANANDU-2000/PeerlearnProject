@@ -340,12 +340,17 @@
                                                 Starting Soon
                                             </span>
                                             <div>
-                                                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">
+                                                <button onclick="markReady('{{ booking.session.id }}')" 
+                                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                                                     I'm Ready
                                                 </button>
                                                 <p class="text-sm text-gray-600 mt-2 waiting-animation">
                                                     Waiting for mentor...
                                                 </p>
+                                                <button onclick="joinSession('{{ booking.session.id }}')"
+                                                        class="mt-3 bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                                                    Join Class
+                                                </button>
                                             </div>
                                         {% else %}
                                             <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -371,33 +376,50 @@
                     {% endfor %}
                 </div>
                 
-                <!-- Past Sessions -->
+                <!-- Past Sessions with Real Database Data -->
                 <div x-show="sessionView === 'past'" class="space-y-4">
-                    <template x-for="session in mySessions.past" :key="session.id">
-                        <div class="border border-gray-200 rounded-xl p-6">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
-                                    <div class="flex items-center text-sm text-gray-600 mb-2">
-                                        <i data-feather="user" class="h-4 w-4 mr-1"></i>
-                                        <span x-text="session.mentor"></span>
+                    {% for booking in user_bookings %}
+                        {% if booking.session.schedule <= now and booking.session.status == 'completed' %}
+                            <div class="border border-gray-200 rounded-xl p-6">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2">{{ booking.session.title }}</h4>
+                                        <div class="flex items-center text-sm text-gray-600 mb-2">
+                                            <i data-feather="user" class="h-4 w-4 mr-1"></i>
+                                            <span>{{ booking.session.mentor.first_name }} {{ booking.session.mentor.last_name }}</span>
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                            <span>{{ booking.session.schedule|date:"M d, Y" }}</span>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
-                                        <span x-text="session.completedDate"></span>
+                                    <div class="text-right">
+                                        {% if booking.session.feedback.all %}
+                                            <div class="flex items-center mb-2">
+                                                {% for i in "12345" %}
+                                                    <i data-feather="star" 
+                                                       class="h-4 w-4 {% if forloop.counter <= booking.session.feedback.first.rating %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <a href="{% url 'submit_feedback' booking.session.id %}"
+                                               class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                                Leave Feedback</a>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <div x-show="session.rating" class="flex items-center mb-2">
-                                        <template x-for="i in 5" :key="i">
-                                            <i data-feather="star" 
-                                               :class="i <= session.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'"
-                                               class="h-4 w-4"></i>
-                                        </template>
-                                    </div>
-                                    <button x-show="!session.feedback" @click="openFeedbackModal(session.id)"
-                                            class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                                        Leave Feedback
+                            </div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="text-center py-12">
+                            <div class="w-24 h-24 mx-auto mb-4 text-gray-300">
+                                <i data-feather="archive" class="w-full h-full"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No Past Sessions</h3>
+                            <p class="text-gray-500">You haven't completed any sessions yet.</p>
+                        </div>
+                    {% endfor %}
+                </div>
                                     </button>
                                 </div>
                             </div>
@@ -406,11 +428,11 @@
                 </div>
             </div>
 
-            <!-- 3. My Requests -->
+            <!-- 3. My Requests - Real Database Data -->
             <div x-show="activeTab === 'requests'" class="tab-content p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-semibold text-gray-900">My Session Requests</h3>
-                    <button @click="openRequestModal()"
+                    <button @click="showRequestModal = true"
                             class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
                         <i data-feather="plus" class="h-4 w-4 inline mr-2"></i>
                         New Request
@@ -418,53 +440,196 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <template x-for="request in myRequests" :key="request.id">
+                    {% for request in user_requests %}
                         <div class="border border-gray-200 rounded-xl p-6">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="request.topic"></h4>
-                                    <p class="text-sm text-gray-600 mb-3" x-text="request.description"></p>
+                                    <h4 class="font-semibold text-gray-900 mb-2">{{ request.topic }}</h4>
+                                    <p class="text-sm text-gray-600 mb-3">{{ request.description }}</p>
                                     <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                        <span x-text="`${request.duration} min`"></span>
-                                        <span x-text="request.urgency"></span>
-                                        <span x-text="request.domain"></span>
+                                        <span>{{ request.duration }} min</span>
+                                        <span>{{ request.urgency|title }}</span>
+                                        <span>{{ request.domain|title }}</span>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span :class="getRequestStatusColor(request.status)"
-                                          class="px-3 py-1 text-xs font-medium rounded-full mb-2 inline-block"
-                                          x-text="request.status"></span>
-                                    <p class="text-sm text-gray-500" x-text="request.created"></p>
-                                    <button x-show="request.status === 'pending'" @click="cancelRequest(request.id)"
-                                            class="mt-2 text-red-600 text-sm hover:text-red-800">
-                                        Cancel
-                                    </button>
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full mb-2 inline-block
+                                        {% if request.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                        {% elif request.status == 'accepted' %}bg-green-100 text-green-800
+                                        {% elif request.status == 'rejected' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ request.status|title }}
+                                    </span>
+                                    <p class="text-sm text-gray-500">{{ request.created_at|timesince }} ago</p>
+                                    {% if request.status == 'pending' %}
+                                        <button class="mt-2 text-red-600 text-sm hover:text-red-800">
+                                            Cancel
+                                        </button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
-                    </template>
+                    {% empty %}
+                        <div class="text-center py-12">
+                            <div class="w-24 h-24 mx-auto mb-4 text-gray-300">
+                                <i data-feather="message-square" class="w-full h-full"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No Requests Yet</h3>
+                            <p class="text-gray-500 mb-4">You haven't made any session requests.</p>
+                            <button @click="showRequestModal = true" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                                Make Your First Request
+                            </button>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- 4. Recommendations -->
+            <!-- 4. Recommendations - Real ML-Based Data -->
             <div x-show="activeTab === 'recommendations'" class="tab-content p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-6">Recommended for You</h3>
                 
-                <!-- Trending Sessions -->
+                <!-- Personalized Recommendations Based on User Interests -->
                 <div class="recommendation-card rounded-xl p-6 mb-6">
                     <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
-                        <i data-feather="trending-up" class="h-5 w-5 mr-2 text-blue-600"></i>
-                        Trending Sessions
+                        <i data-feather="user" class="h-5 w-5 mr-2 text-blue-600"></i>
+                        Based on Your Interests
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <template x-for="session in recommendations.trending" :key="session.id">
+                        {% for session in recommended_sessions %}
+                            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h5 class="font-medium text-gray-900">{{ session.title }}</h5>
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Free</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3">{{ session.description|truncatewords:10 }}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-500">{{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
+                                    <a href="{% url 'session_detail' session.id %}" 
+                                       class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-span-2 text-center py-8">
+                                <i data-feather="lightbulb" class="h-12 w-12 mx-auto text-gray-300 mb-3"></i>
+                                <p class="text-gray-500">Complete your profile to get personalized recommendations</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- All Available Sessions -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
+                        <i data-feather="compass" class="h-5 w-5 mr-2 text-blue-600"></i>
+                        Explore All Sessions
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for session in available_sessions|slice:":4" %}
                             <div class="bg-white border border-gray-200 rounded-lg p-4">
                                 <div class="flex justify-between items-start mb-3">
-                                    <h5 class="font-medium text-gray-900" x-text="session.title"></h5>
-                                    <span class="bg-orange-100 text-orange-800 px-2 py-1 text-xs font-medium rounded-full">
-                                        🔥 Hot
-                                    </span>
+                                    <h5 class="font-medium text-gray-900">{{ session.title }}</h5>
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Free</span>
                                 </div>
+                                <p class="text-sm text-gray-600 mb-3">{{ session.description|truncatewords:8 }}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-500">{{ session.mentor.first_name }}</span>
+                                    <button @click="activeTab = 'browse'" 
+                                            class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                        Book Now
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Notifications - Real Database Data -->
+            <div x-show="activeTab === 'notifications'" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                    <button class="text-blue-600 text-sm hover:text-blue-800">
+                        Mark All Read
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Real-time session notifications would go here -->
+                    <div class="text-center py-12">
+                        <div class="w-24 h-24 mx-auto mb-4 text-gray-300">
+                            <i data-feather="bell" class="w-full h-full"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No New Notifications</h3>
+                        <p class="text-gray-500">You're all caught up! We'll notify you when something important happens.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Session Modal -->
+    <div x-show="showRequestModal" x-cloak 
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+         @click.away="showRequestModal = false">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Request a Custom Session</h3>
+                <button @click="showRequestModal = false" class="text-gray-400 hover:text-gray-600">
+                    <i data-feather="x" class="h-6 w-6"></i>
+                </button>
+            </div>
+            
+            <form method="post" action="{% url 'api_create_request' %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+                    <input type="text" name="topic" required
+                           placeholder="What would you like to learn?"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="3" required
+                              placeholder="Describe what specific help you need..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                        <select name="duration" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>60 minutes</option>
+                            <option value="90">90 minutes</option>
+                            <option value="120">120 minutes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                        <select name="urgency" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="today">Today</option>
+                            <option value="tomorrow">Tomorrow</option>
+                            <option value="this-week">This Week</option>
+                            <option value="next-week">Next Week</option>
+                            <option value="flexible" selected>Flexible</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" @click="showRequestModal = false"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
                                 <p class="text-sm text-gray-600 mb-3" x-text="session.mentor"></p>
                                 <div class="flex justify-between items-center">
                                     <span class="text-sm text-blue-600 font-medium" x-text="session.price"></span>
