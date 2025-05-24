@@ -66,7 +66,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Sessions Attended</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.attended"></p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.attended_sessions }}</p>
                     </div>
                 </div>
             </div>
@@ -78,7 +78,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Upcoming Sessions</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.upcoming"></p>
+                        <p class="text-2xl font-bold text-gray-900">{{ user_bookings|length }}</p>
                     </div>
                 </div>
             </div>
@@ -90,7 +90,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Learning Hours</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.hours"></p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_hours }}</p>
                     </div>
                 </div>
             </div>
@@ -101,8 +101,8 @@
                         <i data-feather="trending-up" class="h-6 w-6 text-yellow-600"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Skill Level</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.level"></p>
+                        <p class="text-sm font-medium text-gray-600">Unique Mentors</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.unique_mentors }}</p>
                     </div>
                 </div>
             </div>
@@ -189,55 +189,71 @@
                     </div>
                 </div>
                 
-                <!-- Session Cards with Real-time Seat Updates -->
+                <!-- Session Cards with Real Database Data -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <template x-for="session in filteredSessions" :key="session.id">
+                    {% for session in available_sessions %}
                         <div class="session-card border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex-1">
-                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
-                                    <p class="text-sm text-gray-600 mb-3" x-text="session.description"></p>
+                                    <h4 class="font-semibold text-gray-900 mb-2">{{ session.title }}</h4>
+                                    <p class="text-sm text-gray-600 mb-3">{{ session.description|truncatewords:15 }}</p>
                                     <div class="flex items-center text-sm text-gray-500 mb-2">
                                         <i data-feather="user" class="h-4 w-4 mr-1"></i>
-                                        <span x-text="session.mentor"></span>
+                                        <span>{{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
                                     </div>
                                 </div>
-                                <span :class="session.price === 'Free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
-                                      class="px-2 py-1 text-xs font-medium rounded-full"
-                                      x-text="session.price"></span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">
+                                    Free
+                                </span>
                             </div>
                             
                             <div class="space-y-2 mb-4">
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Date & Time</span>
-                                    <span class="font-medium" x-text="session.schedule"></span>
+                                    <span class="font-medium">{{ session.schedule|date:"M d, H:i" }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Duration</span>
-                                    <span class="font-medium" x-text="`${session.duration} min`"></span>
+                                    <span class="font-medium">{{ session.duration }} min</span>
                                 </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Available Seats</span>
-                                    <span :class="session.availableSeats <= 2 ? 'text-red-600' : 'text-green-600'"
-                                          class="font-medium" 
-                                          x-text="`${session.availableSeats}/${session.maxParticipants}`"></span>
+                                    {% with available=session.max_participants|add:session.current_participants|add:"-"|stringformat:"d" %}
+                                        <span class="{% if session.current_participants >= session.max_participants|add:'-2' %}text-red-600{% else %}text-green-600{% endif %} font-medium">
+                                            {{ session.max_participants|add:session.current_participants|add:"-"|stringformat:"d" }}/{{ session.max_participants }}
+                                        </span>
+                                    {% endwith %}
                                 </div>
                             </div>
                             
                             <div class="flex space-x-3">
-                                <button @click="viewSessionDetail(session.id)"
-                                        class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                                <a href="{% url 'session_detail' session.id %}"
+                                   class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium text-center">
                                     View Details
-                                </button>
-                                <button @click="bookSession(session.id)"
-                                        :disabled="session.availableSeats === 0"
-                                        :class="session.availableSeats === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
-                                        class="flex-1 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                                    <span x-text="session.availableSeats === 0 ? 'Full' : 'Book Now'"></span>
-                                </button>
+                                </a>
+                                <form method="post" action="{% url 'book_session' session.id %}" class="flex-1">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            {% if session.is_full %}disabled{% endif %}
+                                            class="w-full {% if session.is_full %}bg-gray-300 cursor-not-allowed{% else %}bg-blue-600 hover:bg-blue-700{% endif %} text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                        {% if session.is_full %}Full{% else %}Book Now{% endif %}
+                                    </button>
+                                </form>
                             </div>
                         </div>
-                    </template>
+                    {% empty %}
+                        <div class="col-span-full text-center py-12">
+                            <div class="w-24 h-24 mx-auto mb-4 text-gray-300">
+                                <i data-feather="calendar" class="w-full h-full"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No Sessions Available</h3>
+                            <p class="text-gray-500 mb-4">There are no sessions scheduled at the moment.</p>
+                            <button @click="openRequestModal()" 
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                                Request a Session
+                            </button>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
 
