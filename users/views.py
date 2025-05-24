@@ -67,7 +67,50 @@ def mentor_dashboard(request):
         messages.error(request, 'Access denied. Mentor role required.')
         return redirect('learner_dashboard')
     
-    return render(request, 'dashboard/mentor.html')
+    # Get mentor's sessions
+    from sessions.models import Session, Booking, Request
+    from django.db.models import Count, Avg, Q
+    from django.utils import timezone
+    
+    # Sessions data
+    mentor_sessions = Session.objects.filter(mentor=request.user).order_by('-schedule')
+    
+    # Requests data
+    pending_requests = Request.objects.filter(
+        status='pending',
+        domain__in=request.user.expertise or []
+    ).order_by('-created_at')
+    
+    # Analytics data
+    total_sessions = mentor_sessions.count()
+    total_students = Booking.objects.filter(
+        session__mentor=request.user,
+        status='confirmed'
+    ).values('learner').distinct().count()
+    
+    avg_rating = mentor_sessions.filter(
+        feedback__isnull=False
+    ).aggregate(avg_rating=Avg('feedback__rating'))['avg_rating'] or 0
+    
+    # Earnings calculation (placeholder - implement with payment system)
+    total_earnings = 0
+    for session in mentor_sessions.filter(status='completed'):
+        total_earnings += (session.bookings.filter(status='confirmed').count() * 50)  # Example rate
+    
+    context = {
+        'mentor_sessions': mentor_sessions[:10],  # Recent sessions
+        'pending_requests': pending_requests[:5],
+        'total_sessions': total_sessions,
+        'total_students': total_students,
+        'avg_rating': round(avg_rating, 1),
+        'total_earnings': total_earnings,
+        'upcoming_sessions': mentor_sessions.filter(
+            schedule__gte=timezone.now(),
+            status='scheduled'
+        ).count()
+    }
+    
+    return render(request, 'dashboard/mentor.html', context)
 
 @login_required
 def learner_dashboard(request):
@@ -75,4 +118,65 @@ def learner_dashboard(request):
         messages.error(request, 'Access denied. Learner role required.')
         return redirect('mentor_dashboard')
     
-    return render(request, 'dashboard/learner.html')
+    # Get learner's data
+    from sessions.models import Session, Booking, Request, Feedback
+    from recommendations.models import PopularityMetric
+    from django.db.models import Q
+    from django.utils import timezone
+    
+    # Available sessions
+    available_sessions = Session.objects.filter(
+        status='scheduled',
+        schedule__gte=timezone.now()
+    ).exclude(
+        bookings__learner=request.user,
+        bookings__status='confirmed'
+    ).order_by('schedule')[:10]
+    
+    # User's bookings
+    user_bookings = Booking.objects.filter(
+        learner=request.user,
+        status='confirmed'
+    ).select_related('session').order_by('-session__schedule')
+    
+    # User's requests
+    user_requests = Request.objects.filter(
+        learner=request.user
+    ).order_by('-created_at')
+    
+    # Recommended sessions (simple algorithm)
+    user_interests = request.user.expertise or []
+    recommended_sessions = Session.objects.filter(
+        status='scheduled',
+        schedule__gte=timezone.now()
+    ).exclude(
+        bookings__learner=request.user,
+        bookings__status='confirmed'
+    )
+    
+    if user_interests:
+        recommended_sessions = recommended_sessions.filter(
+            description__icontains=user_interests[0] if user_interests else ''
+        )
+    
+    # Learning stats
+    attended_sessions = Feedback.objects.filter(user=request.user).count()
+    total_hours = sum([
+        booking.session.duration for booking in user_bookings 
+        if booking.session.status == 'completed'
+    ]) // 60  # Convert to hours
+    unique_mentors = user_bookings.values('session__mentor').distinct().count()
+    
+    context = {
+        'available_sessions': available_sessions,
+        'user_bookings': user_bookings[:5],
+        'user_requests': user_requests[:5],
+        'recommended_sessions': recommended_sessions[:6],
+        'stats': {
+            'attended_sessions': attended_sessions,
+            'total_hours': total_hours,
+            'unique_mentors': unique_mentors
+        }
+    }
+    
+    return render(request, 'dashboard/learner_advanced.html', context)

@@ -1,0 +1,322 @@
+<!-- Create Session Modal -->
+<div x-show="showCreateModal" 
+     x-cloak
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+         x-show="showCreateModal"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100">
+        
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h3 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    Create New Session
+                </h3>
+                <p class="text-gray-600 mt-2">Share your expertise and help learners grow</p>
+            </div>
+            <button @click="showCreateModal = false" 
+                    class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i data-feather="x" class="h-8 w-8"></i>
+            </button>
+        </div>
+        
+        <form @submit.prevent="createSession()" x-data="sessionForm()">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column -->
+                <div class="space-y-6">
+                    <!-- Session Title -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Session Title *</label>
+                        <input x-model="form.title" 
+                               type="text" 
+                               placeholder="e.g., Advanced React Hooks & Performance Optimization"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                               required>
+                        <p class="text-xs text-gray-500 mt-1">Make it descriptive and engaging</p>
+                    </div>
+                    
+                    <!-- Domain -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Domain *</label>
+                        <select x-model="form.domain" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                required>
+                            <option value="">Select your expertise domain</option>
+                            <option value="web-development">🌐 Web Development</option>
+                            <option value="mobile-development">📱 Mobile Development</option>
+                            <option value="data-science">📊 Data Science & Analytics</option>
+                            <option value="machine-learning">🤖 Machine Learning & AI</option>
+                            <option value="design">🎨 UI/UX Design</option>
+                            <option value="business">💼 Business & Marketing</option>
+                            <option value="devops">⚙️ DevOps & Cloud</option>
+                            <option value="blockchain">🔗 Blockchain & Web3</option>
+                            <option value="cybersecurity">🔒 Cybersecurity</option>
+                            <option value="other">🔧 Other</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Skills & Technologies -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Skills & Technologies</label>
+                        <input x-model="form.skills" 
+                               type="text" 
+                               placeholder="React, TypeScript, Performance, Hooks..."
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <p class="text-xs text-gray-500 mt-1">Separate with commas</p>
+                    </div>
+                    
+                    <!-- Schedule & Duration -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-3">Schedule *</label>
+                            <input x-model="form.schedule" 
+                                   type="datetime-local" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-3">Duration *</label>
+                            <select x-model="form.duration" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                    required>
+                                <option value="">Select duration</option>
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="90">1.5 hours</option>
+                                <option value="120">2 hours</option>
+                                <option value="180">3 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Participants & Pricing -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-3">Max Participants *</label>
+                            <select x-model="form.maxParticipants" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                    required>
+                                <option value="">Select max size</option>
+                                <option value="1">1-on-1 Session</option>
+                                <option value="3">Small Group (3)</option>
+                                <option value="5">Medium Group (5)</option>
+                                <option value="10">Large Group (10)</option>
+                                <option value="20">Workshop (20)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-900 mb-3">Price (USD)</label>
+                            <input x-model="form.price" 
+                                   type="number" 
+                                   min="0" 
+                                   step="5"
+                                   placeholder="0 for free"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            <p class="text-xs text-gray-500 mt-1">Leave empty for free sessions</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Description *</label>
+                        <textarea x-model="form.description" 
+                                  rows="6" 
+                                  placeholder="Describe what learners will gain from this session. Include prerequisites, topics covered, and learning outcomes..."
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                                  required></textarea>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Be detailed and specific</span>
+                            <span x-text="`${form.description.length}/1000`"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Learning Objectives -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Learning Objectives</label>
+                        <div class="space-y-2">
+                            <template x-for="(objective, index) in form.objectives" :key="index">
+                                <div class="flex items-center space-x-2">
+                                    <input x-model="form.objectives[index]" 
+                                           type="text" 
+                                           placeholder="What will learners achieve?"
+                                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                    <button type="button" 
+                                            @click="form.objectives.splice(index, 1)"
+                                            class="text-red-500 hover:text-red-700">
+                                        <i data-feather="minus-circle" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                            </template>
+                            <button type="button" 
+                                    @click="form.objectives.push('')"
+                                    class="flex items-center space-x-2 text-purple-600 hover:text-purple-700 font-medium">
+                                <i data-feather="plus-circle" class="h-4 w-4"></i>
+                                <span>Add Objective</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Prerequisites -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Prerequisites</label>
+                        <textarea x-model="form.prerequisites" 
+                                  rows="3" 
+                                  placeholder="What should learners know before joining? e.g., Basic JavaScript knowledge, HTML/CSS fundamentals..."
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"></textarea>
+                    </div>
+                    
+                    <!-- Session Type -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3">Session Type</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <template x-for="type in sessionTypes" :key="type.value">
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" 
+                                           x-model="form.sessionType" 
+                                           :value="type.value"
+                                           class="sr-only peer">
+                                    <div class="p-4 border-2 border-gray-200 rounded-xl peer-checked:border-purple-500 peer-checked:bg-purple-50 hover:border-gray-300 transition-colors">
+                                        <div class="flex items-center space-x-3">
+                                            <i :data-feather="type.icon" class="h-5 w-5 text-gray-600 peer-checked:text-purple-600"></i>
+                                            <div>
+                                                <p class="font-medium text-gray-900" x-text="type.name"></p>
+                                                <p class="text-xs text-gray-600" x-text="type.description"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Options -->
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <h4 class="font-bold text-gray-900 mb-3">Advanced Options</h4>
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" 
+                                       x-model="form.recordSession"
+                                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <span class="text-sm text-gray-700">Record session for later review</span>
+                            </label>
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" 
+                                       x-model="form.allowQuestions"
+                                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <span class="text-sm text-gray-700">Allow live Q&A during session</span>
+                            </label>
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" 
+                                       x-model="form.provideMaterials"
+                                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <span class="text-sm text-gray-700">Provide downloadable materials</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="mt-8 flex justify-between items-center">
+                <div class="text-sm text-gray-600">
+                    <span>💡 Tip: You can save as draft and publish later</span>
+                </div>
+                <div class="flex space-x-4">
+                    <button type="button"
+                            @click="showCreateModal = false" 
+                            class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button"
+                            @click="saveDraft()"
+                            class="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                        <i data-feather="save" class="h-4 w-4"></i>
+                        <span>Save as Draft</span>
+                    </button>
+                    <button type="submit"
+                            :disabled="!isFormValid()"
+                            class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                        <i data-feather="send" class="h-4 w-4"></i>
+                        <span>Create & Publish</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function sessionForm() {
+    return {
+        form: {
+            title: '',
+            domain: '',
+            skills: '',
+            description: '',
+            schedule: '',
+            duration: '',
+            maxParticipants: '',
+            price: '',
+            objectives: [''],
+            prerequisites: '',
+            sessionType: 'lecture',
+            recordSession: false,
+            allowQuestions: true,
+            provideMaterials: false
+        },
+        
+        sessionTypes: [
+            {
+                value: 'lecture',
+                name: 'Lecture',
+                icon: 'book-open',
+                description: 'Traditional teaching session'
+            },
+            {
+                value: 'workshop',
+                name: 'Workshop',
+                icon: 'tool',
+                description: 'Hands-on practical session'
+            },
+            {
+                value: 'qna',
+                name: 'Q&A',
+                icon: 'help-circle',
+                description: 'Question and answer session'
+            },
+            {
+                value: 'coding',
+                name: 'Live Coding',
+                icon: 'code',
+                description: 'Code together in real-time'
+            }
+        ],
+        
+        isFormValid() {
+            return this.form.title && 
+                   this.form.domain && 
+                   this.form.description && 
+                   this.form.schedule && 
+                   this.form.duration && 
+                   this.form.maxParticipants;
+        },
+        
+        saveDraft() {
+            // Save as draft logic
+            console.log('Saving as draft:', this.form);
+        },
+        
+        createSession() {
+            if (this.isFormValid()) {
+                // Create and publish session
+                console.log('Creating session:', this.form);
+            }
+        }
+    }
+}
+</script>
