@@ -9,7 +9,7 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='landing.html'), name='landing'),
     path('', include('users.urls')),
     path('sessions/', include('sessions.urls')),
-    path('api/', include('sessions.urls')),
+    path('api/sessions/', include('sessions.urls')),
     path('recommendations/', include('recommendations.urls')),
 ]
 

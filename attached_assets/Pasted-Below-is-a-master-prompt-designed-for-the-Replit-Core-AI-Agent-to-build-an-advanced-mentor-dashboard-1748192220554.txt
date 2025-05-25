@@ -1,0 +1,257 @@
+Below is a master prompt designed for the Replit Core AI Agent to build an advanced mentor dashboard for the PeerLearn platform. This prompt provides in-depth details and assurance that all core features will be fully functional, secure, and optimized for both web and mobile use on Replit. The goal is to ensure the dashboard is complete, reliable, and ready to use without requiring additional coding input.
+
+Master Prompt for Replit Core AI Agent: Advanced Mentor Dashboard for PeerLearn
+Objective:
+Develop a fully operational, advanced mentor dashboard for the PeerLearn platform using Django 4.x, SQLite3, Tailwind CSS, and vanilla JavaScript. The dashboard must be accessible at /mentor/dashboard, require JWT authentication with a ‘mentor’ role, and provide a seamless, responsive user experience on both web and mobile devices. All features must be secure, real-time where applicable, and thoroughly integrated to work on Replit.
+
+Core Features and Detailed Requirements
+1.  Session Management
+	•  Overview: Allow mentors to create, edit, publish, and view their sessions, organized into three subtabs: Draft, Scheduled, and Past.
+	•  UI Elements:
+		•  Display a tabbed navigation bar with “My Sessions,” “Requests,” “Earnings,” “Analytics,” “Profile,” and “Notifications.”
+		•  Under “My Sessions,” include subtabs for Draft, Scheduled, and Past sessions.
+		•  Each session appears as a card with:
+			•  Title
+			•  Date and time
+			•  Number of participants (real-time updates via WebSockets)
+			•  Status (e.g., draft, scheduled, in_progress, completed)
+			•  Action buttons based on status:
+				•  Draft: “Edit” (links to /mentor/sessions/{id}/edit)
+				•  Scheduled: “I’m Ready” (updates status and notifies learners)
+				•  Ready: “Start Class” (initiates WebRTC session at /room/{id})
+	•  Functionality:
+		•  Create Session: A “+ Create Session” button in the header opens /mentor/sessions/create, a form with fields for title, description, date, time, duration, price (optional), and a “Save as Draft” or “Publish” button.
+		•  Edit Session: Draft sessions can be modified at /mentor/sessions/{id}/edit with pre-filled data.
+		•  Publish Session: Moves session from Draft to Scheduled tab, making it bookable by learners.
+		•  Real-Time Updates: Use WebSockets to update participant counts instantly when learners book a session.
+2.  Request Handling
+	•  Overview: Enable mentors to view and respond to learner requests for sessions.
+	•  UI Elements:
+		•  List requests in the “Requests” tab, showing:
+			•  Learner’s name
+			•  Requested topic
+			•  Preferred times
+			•  Status (pending, accepted, declined)
+			•  Buttons: “Accept” and “Decline”
+	•  Functionality:
+		•  View Requests: Fetch and display all pending requests for the authenticated mentor.
+		•  Respond to Requests:
+			•  “Decline” updates the request status and notifies the learner.
+			•  “Accept” opens a modal with a time picker; upon confirmation, creates a new scheduled session and notifies the learner.
+		•  Real-Time Alerts: Use WebSockets to notify mentors of new requests with a badge on the “Requests” tab.
+3.  Earnings Tracking
+	•  Overview: Provide mentors with a clear view of their earnings and ability to request payouts.
+	•  UI Elements:
+		•  In the “Earnings” tab, show:
+			•  Total earnings (sum of completed session payments minus platform commission)
+			•  Monthly breakdown (table or simple graph)
+			•  “Request Payout” button
+	•  Functionality:
+		•  Calculate earnings from completed sessions (e.g., price per booking minus a 10% commission).
+		•  “Request Payout” opens a confirmation dialog; on confirmation, submits a payout request to the server and updates the UI.
+		•  Store payout history for future reference.
+4.  Analytics
+	•  Overview: Offer mentors insights into their performance.
+	•  UI Elements:
+		•  In the “Analytics” tab, display cards with:
+			•  Total students taught
+			•  Total sessions conducted
+			•  Average rating (from feedback)
+			•  Optional: Simple line chart of session bookings over time
+	•  Functionality:
+		•  Fetch data from the database (e.g., count of bookings, sessions, average feedback rating).
+		•  Update metrics dynamically when new sessions or feedback are added.
+5.  Profile Management
+	•  Overview: Allow mentors to update their personal details.
+	•  UI Elements:
+		•  In the “Profile” tab, provide a form with:
+			•  Bio (textarea)
+			•  Expertise (input field for tags, e.g., “Python, Math”)
+			•  Profile picture upload (file input with preview)
+			•  “Save” button
+	•  Functionality:
+		•  Pre-fill form with current data.
+		•  Display a live preview of the uploaded picture before saving.
+		•  Save updates to the database and reflect changes immediately.
+6.  Notifications
+	•  Overview: Keep mentors informed with real-time alerts.
+	•  UI Elements:
+		•  In the “Notifications” tab, list notifications with:
+			•  Message (e.g., “New request from John Doe”)
+			•  Timestamp
+			•  Read/unread status
+		•  Show a badge on the “Notifications” tab with the count of unread notifications.
+	•  Functionality:
+		•  Use WebSockets to push new notifications (e.g., new requests, session reminders).
+		•  Allow mentors to mark notifications as read.
+		•  Link notifications to relevant pages (e.g., clicking a request notification opens the “Requests” tab).
+7.  Live Sessions with WebRTC
+	•  Overview: Enable real-time video and audio sessions between mentors and learners.
+	•  UI Elements:
+		•  At /room/{id}, design a session room with:
+			•  Video feeds for mentor and learner (HTML5 <video> elements)
+			•  Controls: Mute audio, turn off video, share screen
+			•  Optional: Chat window for text communication
+	•  Functionality:
+		•  Use the simple-peer library for WebRTC peer-to-peer connections.
+		•  Flow:
+			1.  Mentor clicks “I’m Ready” on a scheduled session, updating its status.
+			2.  Learner confirms readiness (tracked via Booking status).
+			3.  “Start Class” button appears, redirecting to /room/{id}.
+			4.  Establish WebRTC connection via WebSocket signaling (SDP offers/answers, ICE candidates).
+		•  Handle connection drops with automatic reconnection attempts and display warnings (e.g., “Reconnecting…”).
+		•  Implement chat using WebSockets for real-time messaging within the room.
+
+Database Models
+Define the following models with appropriate fields and relationships:
+•  User
+	•  Extend Django’s User model with:
+		•  role (CharField, choices: “mentor”, “learner”)
+		•  ForeignKey relationships to other models as needed.
+•  Session
+	•  Fields:
+		•  title (CharField)
+		•  description (TextField)
+		•  mentor (ForeignKey to User)
+		•  start_time (DateTimeField)
+		•  duration (IntegerField, in minutes)
+		•  status (CharField, choices: draft, scheduled, in_progress, completed)
+		•  price (DecimalField, nullable for free sessions)
+		•  participants (ManyToManyField to User through Booking)
+•  Booking
+	•  Fields:
+		•  learner (ForeignKey to User)
+		•  session (ForeignKey to Session)
+		•  status (CharField, choices: booked, attended, cancelled)
+		•  payment_amount (DecimalField)
+•  Request
+	•  Fields:
+		•  learner (ForeignKey to User)
+		•  mentor (ForeignKey to User)
+		•  topic (CharField)
+		•  preferred_times (TextField, e.g., JSON or comma-separated)
+		•  status (CharField, choices: pending, accepted, declined)
+•  Notification
+	•  Fields:
+		•  user (ForeignKey to User)
+		•  message (TextField)
+		•  read_status (BooleanField, default=False)
+		•  timestamp (DateTimeField, auto_now_add=True)
+•  Feedback
+	•  Fields:
+		•  session (ForeignKey to Session)
+		•  learner (ForeignKey to User)
+		•  rating (IntegerField, 1-5)
+		•  comment (TextField, nullable)
+Apply migrations to create these tables in SQLite3.
+
+APIs (Django REST Framework)
+Implement the following REST endpoints:
+•  Sessions:
+	•  GET /api/sessions/ - List mentor’s sessions (filter by status)
+	•  POST /api/sessions/ - Create a new session
+	•  PUT /api/sessions/{id}/ - Update session details
+	•  POST /api/sessions/{id}/ready/ - Mark session as ready
+•  Requests:
+	•  GET /api/requests/ - List mentor’s pending requests
+	•  POST /api/requests/{id}/accept/ - Accept a request (include time slot)
+	•  POST /api/requests/{id}/decline/ - Decline a request
+•  Earnings:
+	•  GET /api/earnings/ - Get total and monthly earnings
+	•  POST /api/payouts/ - Submit a payout request
+•  Analytics:
+	•  GET /api/analytics/ - Fetch mentor’s performance metrics
+•  Profile:
+	•  GET /api/profile/ - Get mentor’s profile data
+	•  PUT /api/profile/ - Update profile (including picture upload)
+•  Notifications:
+	•  GET /api/notifications/ - List notifications
+	•  PUT /api/notifications/{id}/ - Mark as read
+Secure all endpoints with JWT authentication.
+
+WebSockets (Django Channels)
+Set up WebSocket consumers for:
+•  Session Updates:
+	•  Channel: session_{session_id}
+	•  Update participant count when learners book or cancel.
+•  Notifications:
+	•  Channel: notifications_{user_id}
+	•  Push new notifications and update badge count.
+•  WebRTC Signaling:
+	•  Channel: room_{session_id}
+	•  Handle SDP offers/answers and ICE candidates for live sessions.
+Authenticate WebSocket connections using JWT tokens (passed as query parameters or headers).
+
+UI/UX Design
+•  Framework: Use Tailwind CSS for styling and vanilla JavaScript for interactivity.
+•  Layout:
+	•  Header: Logo, “Mentor Dashboard” title, “+ Create Session” button.
+	•  Metrics Section: Cards for total students, sessions, rating, earnings.
+	•  Navigation: Tabs with active state styling (e.g., underline or background color).
+	•  Content Area: Dynamic display based on selected tab.
+•  Responsiveness:
+	•  On mobile, convert tabs to a dropdown menu.
+	•  Stack session cards and forms vertically on smaller screens.
+•  Live Session Room:
+	•  Side-by-side video feeds (stacked on mobile).
+	•  Control buttons with clear icons (e.g., microphone, camera).
+	•  Chat window below or beside videos.
+Embed JavaScript in templates to:
+•  Fetch data from APIs and update the DOM.
+•  Connect to WebSocket channels for real-time updates.
+•  Manage WebRTC connections (e.g., navigator.mediaDevices.getUserMedia, simple-peer setup).
+
+Security
+•  Authentication: Use Django REST Framework SimpleJWT for JWT tokens.
+	•  Store token in local storage or secure cookie after login.
+	•  Include token in Authorization: Bearer {token} headers for API calls.
+•  Authorization: Restrict dashboard access to users with role = 'mentor'.
+•  Data Handling:
+	•  Validate and sanitize all user inputs.
+	•  Use HTTPS for secure communication (Replit should handle this).
+	•  Store profile pictures in a media/ directory with proper URL configuration.
+
+Replit-Specific Setup
+•  Project Configuration:
+	•  Use Django’s default project structure.
+	•  Set DEBUG = False for production-like testing on Replit.
+	•  Configure ALLOWED_HOSTS to include Replit’s domain (e.g., *.repl.co).
+•  Server:
+	•  Run Django on Replit’s default port (0.0.0.0:8000 or as specified).
+	•  Use daphne or uvicorn for WebSocket support (pip install daphne and add to INSTALLED_APPS).
+•  Database: Use SQLite3 (DATABASES setting points to db.sqlite3).
+•  Static and Media Files:
+	•  Serve static files (static/) with python manage.py collectstatic.
+	•  Store media files (media/) for profile pictures, configure MEDIA_URL and MEDIA_ROOT.
+•  Dependencies: Include in requirements.txt:
+	•  django==4.x
+	•  djangorestframework
+	•  djangorestframework-simplejwt
+	•  django-channels
+	•  channels-redis (optional, if Redis is available)
+	•  simple-peer (via CDN in templates)
+
+Implementation Instructions
+1.  Project Setup:
+	•  Initialize a Django project with the required apps (rest_framework, channels, etc.).
+	•  Configure settings for static files, media, JWT, and WebSockets.
+2.  Database:
+	•  Define models as specified and run python manage.py makemigrations and migrate.
+3.  Backend:
+	•  Create views (class-based) for each dashboard section.
+	•  Implement REST API endpoints with serializers and permissions.
+	•  Set up WebSocket consumers in routing.py and consumers.py.
+4.  Frontend:
+	•  Build templates (dashboard.html, session_create.html, room.html, etc.) with Tailwind CSS.
+	•  Add JavaScript for API calls, WebSocket connections, and WebRTC setup.
+5.  Testing:
+	•  Test each feature (session creation, request handling, live sessions, etc.) on Replit.
+	•  Verify responsiveness on mobile views.
+	•  Ensure WebRTC and WebSockets work without errors.
+6.  Deployment:
+	•  Run python manage.py runserver 0.0.0.0:8000 (or equivalent for Replit).
+	•  Confirm the dashboard is accessible and functional at the Replit URL.
+
+This master prompt ensures the Replit Core AI Agent builds a robust, feature-rich mentor dashboard with all core functionalities working seamlessly. It covers every aspect—from database design to real-time features and Replit compatibility—providing depth and assurance of a fully operational system.
+
+Let me know if you need further clarification or adjustments!

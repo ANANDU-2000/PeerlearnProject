@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Advanced Session - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .step-indicator {
+        transition: all 0.3s ease;
+    }
+    .step-indicator.active {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .skill-tag {
+        background: #e0f2fe;
+        color: #0277bd;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        margin: 0.25rem;
+        display: inline-block;
+    }
+    .skill-tag.selected {
+        background: #10b981;
+        color: white;
+    }
+    .price-option {
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .price-option.selected {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8" x-data="advancedSessionCreator()" x-init="init()">
+    <!-- Header -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Create Advanced Session</h1>
+                    <p class="text-gray-600 mt-1">Design a comprehensive learning experience</p>
+                </div>
+                <button @click="goBack()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Progress Steps -->
+            <div class="mt-8 flex items-center justify-center space-x-4">
+                <template x-for="(step, index) in steps" :key="index">
+                    <div class="flex items-center">
+                        <div :class="currentStep >= index ? 'active' : ''"
+                             class="step-indicator w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-semibold">
+                            <span x-text="index + 1"></span>
+                        </div>
+                        <div x-show="index < steps.length - 1" class="w-16 h-1 bg-gray-200 mx-2"></div>
+                    </div>
+                </template>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <span class="text-sm text-gray-600" x-text="steps[currentStep]"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <form @submit.prevent="submitSession()" class="bg-white rounded-xl shadow-lg p-8">
+            
+            <!-- Step 1: Basic Information -->
+            <div x-show="currentStep === 0" class="space-y-6">
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Session Title *</label>
+                    <input type="text" x-model="sessionData.title" 
+                           placeholder="e.g., Advanced React Hooks and State Management"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Session Description *</label>
+                    <textarea x-model="sessionData.description" rows="4"
+                              placeholder="Describe what learners will gain from this session. Include prerequisites, topics covered, and learning outcomes..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Duration (minutes) *</label>
+                        <select x-model="sessionData.duration" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="">Select duration</option>
+                            <option value="30">30 minutes</option>
+                            <option value="45">45 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Max Participants</label>
+                        <select x-model="sessionData.maxParticipants"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="1">1-on-1 Session</option>
+                            <option value="5">Small Group (5)</option>
+                            <option value="10">Medium Group (10)</option>
+                            <option value="20">Large Group (20)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Learning Objectives -->
+            <div x-show="currentStep === 1" class="space-y-6">
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Learning Objectives</label>
+                    <p class="text-sm text-gray-500 mb-4">What specific skills or knowledge will learners gain?</p>
+                    
+                    <div class="space-y-3">
+                        <template x-for="(objective, index) in sessionData.objectives" :key="index">
+                            <div class="flex items-center space-x-3">
+                                <input type="text" x-model="sessionData.objectives[index]"
+                                       placeholder="e.g., Understand useEffect dependencies"
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <button type="button" @click="removeObjective(index)" 
+                                        class="text-red-500 hover:text-red-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </template>
+                        
+                        <button type="button" @click="addObjective()" 
+                                class="text-green-600 hover:text-green-700 flex items-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            <span>Add Learning Objective</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Prerequisites</label>
+                    <textarea x-model="sessionData.prerequisites" rows="3"
+                              placeholder="What should learners know before joining? e.g., Basic JavaScript knowledge, HTML/CSS fundamentals"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                </div>
+            </div>
+
+            <!-- Step 3: Session Type & Advanced Options -->
+            <div x-show="currentStep === 2" class="space-y-6">
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-4">Session Type</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div @click="sessionData.sessionType = 'live'" 
+                             :class="sessionData.sessionType === 'live' ? 'selected' : ''"
+                             class="price-option text-center">
+                            <div class="text-lg font-semibold">Live Session</div>
+                            <div class="text-sm text-gray-600">Real-time interaction</div>
+                        </div>
+                        <div @click="sessionData.sessionType = 'recorded'" 
+                             :class="sessionData.sessionType === 'recorded' ? 'selected' : ''"
+                             class="price-option text-center">
+                            <div class="text-lg font-semibold">Pre-recorded</div>
+                            <div class="text-sm text-gray-600">Watch anytime</div>
+                        </div>
+                        <div @click="sessionData.sessionType = 'hybrid'" 
+                             :class="sessionData.sessionType === 'hybrid' ? 'selected' : ''"
+                             class="price-option text-center">
+                            <div class="text-lg font-semibold">Hybrid</div>
+                            <div class="text-sm text-gray-600">Live + materials</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Advanced Options</label>
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" x-model="sessionData.recordSession" 
+                                   class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <span class="ml-2 text-sm text-gray-700">Record session for later review</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" x-model="sessionData.allowQA" 
+                                   class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <span class="ml-2 text-sm text-gray-700">Allow Q&A during session</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" x-model="sessionData.provideResources" 
+                                   class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <span class="ml-2 text-sm text-gray-700">Provide downloadable materials</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Schedule & Pricing -->
+            <div x-show="currentStep === 3" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Session Date & Time</label>
+                        <input type="datetime-local" x-model="sessionData.schedule"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
+                        <select x-model="sessionData.timezone"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="IST">India Standard Time (IST)</option>
+                            <option value="EST">Eastern Standard Time (EST)</option>
+                            <option value="PST">Pacific Standard Time (PST)</option>
+                            <option value="GMT">Greenwich Mean Time (GMT)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-4">Pricing (INR)</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div @click="sessionData.price = 'free'" 
+                             :class="sessionData.price === 'free' ? 'selected' : ''"
+                             class="price-option text-center">
+                            <div class="text-2xl font-bold text-green-600">Free</div>
+                            <div class="text-sm text-gray-600">Community session</div>
+                        </div>
+                        <div @click="sessionData.price = 'paid'" 
+                             :class="sessionData.price === 'paid' ? 'selected' : ''"
+                             class="price-option text-center">
+                            <div class="text-2xl font-bold">₹<span x-text="sessionData.customPrice"></span></div>
+                            <div class="text-sm text-gray-600">Custom pricing</div>
+                            <input x-show="sessionData.price === 'paid'" type="number" x-model="sessionData.customPrice"
+                                   placeholder="Enter amount" 
+                                   class="mt-2 w-full px-3 py-2 border border-gray-300 rounded text-center">
+                        </div>
+                        <div @click="sessionData.price = 'premium'" 
+                             :class="sessionData.price === 'premium' ? 'selected' : ''"
+                             class="price-option text-center">
+                            <div class="text-2xl font-bold">₹2,999</div>
+                            <div class="text-sm text-gray-600">Premium session</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                <button type="button" @click="previousStep()" 
+                        x-show="currentStep > 0"
+                        class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                
+                <div class="flex space-x-4">
+                    <button type="button" @click="saveDraft()" 
+                            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        Save as Draft
+                    </button>
+                    
+                    <button type="button" @click="nextStep()" 
+                            x-show="currentStep < steps.length - 1"
+                            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Next Step
+                    </button>
+                    
+                    <button type="submit" 
+                            x-show="currentStep === steps.length - 1"
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Create & Publish
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function advancedSessionCreator() {
+    return {
+        currentStep: 0,
+        steps: ['Basic Info', 'Learning Goals', 'Session Type', 'Schedule & Price'],
+        
+        sessionData: {
+            title: '',
+            description: '',
+            duration: '',
+            maxParticipants: 10,
+            objectives: [''],
+            prerequisites: '',
+            sessionType: 'live',
+            recordSession: false,
+            allowQA: true,
+            provideResources: false,
+            schedule: '',
+            timezone: 'IST',
+            price: 'free',
+            customPrice: 1500
+        },
+        
+        init() {
+            // Set default date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            this.sessionData.schedule = tomorrow.toISOString().slice(0, 16);
+        },
+        
+        nextStep() {
+            if (this.validateCurrentStep()) {
+                this.currentStep++;
+            }
+        },
+        
+        previousStep() {
+            this.currentStep--;
+        },
+        
+        validateCurrentStep() {
+            switch(this.currentStep) {
+                case 0:
+                    if (!this.sessionData.title || !this.sessionData.description || !this.sessionData.duration) {
+                        this.showNotification('Please fill in all required fields', 'error');
+                        return false;
+                    }
+                    break;
+                case 1:
+                    if (this.sessionData.objectives.filter(o => o.trim()).length === 0) {
+                        this.showNotification('Please add at least one learning objective', 'error');
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        },
+        
+        addObjective() {
+            this.sessionData.objectives.push('');
+        },
+        
+        removeObjective(index) {
+            this.sessionData.objectives.splice(index, 1);
+        },
+        
+        async saveDraft() {
+            try {
+                const response = await fetch('/sessions/api/sessions/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        ...this.sessionData,
+                        status: 'draft'
+                    })
+                });
+                
+                if (response.ok) {
+                    this.showNotification('Session saved as draft!', 'success');
+                    setTimeout(() => window.location.href = '/dashboard/mentor/', 1500);
+                }
+            } catch (error) {
+                this.showNotification('Failed to save draft', 'error');
+            }
+        },
+        
+        async submitSession() {
+            try {
+                const response = await fetch('/sessions/api/sessions/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        ...this.sessionData,
+                        status: 'scheduled'
+                    })
+                });
+                
+                if (response.ok) {
+                    this.showNotification('Session created and published!', 'success');
+                    setTimeout(() => window.location.href = '/dashboard/mentor/', 1500);
+                }
+            } catch (error) {
+                this.showNotification('Failed to create session', 'error');
+            }
+        },
+        
+        goBack() {
+            window.location.href = '/dashboard/mentor/';
+        },
+        
+        showNotification(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        }
+    }
+}
+</script>
+{% endblock %}

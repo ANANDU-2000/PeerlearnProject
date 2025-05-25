@@ -643,7 +643,7 @@ function mentorDashboard() {
         },
         
         createSession() {
-            window.location.href = '/mentor/sessions/create/';
+            window.location.href = '/sessions/create/';
         },
         
         editSession(sessionId) {
@@ -658,7 +658,7 @@ function mentorDashboard() {
             session.publishing = true;
             
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/publish/`, {
+                const response = await fetch(`/sessions/api/sessions/${sessionId}/publish/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': this.getCSRFToken(),
