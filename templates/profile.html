@@ -199,7 +199,7 @@
                         
                         <div class="text-center">
                             <div class="text-2xl font-bold text-green-600">
-                                {% if user.is_mentor %}{{ user.mentor_sessions.filter:status='completed'.count }}{% else %}{{ user.bookings.filter:status='confirmed'.count }}{% endif %}
+                                {% if user.is_mentor %}{{ completed_sessions_count }}{% else %}{{ confirmed_bookings_count }}{% endif %}
                             </div>
                             <div class="text-sm text-gray-500">
                                 {% if user.is_mentor %}Completed Sessions{% else %}Confirmed Bookings{% endif %}

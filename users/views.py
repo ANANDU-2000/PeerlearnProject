@@ -64,7 +64,29 @@ def profile_view(request):
     else:
         form = UserProfileForm(instance=request.user)
     
-    return render(request, 'profile.html', {'form': form})
+    # Calculate profile statistics based on user role
+    if request.user.is_mentor:
+        from sessions.models import Session
+        completed_sessions_count = Session.objects.filter(
+            mentor=request.user, 
+            status='completed'
+        ).count()
+        confirmed_bookings_count = 0
+    else:
+        from sessions.models import Booking
+        completed_sessions_count = 0
+        confirmed_bookings_count = Booking.objects.filter(
+            learner=request.user, 
+            status='confirmed'
+        ).count()
+    
+    context = {
+        'form': form,
+        'completed_sessions_count': completed_sessions_count,
+        'confirmed_bookings_count': confirmed_bookings_count,
+    }
+    
+    return render(request, 'profile.html', context)
 
 @login_required
 def mentor_dashboard(request):
