@@ -204,8 +204,10 @@
                                         Edit
                                     </button>
                                     <button @click="publishSession(session.id)"
-                                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-medium">
-                                        Publish
+                                            :disabled="session.publishing"
+                                            :class="session.publishing ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                                            class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                        <span x-text="session.publishing ? 'Publishing...' : 'Publish'"></span>
                                     </button>
                                 </div>
                             </div>
@@ -649,6 +651,12 @@ function mentorDashboard() {
         },
         
         async publishSession(sessionId) {
+            // Find the session and set publishing state
+            const session = this.mySessions.draft.find(s => s.id === sessionId);
+            if (!session || session.publishing) return;
+            
+            session.publishing = true;
+            
             try {
                 const response = await fetch(`/api/sessions/${sessionId}/publish/`, {
                     method: 'POST',
@@ -662,10 +670,13 @@ function mentorDashboard() {
                     // Move from draft to scheduled
                     const sessionIndex = this.mySessions.draft.findIndex(s => s.id === sessionId);
                     if (sessionIndex !== -1) {
-                        const session = this.mySessions.draft.splice(sessionIndex, 1)[0];
+                        const publishedSession = this.mySessions.draft.splice(sessionIndex, 1)[0];
+                        publishedSession.status = 'scheduled';
+                        publishedSession.publishing = false;
+                        
                         this.mySessions.scheduled.push({
-                            ...session,
-                            schedule: 'TBD',
+                            ...publishedSession,
+                            schedule: publishedSession.schedule || new Date().toLocaleDateString(),
                             participants: 0,
                             timeToStart: 1440,
                             mentorReady: false,
@@ -673,8 +684,14 @@ function mentorDashboard() {
                         });
                     }
                     this.showNotification('Session published successfully!', 'success');
+                    
+                    // Switch to scheduled tab to show the published session
+                    this.sessionView = 'scheduled';
+                } else {
+                    throw new Error('Failed to publish');
                 }
             } catch (error) {
+                session.publishing = false;
                 this.showNotification('Failed to publish session', 'error');
             }
         },
