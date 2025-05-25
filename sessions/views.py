@@ -155,7 +155,7 @@ def session_room(request, session_id):
         'is_mentor': request.user == session.mentor,
     }
     
-    return render(request, 'sessions/room.html', context)
+    return render(request, 'session_room.html', context)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

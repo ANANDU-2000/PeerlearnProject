@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Session - {{ session.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.video-container {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    height: 400px;
+}
+
+.video-grid.single {
+    grid-template-columns: 1fr;
+}
+
+.participant-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #1f2937;
+}
+
+.controls-bar {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.control-btn.active {
+    background: #10b981;
+    color: white;
+}
+
+.control-btn.muted {
+    background: #ef4444;
+    color: white;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+}
+
+.chat-panel {
+    background: white;
+    border-radius: 12px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.participant-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8" x-data="sessionRoom()" x-init="init()">
+    <!-- Session Header -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ session.title }}</h1>
+                    <p class="text-gray-600">{{ session.description }}</p>
+                    <div class="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                        <span>Duration: {{ session.duration }} minutes</span>
+                        <span>Participants: <span x-text="participantCount">{{ session.current_participants }}</span>/{{ session.max_participants }}</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-lg font-semibold text-green-600" x-text="sessionStatus">
+                        {% if session.status == 'live' %}Live{% else %}Starting Soon{% endif %}
+                    </div>
+                    <div class="text-sm text-gray-500" x-text="sessionTime">00:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Video Area -->
+            <div class="lg:col-span-3">
+                <!-- Participant Status -->
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-3">Participants</h3>
+                    <div class="space-y-2">
+                        <div class="participant-status">
+                            <div class="status-dot"></div>
+                            <span class="font-medium">{{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
+                            <span class="text-sm text-gray-500">(Mentor)</span>
+                            <span x-show="mentorReady" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Ready</span>
+                        </div>
+                        
+                        {% for booking in session.bookings.all %}
+                        <div class="participant-status">
+                            <div class="status-dot"></div>
+                            <span class="font-medium">{{ booking.learner.first_name }} {{ booking.learner.last_name }}</span>
+                            <span class="text-sm text-gray-500">(Learner)</span>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full" x-text="learnerStatuses['{{ booking.learner.id }}'] || 'Connecting...'"></span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Video Grid -->
+                <div class="video-container mb-6">
+                    <div class="video-grid" :class="participantCount === 1 ? 'single' : ''">
+                        <!-- Local Video -->
+                        <div class="relative">
+                            <video id="localVideo" class="participant-video" autoplay muted playsinline></video>
+                            <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                                You
+                            </div>
+                        </div>
+                        
+                        <!-- Remote Videos -->
+                        <div id="remoteVideos" class="grid gap-2">
+                            <!-- Remote videos will be added dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex justify-center mb-6">
+                    <div class="controls-bar">
+                        <button @click="toggleAudio()" 
+                                :class="audioEnabled ? 'active' : 'muted'"
+                                class="control-btn">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      :d="audioEnabled ? 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z' : 'M5.586 5.586l1.414 1.414M5.586 5.586L4.172 4.172m1.414 1.414L12 12m0 0l6.414 6.414M12 12L5.586 18.414m0 0L4.172 19.828m1.414-1.414L12 12m0 0l6.414-6.414'"></path>
+                            </svg>
+                        </button>
+                        
+                        <button @click="toggleVideo()" 
+                                :class="videoEnabled ? 'active' : 'muted'"
+                                class="control-btn">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      :d="videoEnabled ? 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' : 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18 21l-3-3m3-3l-3-3m3 3l3 3'"></path>
+                            </svg>
+                        </button>
+                        
+                        <button @click="shareScreen()" 
+                                :class="screenSharing ? 'active' : ''"
+                                class="control-btn bg-gray-600 text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                        
+                        <button @click="endSession()" 
+                                class="control-btn bg-red-500 text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 16l-2-2m0 0l-2-2m2 2l2-2m-2 2l-2 2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Panel -->
+            <div class="lg:col-span-1">
+                <div class="chat-panel">
+                    <div class="p-4 border-b">
+                        <h3 class="font-semibold text-gray-900">Chat</h3>
+                    </div>
+                    
+                    <div class="flex-1 p-4 overflow-y-auto" id="chatMessages">
+                        <div class="space-y-3">
+                            <div class="text-sm text-gray-500 text-center">Session started</div>
+                            <!-- Chat messages will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 border-t">
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   x-model="chatMessage"
+                                   @keyup.enter="sendMessage()"
+                                   placeholder="Type a message..."
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <button @click="sendMessage()" 
+                                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sessionRoom() {
+    return {
+        sessionId: '{{ session.id }}',
+        userId: '{{ user.id }}',
+        userName: '{{ user.first_name }} {{ user.last_name }}',
+        isMentor: {{ user.is_mentor|yojson }},
+        
+        // WebRTC
+        localStream: null,
+        peerConnections: {},
+        socket: null,
+        
+        // State
+        participantCount: {{ session.current_participants }},
+        sessionStatus: 'Live',
+        sessionTime: '00:00',
+        mentorReady: true,
+        learnerStatuses: {},
+        
+        // Controls
+        audioEnabled: true,
+        videoEnabled: true,
+        screenSharing: false,
+        chatMessage: '',
+        
+        async init() {
+            await this.initializeMedia();
+            this.connectWebSocket();
+            this.startSessionTimer();
+            this.updateIcons();
+        },
+        
+        async initializeMedia() {
+            try {
+                this.localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                
+                const localVideo = document.getElementById('localVideo');
+                localVideo.srcObject = this.localStream;
+                
+                this.showNotification('Camera and microphone connected', 'success');
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                this.showNotification('Camera/microphone access denied', 'error');
+            }
+        },
+        
+        connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/session/${this.sessionId}/`;
+            
+            this.socket = new WebSocket(wsUrl);
+            
+            this.socket.onopen = () => {
+                console.log('WebSocket connected');
+                this.socket.send(JSON.stringify({
+                    type: 'join_session',
+                    user_id: this.userId,
+                    user_name: this.userName
+                }));
+            };
+            
+            this.socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                this.handleWebSocketMessage(data);
+            };
+            
+            this.socket.onclose = () => {
+                console.log('WebSocket disconnected');
+                setTimeout(() => this.connectWebSocket(), 3000);
+            };
+        },
+        
+        handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'user_joined':
+                    this.participantCount++;
+                    this.addChatMessage(`${data.user_name} joined the session`, 'system');
+                    break;
+                    
+                case 'user_left':
+                    this.participantCount--;
+                    this.addChatMessage(`${data.user_name} left the session`, 'system');
+                    break;
+                    
+                case 'chat_message':
+                    this.addChatMessage(data.message, 'user', data.user_name);
+                    break;
+                    
+                case 'webrtc_offer':
+                case 'webrtc_answer':
+                case 'ice_candidate':
+                    this.handleWebRTCSignaling(data);
+                    break;
+            }
+        },
+        
+        async handleWebRTCSignaling(data) {
+            // WebRTC peer connection logic
+            const peerId = data.from_user;
+            
+            if (!this.peerConnections[peerId]) {
+                this.peerConnections[peerId] = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+                
+                // Add local stream
+                this.localStream.getTracks().forEach(track => {
+                    this.peerConnections[peerId].addTrack(track, this.localStream);
+                });
+                
+                // Handle remote stream
+                this.peerConnections[peerId].ontrack = (event) => {
+                    this.addRemoteVideo(peerId, event.streams[0]);
+                };
+                
+                // Handle ICE candidates
+                this.peerConnections[peerId].onicecandidate = (event) => {
+                    if (event.candidate) {
+                        this.socket.send(JSON.stringify({
+                            type: 'ice_candidate',
+                            candidate: event.candidate,
+                            to_user: peerId
+                        }));
+                    }
+                };
+            }
+            
+            if (data.type === 'webrtc_offer') {
+                await this.peerConnections[peerId].setRemoteDescription(data.offer);
+                const answer = await this.peerConnections[peerId].createAnswer();
+                await this.peerConnections[peerId].setLocalDescription(answer);
+                
+                this.socket.send(JSON.stringify({
+                    type: 'webrtc_answer',
+                    answer: answer,
+                    to_user: peerId
+                }));
+            } else if (data.type === 'webrtc_answer') {
+                await this.peerConnections[peerId].setRemoteDescription(data.answer);
+            } else if (data.type === 'ice_candidate') {
+                await this.peerConnections[peerId].addIceCandidate(data.candidate);
+            }
+        },
+        
+        addRemoteVideo(peerId, stream) {
+            const remoteVideos = document.getElementById('remoteVideos');
+            
+            const videoContainer = document.createElement('div');
+            videoContainer.className = 'relative';
+            videoContainer.id = `remote-${peerId}`;
+            
+            const video = document.createElement('video');
+            video.className = 'participant-video';
+            video.autoplay = true;
+            video.playsinline = true;
+            video.srcObject = stream;
+            
+            const nameLabel = document.createElement('div');
+            nameLabel.className = 'absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm';
+            nameLabel.textContent = `User ${peerId}`;
+            
+            videoContainer.appendChild(video);
+            videoContainer.appendChild(nameLabel);
+            remoteVideos.appendChild(videoContainer);
+        },
+        
+        toggleAudio() {
+            this.audioEnabled = !this.audioEnabled;
+            this.localStream.getAudioTracks().forEach(track => {
+                track.enabled = this.audioEnabled;
+            });
+        },
+        
+        toggleVideo() {
+            this.videoEnabled = !this.videoEnabled;
+            this.localStream.getVideoTracks().forEach(track => {
+                track.enabled = this.videoEnabled;
+            });
+        },
+        
+        async shareScreen() {
+            if (!this.screenSharing) {
+                try {
+                    const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    const videoTrack = screenStream.getVideoTracks()[0];
+                    
+                    // Replace video track in all peer connections
+                    Object.values(this.peerConnections).forEach(pc => {
+                        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                        if (sender) {
+                            sender.replaceTrack(videoTrack);
+                        }
+                    });
+                    
+                    this.screenSharing = true;
+                    this.showNotification('Screen sharing started', 'success');
+                    
+                    videoTrack.onended = () => {
+                        this.stopScreenShare();
+                    };
+                } catch (error) {
+                    this.showNotification('Screen sharing failed', 'error');
+                }
+            } else {
+                this.stopScreenShare();
+            }
+        },
+        
+        stopScreenShare() {
+            if (this.screenSharing) {
+                const videoTrack = this.localStream.getVideoTracks()[0];
+                
+                Object.values(this.peerConnections).forEach(pc => {
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) {
+                        sender.replaceTrack(videoTrack);
+                    }
+                });
+                
+                this.screenSharing = false;
+                this.showNotification('Screen sharing stopped', 'info');
+            }
+        },
+        
+        sendMessage() {
+            if (this.chatMessage.trim()) {
+                this.socket.send(JSON.stringify({
+                    type: 'chat_message',
+                    message: this.chatMessage,
+                    user_name: this.userName
+                }));
+                
+                this.addChatMessage(this.chatMessage, 'own');
+                this.chatMessage = '';
+            }
+        },
+        
+        addChatMessage(message, type, userName = null) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            
+            if (type === 'system') {
+                messageDiv.className = 'text-sm text-gray-500 text-center';
+                messageDiv.textContent = message;
+            } else if (type === 'own') {
+                messageDiv.className = 'text-right';
+                messageDiv.innerHTML = `
+                    <div class="bg-green-600 text-white inline-block px-3 py-2 rounded-lg max-w-xs">
+                        ${message}
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="text-left">
+                        <div class="text-xs text-gray-500 mb-1">${userName}</div>
+                        <div class="bg-gray-200 inline-block px-3 py-2 rounded-lg max-w-xs">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        },
+        
+        async endSession() {
+            if (confirm('Are you sure you want to end this session?')) {
+                // Close all peer connections
+                Object.values(this.peerConnections).forEach(pc => pc.close());
+                
+                // Stop local stream
+                if (this.localStream) {
+                    this.localStream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Close WebSocket
+                if (this.socket) {
+                    this.socket.close();
+                }
+                
+                // Redirect based on user role
+                if (this.isMentor) {
+                    window.location.href = '/dashboard/mentor/';
+                } else {
+                    window.location.href = '/dashboard/learner/';
+                }
+            }
+        },
+        
+        startSessionTimer() {
+            let startTime = new Date();
+            setInterval(() => {
+                const elapsed = new Date() - startTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                this.sessionTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        },
+        
+        showNotification(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        },
+        
+        updateIcons() {
+            this.$nextTick(() => {
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
