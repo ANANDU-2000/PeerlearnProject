@@ -1,0 +1,84 @@
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "editUser(92aeea6b-4c3b-49e7-9fb9-75c089fc6d1d)"
+
+ 
+<button @click="editUser(92aeea6b-4c3b-49e7-9fb9-75c089fc6d1d)" class="text-green-600 hover:text-green-900" title="Edit">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "banUser(92aeea6b-4c3b-49e7-9fb9-75c089fc6d1d)"
+
+ 
+<button @click="banUser(92aeea6b-4c3b-49e7-9fb9-75c089fc6d1d)" class="text-red-600 hover:text-red-900" title="Ban">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "viewUser(8531af87-c411-42c3-bd49-10948c3c0663)"
+
+ 
+<button @click="viewUser(8531af87-c411-42c3-bd49-10948c3c0663)" class="text-blue-600 hover:text-blue-900" title="View">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "editUser(8531af87-c411-42c3-bd49-10948c3c0663)"
+
+ 
+<button @click="editUser(8531af87-c411-42c3-bd49-10948c3c0663)" class="text-green-600 hover:text-green-900" title="Edit">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "banUser(8531af87-c411-42c3-bd49-10948c3c0663)"
+
+ 
+<button @click="banUser(8531af87-c411-42c3-bd49-10948c3c0663)" class="text-red-600 hover:text-red-900" title="Ban">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "viewUser(69c0b8d7-fe4c-443d-baaf-665c7570badf)"
+
+ 
+<button @click="viewUser(69c0b8d7-fe4c-443d-baaf-665c7570badf)" class="text-blue-600 hover:text-blue-900" title="View">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "editUser(69c0b8d7-fe4c-443d-baaf-665c7570badf)"
+
+ 
+<button @click="editUser(69c0b8d7-fe4c-443d-baaf-665c7570badf)" class="text-green-600 hover:text-green-900" title="Edit">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "banUser(69c0b8d7-fe4c-443d-baaf-665c7570badf)"
+
+ 
+<button @click="banUser(69c0b8d7-fe4c-443d-baaf-665c7570badf)" class="text-red-600 hover:text-red-900" title="Ban">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "viewUser(2fe3f37e-4762-4305-8f02-fe41e76e0ec9)"
+
+ 
+<button @click="viewUser(2fe3f37e-4762-4305-8f02-fe41e76e0ec9)" class="text-blue-600 hover:text-blue-900" title="View">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "editUser(2fe3f37e-4762-4305-8f02-fe41e76e0ec9)"
+
+ 
+<button @click="editUser(2fe3f37e-4762-4305-8f02-fe41e76e0ec9)" class="text-green-600 hover:text-green-900" title="Edit">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "banUser(2fe3f37e-4762-4305-8f02-fe41e76e0ec9)"
+
+ 
+<button @click="banUser(2fe3f37e-4762-4305-8f02-fe41e76e0ec9)" class="text-red-600 hover:text-red-900" title="Ban">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "viewUser(89a097d8-3018-415f-b8ca-e073e4341ec2)"
+
+ 
+<button @click="viewUser(89a097d8-3018-415f-b8ca-e073e4341ec2)" class="text-blue-600 hover:text-blue-900" title="View">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "editUser(89a097d8-3018-415f-b8ca-e073e4341ec2)"
+
+ 
+<button @click="editUser(89a097d8-3018-415f-b8ca-e073e4341ec2)" class="text-green-600 hover:text-green-900" title="Edit">…</button>
+Alpine Expression Error: Invalid or unexpected token
+
+Expression: "banUser(89a097d8-3018-415f-b8ca-e073e4341ec2)"
+
+ 
+<button @click="banUser(89a097d8-3018-415f-b8ca-e073e4341ec2)" class="text-red-600 hover:text-red-900" title="Ban">…</button>

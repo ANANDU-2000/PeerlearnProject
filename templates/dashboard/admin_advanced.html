@@ -1451,6 +1451,22 @@
                     total: {{ total_users }}
                 },
                 
+                // Missing Variables - Fixed
+                automation: {
+                    welcomeUsers: true,
+                    sessionFollowup: false,
+                    issueDetection: true
+                },
+                
+                adminList: [
+                    { id: 1, name: 'Anandu Krishna', role: 'Owner', lastActive: '2 min ago', avatar: '/static/images/default-avatar.png' },
+                    { id: 2, name: 'Admin User', role: 'Admin', lastActive: '1 hour ago', avatar: '/static/images/default-avatar.png' }
+                ],
+                
+                platformRevenue: '2,45,680',
+                growthRate: '+18.5',
+                satisfactionScore: '94.8',
+                
                 notifications: [
                     { id: 1, type: 'info', title: 'System Update', message: 'Platform maintenance scheduled for tonight', timestamp: '1 hour ago', read: false, icon: 'fas fa-info-circle' },
                     { id: 2, type: 'warning', title: 'High Server Load', message: 'Server experiencing heavy traffic', timestamp: '2 hours ago', read: false, icon: 'fas fa-exclamation-triangle' },
