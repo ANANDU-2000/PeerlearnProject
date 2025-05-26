@@ -247,7 +247,7 @@ function sessionRoom() {
         sessionId: '{{ session.id }}',
         userId: '{{ user.id }}',
         userName: '{{ user.first_name }} {{ user.last_name }}',
-        isMentor: {{ user.is_mentor|yojson }},
+        isMentor: {% if user.is_mentor %}true{% else %}false{% endif %},
         
         // WebRTC
         localStream: null,
