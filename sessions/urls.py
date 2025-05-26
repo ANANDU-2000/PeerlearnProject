@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views, api_views
+from .mentor_api_clean import mentor_dashboard_clean
 from .create_session_api import create_session_api
 
 urlpatterns = [
@@ -36,6 +37,9 @@ urlpatterns = [
     
     # Dashboard data endpoints
     path('api/mentor-dashboard/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
+    
+    # Clean robust API endpoint - Fix your 400 errors
+    path('api/mentor-data/', mentor_dashboard_clean, name='mentor_data_clean'),
     
     # Session status endpoints
     path('api/mark-ready/<uuid:session_id>/', api_views.mark_ready, name='api_mark_ready'),

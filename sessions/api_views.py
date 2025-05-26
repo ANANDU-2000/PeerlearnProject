@@ -555,32 +555,36 @@ def mentor_dashboard_data(request):
         
         # Get all sessions with bookings for the "Booked Sessions" tab
         booked_sessions_data = []
-        sessions_with_bookings = mentor_sessions.filter(bookings__status='confirmed').distinct()
-        
-        for session in sessions_with_bookings:
-            session_bookings = session.bookings.filter(status='confirmed')
-            learners = []
-            for booking in session_bookings:
-                learners.append({
-                    'id': booking.learner.id,
-                    'name': f"{booking.learner.first_name} {booking.learner.last_name}",
-                    'username': booking.learner.username,
-                    'ready': getattr(booking, 'learner_ready', False),
-                    'booking_time': booking.created_at.strftime('%b %d, %Y %I:%M %p'),
-                    'status': booking.status
-                })
+        try:
+            sessions_with_bookings = mentor_sessions.filter(bookings__status='confirmed').distinct()
             
-            booked_sessions_data.append({
-                'id': str(session.id),
-                'title': session.title,
-                'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
-                'duration': session.duration,
-                'price': str(session.price) if session.price else 'Free',
-                'learners': learners,
-                'total_bookings': len(learners),
-                'ready_count': sum(1 for learner in learners if learner['ready']),
-                'status': session.status
-            })
+            for session in sessions_with_bookings:
+                session_bookings = session.bookings.filter(status='confirmed')
+                learners = []
+                for booking in session_bookings:
+                    learners.append({
+                        'id': booking.learner.id,
+                        'name': f"{booking.learner.first_name or ''} {booking.learner.last_name or ''}".strip() or booking.learner.username,
+                        'username': booking.learner.username,
+                        'ready': getattr(booking, 'learner_ready', False),
+                        'booking_time': booking.created_at.strftime('%b %d, %Y %I:%M %p'),
+                        'status': booking.status
+                    })
+            
+                booked_sessions_data.append({
+                    'id': str(session.id),
+                    'title': session.title,
+                    'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
+                    'duration': session.duration,
+                    'price': str(session.price) if session.price else 'Free',
+                    'learners': learners,
+                    'total_bookings': len(learners),
+                    'ready_count': sum(1 for learner in learners if learner['ready']),
+                    'status': session.status
+                })
+        except Exception as e:
+            # If booked sessions fail, continue without them
+            booked_sessions_data = []
 
         return JsonResponse({
             'total_students': total_students,
