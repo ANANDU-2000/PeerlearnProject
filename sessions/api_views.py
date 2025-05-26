@@ -580,11 +580,15 @@ def create_session_api(request):
         if schedule <= timezone.now():
             return JsonResponse({'error': 'Session must be scheduled for future'}, status=400)
         
+        # Handle thumbnail upload
+        thumbnail = request.FILES.get('thumbnail')
+        
         # Create session in database
         session = Session.objects.create(
             mentor=request.user,
             title=title,
             description=description, 
+            thumbnail=thumbnail,
             schedule=schedule,
             duration=duration,
             max_participants=max_participants,

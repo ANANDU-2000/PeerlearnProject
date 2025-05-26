@@ -223,6 +223,9 @@
                             <div class="group relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
                                 <!-- Thumbnail Area -->
                                 <div class="relative h-32 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 overflow-hidden">
+                                    <template x-if="session.thumbnail">
+                                        <img :src="session.thumbnail" :alt="session.title" class="w-full h-full object-cover">
+                                    </template>
                                     <div class="absolute inset-0 bg-black bg-opacity-20"></div>
                                     <!-- Category Badge -->
                                     <div class="absolute top-3 left-3">
