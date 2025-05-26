@@ -229,7 +229,7 @@
             <div class="video-participant">
                 <video id="localVideo" class="participant-video" autoplay muted playsinline></video>
                 <div class="participant-info">
-                    You ({{ isMentor ? 'Mentor' : 'Learner' }})
+                    You ({% if user.is_mentor %}Mentor{% else %}Learner{% endif %})
                 </div>
                 <div class="status-indicators">
                     <div x-show="!audioEnabled" class="status-indicator muted">

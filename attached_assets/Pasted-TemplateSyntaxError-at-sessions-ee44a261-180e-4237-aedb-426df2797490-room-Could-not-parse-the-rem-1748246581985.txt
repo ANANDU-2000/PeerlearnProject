@@ -1,0 +1,75 @@
+TemplateSyntaxError at /sessions/ee44a261-180e-4237-aedb-426df2797490/room/
+Could not parse the remainder: ' ? 'Mentor' : 'Learner'' from 'isMentor ? 'Mentor' : 'Learner''
+Request Method:	GET
+Request URL:	http://3e4c4c4a-b60b-4556-9647-2c6022f13499-00-186qnvr9j3jvh.worf.replit.dev/sessions/ee44a261-180e-4237-aedb-426df2797490/room/?early=true
+Django Version:	5.2.1
+Exception Type:	TemplateSyntaxError
+Exception Value:	
+Could not parse the remainder: ' ? 'Mentor' : 'Learner'' from 'isMentor ? 'Mentor' : 'Learner''
+Exception Location:	/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/template/base.py, line 710, in __init__
+Raised during:	sessions.views.session_room
+Python Executable:	/home/runner/workspace/.pythonlibs/bin/python
+Python Version:	3.11.10
+Python Path:	
+['/home/runner/workspace',
+ '/nix/store/lc7qv2ldzrs1aq3hbyzmbgvn0h2w26pl-sitecustomize/lib/python/site-packages',
+ '/nix/store/dfg63lldbvcj207iyr9z0xw21d8ax02n-python3.11-pip-24.0/lib/python3.11/site-packages',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python311.zip',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/lib-dynload',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages',
+ '/nix/store/wblvmd5y7izx0z10d1w7ga7zc4apjxmb-python3.11-setuptools-75.1.1/lib/python3.11/site-packages']
+Server time:	Mon, 26 May 2025 07:58:47 +0000
+Error during template rendering
+In template /home/runner/workspace/templates/session_room_premium.html, error at line 232
+
+Could not parse the remainder: ' ? 'Mentor' : 'Learner'' from 'isMentor ? 'Mentor' : 'Learner''
+222	        </div>
+223	    </div>
+224	
+225	    <!-- Main Video Area -->
+226	    <div class="main-video-area">
+227	        <div class="video-grid" :class="participantCount === 1 ? 'single' : ''">
+228	            <!-- Local Video -->
+229	            <div class="video-participant">
+230	                <video id="localVideo" class="participant-video" autoplay muted playsinline></video>
+231	                <div class="participant-info">
+232	                    You ({{ isMentor ? 'Mentor' : 'Learner' }})
+233	                </div>
+234	                <div class="status-indicators">
+235	                    <div x-show="!audioEnabled" class="status-indicator muted">
+236	                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+237	                            <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+238	                        </svg>
+239	                    </div>
+240	                    <div x-show="!videoEnabled" class="status-indicator no-video">
+241	                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+242	                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"></path>
+Traceback Switch to copy-and-paste view
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/core/handlers/exception.py, line 42, in inner
+                response = await get_response(request)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+Local vars
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/core/handlers/base.py, line 253, in _get_response_async
+                response = await wrapped_callback(
+                                 …
+Local vars
+/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/concurrent/futures/thread.py, line 58, in run
+            result = self.fn(*self.args, **self.kwargs)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+Local vars
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/contrib/auth/decorators.py, line 59, in _view_wrapper
+                    return view_func(request, *args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+Local vars
+/home/runner/workspace/sessions/views.py, line 192, in session_room
+    return render(request, 'session_room_premium.html', context)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+Local vars
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/shortcuts.py, line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+Local vars
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/template/loader.py, line 61, in render_to_string
+        template = 
