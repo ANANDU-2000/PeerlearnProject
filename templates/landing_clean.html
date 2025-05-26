@@ -102,6 +102,97 @@
         </div>
     </section>
 
+    <!-- Recommended Sessions Section -->
+    <section id="sessions" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Recommended Sessions</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Join live interactive sessions tailored to your learning goals</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for session in featured_sessions %}
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold">{{ session.mentor.first_name.0 }}{{ session.mentor.last_name.0 }}</span>
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="font-semibold text-gray-900">{{ session.mentor.get_full_name }}</h4>
+                                <p class="text-sm text-blue-600">{{ session.mentor.expertise|default:"Expert Mentor" }}</p>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">{{ session.title }}</h3>
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ session.description|truncatewords:15 }}</p>
+                        
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm font-medium text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
+                                {{ session.schedule|date:"M d, Y" }}
+                            </span>
+                            <span class="text-sm text-gray-500">
+                                ₹{{ session.price|default:"Free" }}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i data-feather="users" class="h-4 w-4 mr-1"></i>
+                                {{ session.current_participants }}/{{ session.max_participants }}
+                            </div>
+                            <a href="{% url 'login' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                                Join Session
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-500 text-lg">No sessions available right now. Check back soon!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Mentors Section -->
+    <section id="mentors" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Meet Our Expert Mentors</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Learn from industry professionals and experienced educators</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {% for mentor in featured_mentors %}
+                <div class="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-all">
+                    <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white font-bold text-xl">{{ mentor.first_name.0 }}{{ mentor.last_name.0 }}</span>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ mentor.get_full_name }}</h3>
+                    <p class="text-blue-600 font-medium mb-3">{{ mentor.expertise|default:"Expert Mentor" }}</p>
+                    <p class="text-gray-600 text-sm mb-4">{{ mentor.bio|truncatewords:12|default:"Experienced professional ready to guide your learning journey." }}</p>
+                    
+                    <div class="flex items-center justify-center text-sm text-gray-500 mb-4">
+                        <i data-feather="star" class="h-4 w-4 text-yellow-500 mr-1"></i>
+                        <span>{{ mentor.rating|default:"4.9" }} Rating</span>
+                    </div>
+                    
+                    <a href="{% url 'login' %}" class="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                        View Profile
+                    </a>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-500 text-lg">No mentors available right now. Check back soon!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
     <section id="features" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -121,7 +212,7 @@
                 
                 <div class="text-center p-6 bg-blue-50 rounded-xl">
                     <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-feather="brain" class="h-8 w-8 text-white"></i>
+                        <i data-feather="cpu" class="h-8 w-8 text-white"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-3">AI Recommendations</h3>
                     <p class="text-gray-600">Personalized learning paths powered by advanced machine learning algorithms</p>
