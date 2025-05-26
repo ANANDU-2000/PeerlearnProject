@@ -1045,14 +1045,6 @@ function mentorDashboard() {
                 // Send notification to learner
                 this.showNotificationPopup('Message Sent', 'Your message has been sent to the learner');
             }
-        }
-                        
-                        session.readyLearners = session.bookedLearners.filter(l => l.isReady).length;
-                    }
-                } catch (error) {
-                    console.error(`Error loading learners for session ${session.id}:`, error);
-                }
-            }
         },
 
         async loadRealData() {
