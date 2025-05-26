@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from . import views, api_views, admin_api
+from . import views, api_views, admin_api, real_admin_api
 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
@@ -19,7 +19,16 @@ urlpatterns = [
     path('api/check-email/', api_views.check_email_exists, name='check_email_exists'),
     path('api/users/profile/update/', views.update_profile_api, name='api_update_profile'),
     
-    # Advanced Admin API endpoints
+    # REAL Working Admin API endpoints
+    path('api/admin/toggle-user-status/<uuid:user_id>/', real_admin_api.toggle_user_status, name='admin_toggle_user_status'),
+    path('api/admin/real-stats/', real_admin_api.get_real_stats, name='admin_real_stats'),
+    path('api/admin/real-users/', real_admin_api.get_real_users, name='admin_real_users'),
+    path('api/admin/real-sessions/', real_admin_api.get_real_sessions, name='admin_real_sessions'),
+    path('api/admin/real-bookings/', real_admin_api.get_real_bookings, name='admin_real_bookings'),
+    path('api/admin/real-activity/', real_admin_api.get_real_activity, name='admin_real_activity'),
+    path('api/admin/update-user/<uuid:user_id>/', real_admin_api.update_user, name='admin_update_user'),
+    
+    # Legacy Admin API endpoints
     path('api/ai-chat/', admin_api.ai_chat_endpoint, name='admin_ai_chat'),
     path('api/admin/bulk-email/', admin_api.bulk_email_endpoint, name='admin_bulk_email'),
     path('api/admin/send-notification/', admin_api.send_notification_endpoint, name='admin_send_notification'),

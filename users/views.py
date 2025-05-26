@@ -336,4 +336,4 @@ def admin_dashboard(request):
         'is_owner': request.user.is_superuser,
     }
     
-    return render(request, 'dashboard/admin_clean.html', context)
+    return render(request, 'dashboard/admin_real.html', context)

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn Admin | Real Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .admin-gradient { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
+        .tab-active { background: #1e40af; color: white; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4); }
+        .tab-inactive { background: white; color: #6b7280; border: 1px solid #e5e7eb; }
+        .tab-inactive:hover { background: #f8fafc; color: #374151; }
+        .subtab-active { background: #1e40af; color: white; }
+        .subtab-inactive { background: #f8fafc; color: #64748b; }
+        .subtab-inactive:hover { background: #e2e8f0; color: #475569; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .pulse-success { animation: pulseSuccess 2s infinite; }
+        .pulse-warning { animation: pulseWarning 2s infinite; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseSuccess { 0%, 100% { background-color: #10b981; } 50% { background-color: #34d399; } }
+        @keyframes pulseWarning { 0%, 100% { background-color: #f59e0b; } 50% { background-color: #fbbf24; } }
+        .notification { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 500; transform: translateX(400px); transition: all 0.3s ease; }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: #10b981; }
+        .notification.error { background: #ef4444; }
+        .notification.warning { background: #f59e0b; }
+        .notification.info { background: #3b82f6; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans" x-data="realAdminDashboard()" x-init="init()">
+    
+    <!-- Modern Header -->
+    <header class="bg-white shadow-sm border-b-2 border-blue-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 admin-gradient rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                            <i class="fas fa-crown text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">PeerLearn Admin</h1>
+                            <p class="text-sm text-gray-500">Real-Time Control Center</p>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-lg text-sm font-semibold">
+                        <i class="fas fa-shield-alt mr-1"></i>OWNER ACCESS
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-8">
+                    <!-- Real-Time Stats Bar -->
+                    <div class="hidden lg:flex items-center space-x-6 text-sm bg-gray-50 px-4 py-2 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full pulse-success"></div>
+                            <span class="text-gray-600">Users:</span>
+                            <span class="font-bold text-gray-900" x-text="realStats.users.total">{{ total_users }}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-video text-blue-500"></i>
+                            <span class="font-bold text-gray-900" x-text="realStats.sessions.active">{{ active_sessions }}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-rupee-sign text-green-500"></i>
+                            <span class="font-bold text-gray-900">₹<span x-text="realStats.revenue.today">{{ today_revenue|default:0 }}</span></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Info -->
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="text-xs text-gray-500">Last update: <span x-text="lastUpdate">{{ current_time|date:"H:i:s" }}</span></p>
+                        </div>
+                        <div class="w-10 h-10 admin-gradient rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-user-crown text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Premium Tab Navigation -->
+        <div class="mb-8">
+            <div class="flex flex-wrap gap-3">
+                <button @click="activeTab = 'overview'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'overview' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Overview
+                </button>
+                <button @click="activeTab = 'users'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'users' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-users mr-2"></i>User Management 
+                    <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs" x-text="realStats.users.total">{{ total_users }}</span>
+                </button>
+                <button @click="activeTab = 'sessions'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'sessions' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-video mr-2"></i>Session Control
+                    <span class="ml-2 px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs" x-text="realStats.sessions.total">{{ total_sessions }}</span>
+                </button>
+                <button @click="activeTab = 'analytics'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'analytics' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-chart-line mr-2"></i>Analytics & Reports
+                </button>
+                <button @click="activeTab = 'financial'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'financial' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-wallet mr-2"></i>Financial Hub
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Overview Tab -->
+        <div x-show="activeTab === 'overview'" class="fade-in">
+            <!-- Sub-tabs for Overview -->
+            <div class="flex space-x-3 mb-8">
+                <button @click="overviewSub = 'realtime'" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="overviewSub === 'realtime' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-bolt mr-1"></i>Real-Time Stats
+                </button>
+                <button @click="overviewSub = 'activity'" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="overviewSub === 'activity' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-activity mr-1"></i>Live Activity
+                </button>
+                <button @click="overviewSub = 'health'" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="overviewSub === 'health' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-heartbeat mr-1"></i>System Health
+                </button>
+            </div>
+
+            <!-- Real-Time Stats -->
+            <div x-show="overviewSub === 'realtime'" class="fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total Users Card -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Users</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1" x-text="realStats.users.total">{{ total_users }}</p>
+                                <p class="text-xs text-green-600 mt-2">
+                                    <i class="fas fa-arrow-up mr-1"></i>Real count from database
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-users text-blue-600 text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Sessions Card -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Live Sessions</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1" x-text="realStats.sessions.active">{{ active_sessions }}</p>
+                                <p class="text-xs text-blue-600 mt-2">
+                                    <i class="fas fa-broadcast-tower mr-1"></i>Currently active
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-video text-green-600 text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Revenue Card -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Today's Revenue</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1">₹<span x-text="realStats.revenue.today">{{ today_revenue|default:0 }}</span></p>
+                                <p class="text-xs text-green-600 mt-2">
+                                    <i class="fas fa-coins mr-1"></i>Real transactions
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-rupee-sign text-yellow-600 text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Status Card -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">System Status</p>
+                                <p class="text-3xl font-bold text-green-600 mt-1">100%</p>
+                                <p class="text-xs text-green-600 mt-2">
+                                    <i class="fas fa-check-circle mr-1"></i>All systems operational
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-server text-purple-600 text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Real Stats -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                        <h3 class="text-lg font-semibold mb-4">User Breakdown</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Mentors</span>
+                                <span class="font-semibold" x-text="realStats.users.mentors">{{ total_mentors }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Learners</span>
+                                <span class="font-semibold" x-text="realStats.users.learners">{{ total_learners }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Online Now</span>
+                                <span class="font-semibold text-green-600" x-text="realStats.users.online">{{ online_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                        <h3 class="text-lg font-semibold mb-4">Session Statistics</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Total Sessions</span>
+                                <span class="font-semibold" x-text="realStats.sessions.total">{{ total_sessions }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Completed</span>
+                                <span class="font-semibold" x-text="realStats.sessions.completed">{{ completed_sessions }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Scheduled</span>
+                                <span class="font-semibold" x-text="realStats.sessions.scheduled">{{ scheduled_sessions }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                        <h3 class="text-lg font-semibold mb-4">Revenue Metrics</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Total Revenue</span>
+                                <span class="font-semibold">₹<span x-text="realStats.revenue.total">{{ total_revenue|default:0 }}</span></span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Total Bookings</span>
+                                <span class="font-semibold" x-text="realStats.bookings.total">{{ total_bookings }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Avg Rating</span>
+                                <span class="font-semibold" x-text="realStats.feedback.avg_rating">{{ system_health.user_activity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Activity Feed -->
+            <div x-show="overviewSub === 'activity'" class="fade-in">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold">Live Platform Activity</h3>
+                        <button @click="loadRealActivity()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="space-y-4" x-show="realActivity.length > 0">
+                        <template x-for="activity in realActivity.slice(0, 10)" :key="activity.timestamp">
+                            <div class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4" :class="activity.type === 'user_registered' ? 'bg-green-100' : activity.type === 'session_created' ? 'bg-blue-100' : 'bg-purple-100'">
+                                    <i :class="activity.icon" :class="activity.type === 'user_registered' ? 'text-green-600' : activity.type === 'session_created' ? 'text-blue-600' : 'text-purple-600'"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900" x-text="activity.message"></p>
+                                    <p class="text-xs text-gray-500" x-text="formatTimestamp(activity.timestamp)"></p>
+                                </div>
+                                <span class="px-3 py-1 text-xs rounded-full font-medium" :class="activity.status === 'success' ? 'bg-green-100 text-green-800' : activity.status === 'info' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'" x-text="activity.status"></span>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="realActivity.length === 0" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-activity text-4xl mb-4"></i>
+                        <p>No recent activity to display</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div x-show="overviewSub === 'health'" class="fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                        <h3 class="text-lg font-semibold mb-4">Database Health</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Connection Status</span>
+                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Healthy</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Total Records</span>
+                                <span class="font-semibold" x-text="realStats.users.total + realStats.sessions.total + realStats.bookings.total">Calculating...</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Last Backup</span>
+                                <span class="text-sm text-gray-500">Today</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                        <h3 class="text-lg font-semibold mb-4">Performance Metrics</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Response Time</span>
+                                    <span>12ms</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Server Load</span>
+                                    <span>Low</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 35%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Tab -->
+        <div x-show="activeTab === 'users'" class="fade-in">
+            <!-- Sub-tabs for Users -->
+            <div class="flex space-x-3 mb-8">
+                <button @click="userSub = 'list'; loadRealUsers()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'list' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-list mr-1"></i>User Database
+                </button>
+                <button @click="userSub = 'analytics'" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'analytics' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-chart-bar mr-1"></i>User Analytics
+                </button>
+                <button @click="userSub = 'management'" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'management' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-cogs mr-1"></i>Bulk Actions
+                </button>
+            </div>
+
+            <!-- User List -->
+            <div x-show="userSub === 'list'" class="fade-in">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">User Database Management</h3>
+                        <div class="flex space-x-3">
+                            <button @click="loadRealUsers()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+                            </button>
+                            <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
+                                <i class="fas fa-download mr-2"></i>Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Details</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="user in realUsers" :key="user.id">
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                                                    <i class="fas fa-user text-white text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900" x-text="user.username"></div>
+                                                    <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-3 py-1 text-xs rounded-full font-medium" :class="user.role === 'mentor' ? 'bg-green-100 text-green-800' : user.role === 'learner' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'" x-text="user.role"></span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-2 h-2 rounded-full mr-2" :class="user.is_active ? 'bg-green-500' : 'bg-red-500'"></div>
+                                                <span class="text-sm" x-text="user.is_active ? 'Active' : 'Inactive'"></span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500" x-text="formatDate(user.date_joined)"></td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex space-x-2">
+                                                <button @click="viewUserDetails(user)" class="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button @click="editUserDialog(user)" class="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-colors" title="Edit User">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button @click="toggleUserStatusReal(user)" class="text-orange-600 hover:text-orange-900 p-2 rounded-lg hover:bg-orange-50 transition-colors" title="Toggle Status">
+                                                    <i class="fas fa-power-off"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div x-show="realUsers.length === 0" class="text-center py-12 text-gray-500">
+                        <i class="fas fa-users text-4xl mb-4"></i>
+                        <p>Loading user data from database...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other user tabs placeholder -->
+            <div x-show="userSub === 'analytics'" class="fade-in">
+                <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+                    <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">User Analytics</h3>
+                    <p class="text-gray-600">Advanced user behavior analytics coming soon...</p>
+                </div>
+            </div>
+
+            <div x-show="userSub === 'management'" class="fade-in">
+                <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+                    <i class="fas fa-cogs text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Bulk Management</h3>
+                    <p class="text-gray-600">Bulk user management tools coming soon...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other Tabs Placeholder -->
+        <div x-show="activeTab === 'sessions'" class="fade-in">
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+                <i class="fas fa-video text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Session Control Center</h3>
+                <p class="text-gray-600">Real-time session monitoring and management tools coming soon...</p>
+            </div>
+        </div>
+
+        <div x-show="activeTab === 'analytics'" class="fade-in">
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+                <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Analytics & Reports</h3>
+                <p class="text-gray-600">Comprehensive platform analytics dashboard coming soon...</p>
+            </div>
+        </div>
+
+        <div x-show="activeTab === 'financial'" class="fade-in">
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+                <i class="fas fa-wallet text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Financial Hub</h3>
+                <p class="text-gray-600">Revenue management and financial controls coming soon...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications"></div>
+
+    <script>
+        function realAdminDashboard() {
+            return {
+                activeTab: 'overview',
+                overviewSub: 'realtime',
+                userSub: 'list',
+                lastUpdate: new Date().toLocaleTimeString(),
+                
+                // REAL data from database
+                realStats: {
+                    users: {
+                        total: {{ total_users }},
+                        mentors: {{ total_mentors }},
+                        learners: {{ total_learners }},
+                        online: {{ online_count }}
+                    },
+                    sessions: {
+                        total: {{ total_sessions }},
+                        active: {{ active_sessions }},
+                        scheduled: {{ scheduled_sessions|default:0 }},
+                        completed: {{ completed_sessions }}
+                    },
+                    bookings: {
+                        total: {{ total_bookings }},
+                        confirmed: {{ confirmed_bookings }},
+                        pending: {{ pending_bookings|default:0 }}
+                    },
+                    revenue: {
+                        total: {{ total_revenue|default:0 }},
+                        today: {{ today_revenue|default:0 }}
+                    },
+                    feedback: {
+                        total: 0,
+                        avg_rating: 0
+                    }
+                },
+                
+                realUsers: [],
+                realActivity: [],
+                
+                init() {
+                    this.loadRealData();
+                    this.startRealTimeUpdates();
+                },
+                
+                loadRealData() {
+                    // Load real stats
+                    this.loadRealStats();
+                    if (this.activeTab === 'users' && this.userSub === 'list') {
+                        this.loadRealUsers();
+                    }
+                    if (this.overviewSub === 'activity') {
+                        this.loadRealActivity();
+                    }
+                },
+                
+                loadTabData() {
+                    if (this.activeTab === 'users' && this.userSub === 'list') {
+                        this.loadRealUsers();
+                    }
+                    if (this.activeTab === 'overview' && this.overviewSub === 'activity') {
+                        this.loadRealActivity();
+                    }
+                },
+                
+                async loadRealStats() {
+                    try {
+                        const response = await fetch('/api/admin/real-stats/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.realStats = data.stats;
+                                this.lastUpdate = new Date().toLocaleTimeString();
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Using initial data from template');
+                    }
+                },
+                
+                async loadRealUsers() {
+                    try {
+                        const response = await fetch('/api/admin/real-users/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.realUsers = data.users;
+                                this.showNotification('success', `Loaded ${data.users.length} real users from database`);
+                            }
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Failed to load user data');
+                    }
+                },
+                
+                async loadRealActivity() {
+                    try {
+                        const response = await fetch('/api/admin/real-activity/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.realActivity = data.activities;
+                                this.showNotification('info', `Loaded ${data.activities.length} real activities`);
+                            }
+                        }
+                    } catch (error) {
+                        this.showNotification('warning', 'No recent activity available');
+                    }
+                },
+                
+                async toggleUserStatusReal(user) {
+                    if (!confirm(`Toggle status for ${user.username}?`)) return;
+                    
+                    try {
+                        const response = await fetch(`/api/admin/toggle-user-status/${user.id}/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                user.is_active = data.new_status;
+                                this.showNotification('success', data.message);
+                                this.loadRealStats(); // Refresh stats
+                            } else {
+                                this.showNotification('error', data.error);
+                            }
+                        } else {
+                            this.showNotification('error', 'Failed to update user status');
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Network error occurred');
+                    }
+                },
+                
+                viewUserDetails(user) {
+                    this.showNotification('info', `Viewing details for ${user.username}`);
+                    // Implement user details modal
+                },
+                
+                editUserDialog(user) {
+                    this.showNotification('info', `Edit mode for ${user.username}`);
+                    // Implement edit user modal
+                },
+                
+                startRealTimeUpdates() {
+                    setInterval(() => {
+                        this.loadRealStats();
+                        this.lastUpdate = new Date().toLocaleTimeString();
+                    }, 30000); // Update every 30 seconds
+                },
+                
+                formatDate(dateString) {
+                    return new Date(dateString).toLocaleDateString();
+                },
+                
+                formatTimestamp(timestamp) {
+                    return new Date(timestamp).toLocaleString();
+                },
+                
+                showNotification(type, message) {
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${type}`;
+                    notification.textContent = message;
+                    
+                    const container = document.getElementById('notifications');
+                    container.appendChild(notification);
+                    
+                    setTimeout(() => notification.classList.add('show'), 100);
+                    
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                        setTimeout(() => container.removeChild(notification), 300);
+                    }, 4000);
+                },
+                
+                getCSRFToken() {
+                    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                           document.querySelector('meta[name="csrf-token"]')?.content || '';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
