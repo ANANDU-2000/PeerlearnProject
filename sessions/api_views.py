@@ -494,6 +494,9 @@ def mentor_dashboard_data(request):
                 'title': session.title,
                 'description': session.description,
                 'thumbnail': session.thumbnail.url if session.thumbnail else None,
+                'category': session.category,
+                'skills': session.skills,
+                'price': str(session.price) if session.price else 'Free',
                 'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
                 'duration': session.duration,
                 'maxParticipants': session.max_participants,
@@ -621,7 +624,7 @@ def create_session_api(request):
         
         return JsonResponse({
             'success': True,
-            'message': f'Session "{title}" created successfully!',
+            'message': 'Session created successfully!',
             'session_id': str(session.id),
             'status': session.status
         })
