@@ -9,10 +9,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
     path('sessions/', include('sessions.urls')),
-    path('api/sessions/', include('sessions.urls')),
     
-    # Direct API endpoints
-    path('api/sessions/mentor-data/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
+    # Direct API endpoints for mentor dashboard
+    path('api/sessions/mentor-dashboard/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
     path('api/follow-mentor/', api_views.follow_mentor_api, name='follow_mentor_api'),
     path('api/request-mentor-session/', api_views.request_mentor_session_api, name='request_mentor_session_api'),
     path('recommendations/', include('recommendations.urls')),
