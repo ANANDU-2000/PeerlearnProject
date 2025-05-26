@@ -317,3 +317,94 @@ def session_api_list(request):
         })
     
     return Response(data)
+
+
+@login_required
+def waiting_room(request, session_id):
+    """WebRTC waiting room for early access"""
+    try:
+        session = get_object_or_404(Session, id=session_id)
+        
+        # Check if user has permission to join
+        can_join = False
+        if request.user == session.mentor:
+            can_join = True
+        elif Booking.objects.filter(session=session, learner=request.user, status='confirmed').exists():
+            can_join = True
+        
+        if not can_join:
+            messages.error(request, 'You are not authorized to join this session.')
+            return redirect('session_detail', session_id=session_id)
+        
+        context = {
+            'session': session,
+            'user_role': 'mentor' if request.user == session.mentor else 'learner',
+            'room_id': str(session_id),
+            'is_waiting_room': True
+        }
+        
+        return render(request, 'sessions/webrtc_room.html', context)
+        
+    except Exception as e:
+        messages.error(request, f'Error accessing waiting room: {str(e)}')
+        return redirect('session_list')
+
+
+@login_required
+def session_room(request, session_id):
+    """Advanced WebRTC room for live video sessions"""
+    try:
+        session = get_object_or_404(Session, id=session_id)
+        
+        # Check if user has permission to join
+        can_join = False
+        user_role = 'learner'
+        
+        if request.user == session.mentor:
+            can_join = True
+            user_role = 'mentor'
+        elif Booking.objects.filter(session=session, learner=request.user, status='confirmed').exists():
+            can_join = True
+            user_role = 'learner'
+        
+        if not can_join:
+            messages.error(request, 'You are not authorized to join this session.')
+            return redirect('session_detail', session_id=session_id)
+        
+        # Get all participants for this session
+        bookings = Booking.objects.filter(session=session, status='confirmed')
+        participants = []
+        
+        # Add mentor
+        participants.append({
+            'id': session.mentor.id,
+            'name': session.mentor.get_full_name() or session.mentor.username,
+            'role': 'mentor',
+            'is_ready': getattr(session, 'mentor_ready', False)
+        })
+        
+        # Add learners
+        for booking in bookings:
+            participants.append({
+                'id': booking.learner.id,
+                'name': booking.learner.get_full_name() or booking.learner.username,
+                'role': 'learner',
+                'is_ready': getattr(booking, 'learner_ready', False)
+            })
+        
+        context = {
+            'session': session,
+            'user_role': user_role,
+            'room_id': str(session_id),
+            'participants': participants,
+            'is_waiting_room': False,
+            'can_start': user_role == 'mentor',
+            'session_title': session.title,
+            'session_duration': session.duration
+        }
+        
+        return render(request, 'sessions/webrtc_room.html', context)
+        
+    except Exception as e:
+        messages.error(request, f'Error accessing session room: {str(e)}')
+        return redirect('session_list')

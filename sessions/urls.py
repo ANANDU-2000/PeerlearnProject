@@ -37,9 +37,13 @@ urlpatterns = [
     # Dashboard data endpoints
     path('api/mentor-dashboard/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
     
-    # Session status endpoints
-    path('api/mark-ready/<uuid:session_id>/', api_views.mark_ready, name='api_mark_ready'),
+    # Session management endpoints
+    path('api/sessions/<uuid:session_id>/mark-ready/', api_views.mark_ready, name='api_mark_ready'),
+    path('api/sessions/<uuid:session_id>/start/', api_views.start_session_api, name='api_start_session_new'),
+    path('api/sessions/<uuid:session_id>/bookings/', api_views.session_bookings, name='api_session_bookings'),
+    path('api/sessions/<uuid:session_id>/send-reminders/', api_views.send_session_reminders, name='api_send_reminders'),
     
-    # Room access endpoints
-    path('room/<uuid:session_id>/', views.session_room, name='session_room'),
+    # WebRTC Room access endpoints
+    path('<uuid:session_id>/room/', views.session_room, name='session_room'),
+    path('<uuid:session_id>/waiting-room/', views.waiting_room, name='waiting_room'),
 ]

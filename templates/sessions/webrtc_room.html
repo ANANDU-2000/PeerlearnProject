@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ session.title }} - Live Session</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .video-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #1a1a1a;
+        }
+        .control-panel {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-connected { background: #10b981; }
+        .status-connecting { background: #f59e0b; animation: pulse 2s infinite; }
+        .status-disconnected { background: #ef4444; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .chat-message {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-left: 3px solid #0056d3;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0056d3 0%, #004bb5 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #004bb5 0%, #003d96 100%);
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <div class="control-panel px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-white text-xl font-semibold">{{ session.title }}</h1>
+                <div class="flex items-center text-sm text-gray-300">
+                    <span class="status-indicator status-connecting" id="connectionStatus"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="text-sm text-gray-300">
+                    Duration: {{ session.duration }} minutes
+                </div>
+                {% if user_role == 'mentor' %}
+                <div class="bg-blue-500 px-3 py-1 rounded-full text-white text-sm font-medium">
+                    Mentor
+                </div>
+                {% else %}
+                <div class="bg-green-500 px-3 py-1 rounded-full text-white text-sm font-medium">
+                    Learner
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex">
+            <!-- Video Area -->
+            <div class="flex-1 p-6">
+                {% if is_waiting_room %}
+                <!-- Waiting Room -->
+                <div class="h-full flex flex-col items-center justify-center">
+                    <div class="video-container w-full max-w-2xl h-96 mb-8">
+                        <video id="localVideo" class="video-element" autoplay muted playsinline></video>
+                    </div>
+                    
+                    <div class="text-center text-white mb-8">
+                        <h2 class="text-2xl font-bold mb-2">Waiting Room</h2>
+                        <p class="text-gray-300">Prepare yourself for the session. Check your camera and microphone.</p>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        {% if user_role == 'mentor' %}
+                        <button onclick="startMainSession()" class="btn-primary px-6 py-3 rounded-lg text-white font-medium">
+                            🚀 Start Session
+                        </button>
+                        {% endif %}
+                        <button onclick="leaveRoom()" class="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg text-white font-medium">
+                            Leave Room
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Main Session Room -->
+                <div class="h-full">
+                    <!-- Video Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-4/5">
+                        <!-- Local Video (Self) -->
+                        <div class="video-container">
+                            <video id="localVideo" class="video-element" autoplay muted playsinline></video>
+                            <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm">
+                                You ({{ user_role|title }})
+                            </div>
+                        </div>
+                        
+                        <!-- Remote Video (Other participant) -->
+                        <div class="video-container">
+                            <video id="remoteVideo" class="video-element" autoplay playsinline></video>
+                            <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm" id="remoteUserLabel">
+                                Waiting for others...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Control Bar -->
+                    <div class="control-panel mt-6 px-6 py-4 rounded-lg flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <!-- Camera Toggle -->
+                            <button id="toggleCamera" onclick="toggleCamera()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14 8a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
+                            </button>
+                            
+                            <!-- Microphone Toggle -->
+                            <button id="toggleMic" onclick="toggleMicrophone()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                            
+                            <!-- Screen Share -->
+                            <button id="shareScreen" onclick="shareScreen()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-2 0V5H5v10h4a1 1 0 110 2H4a1 1 0 01-1-1V4zm9.707 4.293a1 1 0 010 1.414L9.414 13H11a1 1 0 110 2H7a1 1 0 01-1-1V10a1 1 0 112 0v1.586l3.293-3.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <!-- Session Time -->
+                            <div class="text-white text-sm" id="sessionTimer">00:00</div>
+                            
+                            <!-- End Session -->
+                            {% if user_role == 'mentor' %}
+                            <button onclick="endSession()" class="btn-danger px-4 py-2 rounded-lg text-white font-medium">
+                                End Session
+                            </button>
+                            {% else %}
+                            <button onclick="leaveSession()" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white font-medium">
+                                Leave Session
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Chat Sidebar -->
+            <div class="w-80 control-panel flex flex-col">
+                <!-- Chat Header -->
+                <div class="px-4 py-3 border-b border-gray-600">
+                    <h3 class="text-white font-medium">Session Chat</h3>
+                </div>
+                
+                <!-- Chat Messages -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-3" id="chatMessages">
+                    <div class="chat-message p-3 rounded-lg">
+                        <div class="text-blue-400 text-sm font-medium">System</div>
+                        <div class="text-gray-300 text-sm">Welcome to the live session!</div>
+                    </div>
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="p-4 border-t border-gray-600">
+                    <div class="flex space-x-2">
+                        <input type="text" id="chatInput" placeholder="Type a message..." 
+                               class="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="sendMessage()" class="btn-primary px-4 py-2 rounded-lg text-white text-sm">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WebRTC JavaScript -->
+    <script>
+        // WebRTC Configuration
+        const roomId = '{{ room_id }}';
+        const userRole = '{{ user_role }}';
+        const isWaitingRoom = {{ is_waiting_room|yojson }};
+        const sessionTitle = '{{ session.title }}';
+        
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let isVideoEnabled = true;
+        let isAudioEnabled = true;
+        let sessionStartTime = null;
+        
+        // WebRTC Configuration
+        const rtcConfiguration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // Initialize WebRTC
+        async function initializeWebRTC() {
+            try {
+                // Get user media
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                
+                // Display local video
+                const localVideo = document.getElementById('localVideo');
+                localVideo.srcObject = localStream;
+                
+                // Update connection status
+                updateConnectionStatus('connected', 'Connected');
+                
+                // Initialize peer connection for main session
+                if (!isWaitingRoom) {
+                    await initializePeerConnection();
+                    startSessionTimer();
+                }
+                
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                updateConnectionStatus('disconnected', 'Media access denied');
+                showNotification('Camera/microphone access required for video sessions', 'error');
+            }
+        }
+
+        // Initialize Peer Connection
+        async function initializePeerConnection() {
+            peerConnection = new RTCPeerConnection(rtcConfiguration);
+            
+            // Add local stream tracks
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
+            // Handle remote stream
+            peerConnection.ontrack = (event) => {
+                const remoteVideo = document.getElementById('remoteVideo');
+                if (remoteVideo && event.streams[0]) {
+                    remoteVideo.srcObject = event.streams[0];
+                    document.getElementById('remoteUserLabel').textContent = 'Connected User';
+                }
+            };
+            
+            // Handle ICE candidates
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    // Send ICE candidate to remote peer via websocket
+                    sendSignalingMessage({
+                        type: 'ice-candidate',
+                        candidate: event.candidate
+                    });
+                }
+            };
+            
+            // Connection state monitoring
+            peerConnection.onconnectionstatechange = () => {
+                const state = peerConnection.connectionState;
+                console.log('Connection state:', state);
+                
+                if (state === 'connected') {
+                    updateConnectionStatus('connected', 'Live session active');
+                } else if (state === 'connecting') {
+                    updateConnectionStatus('connecting', 'Establishing connection...');
+                } else if (state === 'disconnected' || state === 'failed') {
+                    updateConnectionStatus('disconnected', 'Connection lost');
+                }
+            };
+        }
+
+        // Media Controls
+        function toggleCamera() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    isVideoEnabled = videoTrack.enabled;
+                    
+                    const button = document.getElementById('toggleCamera');
+                    button.classList.toggle('bg-red-600', !isVideoEnabled);
+                    button.classList.toggle('bg-gray-700', isVideoEnabled);
+                }
+            }
+        }
+
+        function toggleMicrophone() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    isAudioEnabled = audioTrack.enabled;
+                    
+                    const button = document.getElementById('toggleMic');
+                    button.classList.toggle('bg-red-600', !isAudioEnabled);
+                    button.classList.toggle('bg-gray-700', isAudioEnabled);
+                }
+            }
+        }
+
+        async function shareScreen() {
+            try {
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true
+                });
+                
+                // Replace video track
+                const videoTrack = screenStream.getVideoTracks()[0];
+                const sender = peerConnection.getSenders().find(s => 
+                    s.track && s.track.kind === 'video'
+                );
+                
+                if (sender) {
+                    await sender.replaceTrack(videoTrack);
+                }
+                
+                // Handle screen share end
+                videoTrack.onended = async () => {
+                    const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const cameraTrack = cameraStream.getVideoTracks()[0];
+                    await sender.replaceTrack(cameraTrack);
+                    
+                    // Update local video
+                    const localVideo = document.getElementById('localVideo');
+                    localVideo.srcObject = new MediaStream([cameraTrack, localStream.getAudioTracks()[0]]);
+                };
+                
+            } catch (error) {
+                console.error('Error sharing screen:', error);
+                showNotification('Screen sharing failed', 'error');
+            }
+        }
+
+        // Session Management
+        function startMainSession() {
+            if (userRole === 'mentor') {
+                fetch(`/api/sessions/{{ session.id }}/start/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = `/sessions/{{ session.id }}/room/`;
+                    } else {
+                        showNotification('Failed to start session', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error starting session:', error);
+                    showNotification('Error starting session', 'error');
+                });
+            }
+        }
+
+        function endSession() {
+            if (confirm('Are you sure you want to end this session?')) {
+                fetch(`/api/sessions/{{ session.id }}/end/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(() => {
+                    window.location.href = '/dashboard/mentor/';
+                })
+                .catch(error => {
+                    console.error('Error ending session:', error);
+                });
+            }
+        }
+
+        function leaveSession() {
+            if (confirm('Are you sure you want to leave this session?')) {
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                }
+                if (peerConnection) {
+                    peerConnection.close();
+                }
+                window.location.href = '/dashboard/learner/';
+            }
+        }
+
+        function leaveRoom() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            window.location.href = '/sessions/{{ session.id }}/';
+        }
+
+        // Chat Functions
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addChatMessage('You', message, 'self');
+                input.value = '';
+                
+                // Send via WebSocket (implement as needed)
+                sendSignalingMessage({
+                    type: 'chat',
+                    message: message,
+                    sender: userRole
+                });
+            }
+        }
+
+        function addChatMessage(sender, message, type = 'other') {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message p-3 rounded-lg';
+            
+            const senderColor = type === 'self' ? 'text-blue-400' : 'text-green-400';
+            messageDiv.innerHTML = `
+                <div class="${senderColor} text-sm font-medium">${sender}</div>
+                <div class="text-gray-300 text-sm">${message}</div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Utility Functions
+        function updateConnectionStatus(status, text) {
+            const indicator = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+            
+            indicator.className = `status-indicator status-${status}`;
+            statusText.textContent = text;
+        }
+
+        function startSessionTimer() {
+            sessionStartTime = Date.now();
+            setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            if (sessionStartTime) {
+                const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('sessionTimer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function sendSignalingMessage(message) {
+            // Implement WebSocket signaling as needed
+            console.log('Signaling message:', message);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Chat input enter key handler
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializeWebRTC);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (peerConnection) {
+                peerConnection.close();
+            }
+        });
+    </script>
+</body>
+</html>
