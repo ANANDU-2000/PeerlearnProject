@@ -373,16 +373,6 @@
                             </div>
                         </div>
                     </div>
-                            </div>
-                            <div class="flex-1">
-                                <input type="file" 
-                                       @change="handleImageUpload($event)"
-                                       accept="image/*"
-                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors">
-                                <p class="text-xs text-gray-500 mt-1">Upload a professional photo (JPG, PNG - Max 5MB)</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 
                 <div class="mt-8 flex justify-between">
@@ -547,6 +537,7 @@ function registrationWizard() {
             experience: '',
             bio: '',
             profileImage: null,
+            profileImageName: '',
             acceptTerms: false,
             acceptMarketing: false
         },
@@ -728,6 +719,38 @@ function registrationWizard() {
             }
         },
         
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Please upload a valid image file (JPG, PNG, or WEBP)');
+                    return;
+                }
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    return;
+                }
+                
+                // Store the file
+                this.formData.profileImage = file;
+                this.formData.profileImageName = file.name;
+                
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('imagePreview');
+                    if (preview) {
+                        preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-full" alt="Profile preview">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+
         getCSRFToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
                    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';

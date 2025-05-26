@@ -92,26 +92,25 @@ class UserRegistrationView(CreateView):
 def register_steps_view(request):
     """Enhanced step-by-step registration with profile image upload"""
     if request.method == 'GET':
-        return render(request, 'registration/register_steps.html')
+        return render(request, 'registration/register_wizard.html')
     
     elif request.method == 'POST':
         try:
-            # Get form data
+            # Get form data from wizard
             role = request.POST.get('role')
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
+            first_name = request.POST.get('firstName')
+            last_name = request.POST.get('lastName')
             username = request.POST.get('username')
             email = request.POST.get('email')
-            password1 = request.POST.get('password1')
-            password2 = request.POST.get('password2')
+            password1 = request.POST.get('password')
+            password2 = request.POST.get('confirmPassword')
             
-            # Optional fields
+            # Optional fields from wizard
             skills = request.POST.get('skills', '')
-            interests = request.POST.get('interests', '')
-            domain = request.POST.get('domain', '')
-            expertise = request.POST.get('expertise', '')
+            domains = request.POST.getlist('domains[]')  # Handle multiple domains
+            expertise = ','.join(domains) if domains else ''
             bio = request.POST.get('bio', '')
-            career_goals = request.POST.get('career_goals', '')
+            experience = request.POST.get('experience', '')
             profile_image = request.FILES.get('profile_image')
             
             # Validation
@@ -136,11 +135,11 @@ def register_steps_view(request):
                 last_name=last_name,
                 role=role,
                 skills=skills,
-                interests=interests,
-                domain=domain,
-                expertise=expertise,
+                interests=expertise,  # Using domains as interests
+                domain=expertise,
+                expertise=experience,
                 bio=bio,
-                career_goals=career_goals
+                career_goals=''  # Not collected in wizard
             )
             
             # Handle profile image upload
