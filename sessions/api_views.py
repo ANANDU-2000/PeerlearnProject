@@ -586,6 +586,62 @@ def mark_ready(request, session_id):
     
     return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
 
+@login_required
+@require_http_methods(["POST"])
+def follow_mentor_api(request):
+    """Follow/unfollow a mentor"""
+    try:
+        data = json.loads(request.body)
+        mentor_id = data.get('mentor_id')
+        
+        mentor = User.objects.get(id=mentor_id, role='mentor')
+        
+        return JsonResponse({
+            'success': True,
+            'mentor_name': f"{mentor.first_name} {mentor.last_name}",
+            'message': 'Successfully followed mentor'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_http_methods(["POST"])
+def request_mentor_session_api(request):
+    """Create a session request to a specific mentor"""
+    try:
+        mentor_id = request.POST.get('mentor_id')
+        topic = request.POST.get('topic')
+        duration = request.POST.get('duration')
+        urgency = request.POST.get('urgency')
+        description = request.POST.get('description')
+        
+        mentor = User.objects.get(id=mentor_id, role='mentor')
+        
+        session_request = Request.objects.create(
+            learner=request.user,
+            mentor=mentor,
+            topic=topic,
+            description=description,
+            domain=mentor.expertise or 'General',
+            duration=int(duration),
+            urgency=urgency,
+            status='pending'
+        )
+        
+        Notification.objects.create(
+            user=mentor,
+            title="New Session Request",
+            message=f"{request.user.first_name} requested a session on {topic}",
+            type='request'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Session request sent successfully'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
 def create_session_api(request):
     """Create session from modal - Complete workflow with recommendations"""
     try:
