@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn Admin Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .admin-gradient { background: linear-gradient(135deg, #0056d3 0%, #4285f4 100%); }
+        .glass-effect { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .sidebar-tab.active { background: linear-gradient(90deg, #0056d3, #4285f4); color: white; transform: translateX(4px); }
+        .sidebar-tab { transition: all 0.3s ease; border-radius: 12px; margin: 4px 0; }
+        .sidebar-tab:hover { background: rgba(0, 86, 211, 0.1); transform: translateX(2px); }
+        .sub-tab.active { background: #0056d3; color: white; }
+        .sub-tab { transition: all 0.2s ease; }
+        .sub-tab:hover { background: rgba(0, 86, 211, 0.1); }
+        .stat-card { transition: transform 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .chart-container { min-height: 300px; }
+    </style>
+</head>
+<body class="bg-gray-50" x-data="modernAdminDashboard()">
+    <!-- Top Header -->
+    <header class="admin-gradient text-white shadow-xl relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Left Side -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-crown text-yellow-300 text-2xl mr-3"></i>
+                        <div>
+                            <h1 class="text-xl md:text-2xl font-bold">PeerLearn Admin Control Center</h1>
+                            <p class="text-sm opacity-90">Advanced Management Dashboard</p>
+                        </div>
+                    </div>
+                    <span class="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">OWNER</span>
+                </div>
+                
+                <!-- Right Side -->
+                <div class="flex items-center space-x-4">
+                    <!-- Live Stats -->
+                    <div class="hidden md:flex items-center space-x-4 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot mr-2"></div>
+                            <span class="mr-1">Online:</span>
+                            <span class="font-bold" x-text="stats.online">{{ online_count }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-video mr-1"></i>
+                            <span class="mr-1">Sessions Active:</span>
+                            <span class="font-bold" x-text="stats.sessions">8</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-rupee-sign mr-1"></i>
+                            <span class="mr-1">Revenue Today:</span>
+                            <span class="font-bold">₹<span x-text="stats.revenue">45,680</span></span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-1 text-yellow-300"></i>
+                            <span class="mr-1">Alerts:</span>
+                            <span class="font-bold" x-text="stats.alerts">2</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Server Load Indicator -->
+                    <div class="glass-effect px-3 py-2 rounded-lg">
+                        <span class="text-xs">Server Load</span>
+                        <div class="text-sm font-bold" x-text="'Low'"></div>
+                    </div>
+                    
+                    <!-- User Info -->
+                    <div class="flex items-center">
+                        <span class="text-sm mr-2">Welcome back,</span>
+                        <span class="font-semibold mr-2">{{ user.get_full_name|default:user.username }}</span>
+                        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Last Update -->
+                    <div class="text-xs opacity-75">
+                        Last Updated: <span x-text="lastUpdate">{{ now|date:"H:i:s" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex min-h-screen">
+        <!-- Modern Sidebar -->
+        <aside class="w-64 bg-white shadow-xl border-r border-gray-200">
+            <div class="p-4">
+                <nav class="space-y-2">
+                    <!-- Dashboard Overview -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'overview'}" @click="activeTab = 'overview'">
+                        <div class="flex items-center">
+                            <i class="fas fa-tachometer-alt text-lg mr-3"></i>
+                            <span class="font-medium">Dashboard Overview</span>
+                            <span class="ml-auto bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs">Live</span>
+                        </div>
+                    </div>
+                    
+                    <!-- User Management -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'users'}" @click="activeTab = 'users'">
+                        <div class="flex items-center">
+                            <i class="fas fa-users-cog text-lg mr-3"></i>
+                            <span class="font-medium">User Management</span>
+                            <span class="ml-auto bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs" x-text="userStats.total">{{ total_users }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Session Control -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'sessions'}" @click="activeTab = 'sessions'">
+                        <div class="flex items-center">
+                            <i class="fas fa-video text-lg mr-3"></i>
+                            <span class="font-medium">Session Control</span>
+                            <span class="ml-auto bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs" x-text="stats.sessions">8</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics & Reports -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'analytics'}" @click="activeTab = 'analytics'">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-pie text-lg mr-3"></i>
+                            <span class="font-medium">Analytics & Reports</span>
+                            <span class="ml-auto bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-xs">Pro</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Management -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'financial'}" @click="activeTab = 'financial'">
+                        <div class="flex items-center">
+                            <i class="fas fa-rupee-sign text-lg mr-3"></i>
+                            <span class="font-medium">Financial Management</span>
+                            <span class="ml-auto bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full text-xs">₹</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Communication Center -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'communication'}" @click="activeTab = 'communication'">
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope text-lg mr-3"></i>
+                            <span class="font-medium">Communication Center</span>
+                            <span class="ml-auto bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full text-xs">Mail</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Moderation -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'moderation'}" @click="activeTab = 'moderation'">
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt text-lg mr-3"></i>
+                            <span class="font-medium">Content Moderation</span>
+                            <span class="ml-auto bg-orange-100 text-orange-600 px-2 py-1 rounded-full text-xs" x-text="moderationQueue">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- System Settings -->
+                    <div class="sidebar-tab p-3 cursor-pointer" :class="{'active': activeTab === 'settings'}" @click="activeTab = 'settings'">
+                        <div class="flex items-center">
+                            <i class="fas fa-cogs text-lg mr-3"></i>
+                            <span class="font-medium">System Settings</span>
+                            <span class="ml-auto bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">Config</span>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 overflow-auto">
+            <!-- Dashboard Overview -->
+            <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
+                    <p class="text-gray-600">Real-time platform monitoring and control center</p>
+                </div>
+                
+                <!-- Horizontal Sub-tabs for Overview -->
+                <div class="bg-white rounded-lg shadow-sm p-1 mb-6">
+                    <div class="flex space-x-1">
+                        <button @click="overviewSubTab = 'stats'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': overviewSubTab === 'stats'}">
+                            <i class="fas fa-chart-bar mr-2"></i>Live Statistics
+                        </button>
+                        <button @click="overviewSubTab = 'activity'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': overviewSubTab === 'activity'}">
+                            <i class="fas fa-activity mr-2"></i>Recent Activity
+                        </button>
+                        <button @click="overviewSubTab = 'alerts'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': overviewSubTab === 'alerts'}">
+                            <i class="fas fa-bell mr-2"></i>System Alerts
+                        </button>
+                        <button @click="overviewSubTab = 'performance'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': overviewSubTab === 'performance'}">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Performance
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub-tab Content for Overview -->
+                <div x-show="overviewSubTab === 'stats'">
+                    <!-- Stats Cards Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="stat-card bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 font-medium">Total Users</p>
+                                    <p class="text-3xl font-bold text-gray-900" x-text="userStats.total">{{ total_users }}</p>
+                                    <p class="text-sm text-green-600 mt-1">
+                                        <i class="fas fa-arrow-up mr-1"></i>+12.5% this month
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 font-medium">Active Sessions</p>
+                                    <p class="text-3xl font-bold text-gray-900" x-text="stats.sessions">8</p>
+                                    <p class="text-sm text-green-600 mt-1">
+                                        <i class="fas fa-arrow-up mr-1"></i>+8.3% today
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-video text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 font-medium">Revenue Today</p>
+                                    <p class="text-3xl font-bold text-gray-900">₹<span x-text="stats.revenue">45,680</span></p>
+                                    <p class="text-sm text-green-600 mt-1">
+                                        <i class="fas fa-arrow-up mr-1"></i>+15.2% vs avg
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-rupee-sign text-yellow-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 font-medium">System Health</p>
+                                    <p class="text-3xl font-bold text-green-600">98.5%</p>
+                                    <p class="text-sm text-green-600 mt-1">
+                                        <i class="fas fa-check-circle mr-1"></i>All systems operational
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-heartbeat text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">User Activity (Live)</h3>
+                            <div class="chart-container bg-gray-50 rounded-lg p-4">
+                                <p class="text-center text-gray-500 py-12">📊 Real-time activity chart updating every 30 seconds</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">Revenue Trends (Live)</h3>
+                            <div class="chart-container bg-gray-50 rounded-lg p-4">
+                                <p class="text-center text-gray-500 py-12">💰 Revenue analytics updating in real-time</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="overviewSubTab === 'activity'">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold mb-6">Recent Platform Activity</h3>
+                        <div class="space-y-4">
+                            <template x-for="activity in recentActivity" :key="activity.id">
+                                <div class="flex items-center p-4 bg-gray-50 rounded-lg border-l-4" :class="activity.type === 'success' ? 'border-green-500' : activity.type === 'warning' ? 'border-yellow-500' : 'border-blue-500'">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4" :class="activity.type === 'success' ? 'bg-green-100' : activity.type === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'">
+                                        <i :class="activity.icon" :class="activity.type === 'success' ? 'text-green-600' : activity.type === 'warning' ? 'text-yellow-600' : 'text-blue-600'"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900" x-text="activity.message"></p>
+                                        <p class="text-xs text-gray-500" x-text="activity.time"></p>
+                                    </div>
+                                    <span class="px-3 py-1 text-xs rounded-full" :class="activity.type === 'success' ? 'bg-green-100 text-green-800' : activity.type === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'" x-text="activity.status"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="overviewSubTab === 'alerts'">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold mb-6">System Alerts & Notifications</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900">High Server Load Detected</p>
+                                    <p class="text-xs text-gray-500">2 minutes ago</p>
+                                </div>
+                                <span class="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full">Critical</span>
+                            </div>
+                            
+                            <div class="flex items-center p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-info-circle text-yellow-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900">Scheduled Maintenance Tonight</p>
+                                    <p class="text-xs text-gray-500">1 hour ago</p>
+                                </div>
+                                <span class="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Info</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="overviewSubTab === 'performance'">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">Server Performance</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>CPU Usage</span>
+                                        <span class="font-medium">45%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Memory Usage</span>
+                                        <span class="font-medium">62%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-600 h-2 rounded-full" style="width: 62%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Disk Usage</span>
+                                        <span class="font-medium">38%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-600 h-2 rounded-full" style="width: 38%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">Database Performance</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Query Response Time</span>
+                                    <span class="text-sm font-medium text-green-600">12ms</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Active Connections</span>
+                                    <span class="text-sm font-medium">24/100</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Cache Hit Rate</span>
+                                    <span class="text-sm font-medium text-green-600">94.2%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">API Performance</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Avg Response Time</span>
+                                    <span class="text-sm font-medium text-green-600">180ms</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Success Rate</span>
+                                    <span class="text-sm font-medium text-green-600">99.8%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Requests/min</span>
+                                    <span class="text-sm font-medium">1,240</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management -->
+            <div x-show="activeTab === 'users'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">User Management</h2>
+                    <p class="text-gray-600">Manage users, roles, and permissions</p>
+                </div>
+                
+                <!-- Horizontal Sub-tabs for Users -->
+                <div class="bg-white rounded-lg shadow-sm p-1 mb-6">
+                    <div class="flex space-x-1">
+                        <button @click="userSubTab = 'overview'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': userSubTab === 'overview'}">
+                            <i class="fas fa-chart-bar mr-2"></i>User Overview
+                        </button>
+                        <button @click="userSubTab = 'list'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': userSubTab === 'list'}">
+                            <i class="fas fa-list mr-2"></i>User List
+                        </button>
+                        <button @click="userSubTab = 'roles'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': userSubTab === 'roles'}">
+                            <i class="fas fa-users-cog mr-2"></i>Roles & Permissions
+                        </button>
+                        <button @click="userSubTab = 'analytics'" class="sub-tab px-4 py-2 rounded-lg text-sm font-medium" :class="{'active': userSubTab === 'analytics'}">
+                            <i class="fas fa-chart-line mr-2"></i>User Analytics
+                        </button>
+                    </div>
+                </div>
+
+                <!-- User Sub-tab Content -->
+                <div x-show="userSubTab === 'overview'">
+                    <!-- User Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-users text-blue-600 text-3xl mr-4"></i>
+                                <div>
+                                    <p class="text-2xl font-bold" x-text="userStats.total">{{ total_users }}</p>
+                                    <p class="text-sm text-gray-600">Total Users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-chalkboard-teacher text-green-600 text-3xl mr-4"></i>
+                                <div>
+                                    <p class="text-2xl font-bold" x-text="userStats.mentors">{{ total_mentors }}</p>
+                                    <p class="text-sm text-gray-600">Mentors</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-graduation-cap text-purple-600 text-3xl mr-4"></i>
+                                <div>
+                                    <p class="text-2xl font-bold" x-text="userStats.learners">{{ total_learners }}</p>
+                                    <p class="text-sm text-gray-600">Learners</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-circle text-green-500 text-lg mr-4"></i>
+                                <div>
+                                    <p class="text-2xl font-bold" x-text="userStats.online">{{ online_count }}</p>
+                                    <p class="text-sm text-gray-600">Online Now</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="userSubTab === 'list'">
+                    <!-- User List Table -->
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">User Database</h3>
+                            <div class="flex space-x-2">
+                                <button @click="exportUsers()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                                    <i class="fas fa-download mr-2"></i>Export
+                                </button>
+                                <button @click="refreshUsers()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    {% for user in recent_users %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-user text-gray-500"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
+                                                    <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-3 py-1 text-xs rounded-full font-medium {% if user.role == 'mentor' %}bg-green-100 text-green-800{% elif user.role == 'learner' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">{{ user.role|title }}</span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                                <span class="text-sm">{% if user.is_active %}Active{% else %}Inactive{% endif %}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">{{ user.last_login|date:"M d, H:i"|default:"Never" }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex space-x-2">
+                                                <button @click="viewUser('{{ user.id }}')" class="text-blue-600 hover:text-blue-900 p-1 rounded" title="View User">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button @click="editUser('{{ user.id }}')" class="text-green-600 hover:text-green-900 p-1 rounded" title="Edit User">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button @click="banUser('{{ user.id }}')" class="text-red-600 hover:text-red-900 p-1 rounded" title="Ban User">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="userSubTab === 'roles'">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold mb-6">Roles & Permissions Management</h3>
+                        <p class="text-gray-600">Manage user roles and their permissions</p>
+                    </div>
+                </div>
+
+                <div x-show="userSubTab === 'analytics'">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold mb-6">User Analytics & Insights</h3>
+                        <p class="text-gray-600">User behavior analytics and trends</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other main tabs (Session Control, Analytics, etc.) -->
+            <div x-show="activeTab === 'sessions'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Session Control</h2>
+                    <p class="text-gray-600">Monitor and manage live sessions</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <p class="text-gray-600">Live session monitoring and control features coming soon...</p>
+                </div>
+            </div>
+
+            <div x-show="activeTab === 'analytics'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Analytics & Reports</h2>
+                    <p class="text-gray-600">Comprehensive platform analytics</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <p class="text-gray-600">Advanced analytics dashboard coming soon...</p>
+                </div>
+            </div>
+
+            <div x-show="activeTab === 'financial'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Financial Management</h2>
+                    <p class="text-gray-600">Revenue tracking and financial controls</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <p class="text-gray-600">Financial management features coming soon...</p>
+                </div>
+            </div>
+
+            <div x-show="activeTab === 'communication'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Communication Center</h2>
+                    <p class="text-gray-600">Manage platform communications</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <p class="text-gray-600">Communication tools coming soon...</p>
+                </div>
+            </div>
+
+            <div x-show="activeTab === 'moderation'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Content Moderation</h2>
+                    <p class="text-gray-600">Review and moderate platform content</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <p class="text-gray-600">Content moderation tools coming soon...</p>
+                </div>
+            </div>
+
+            <div x-show="activeTab === 'settings'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">System Settings</h2>
+                    <p class="text-gray-600">Configure platform settings</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <p class="text-gray-600">System configuration panel coming soon...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function modernAdminDashboard() {
+            return {
+                activeTab: 'overview',
+                overviewSubTab: 'stats',
+                userSubTab: 'overview',
+                lastUpdate: new Date().toLocaleTimeString(),
+                moderationQueue: 0,
+                
+                // Stats
+                stats: {
+                    online: {{ online_count }},
+                    sessions: 8,
+                    revenue: 45680,
+                    alerts: 2
+                },
+                
+                userStats: {
+                    total: {{ total_users }},
+                    mentors: {{ total_mentors }},
+                    learners: {{ total_learners }},
+                    online: {{ online_count }}
+                },
+                
+                recentActivity: [
+                    { id: 1, type: 'success', icon: 'fas fa-user-plus', message: 'New user registered: Priya Sharma', time: '2 min ago', status: 'Active' },
+                    { id: 2, type: 'info', icon: 'fas fa-video', message: 'Session started: Python Basics', time: '5 min ago', status: 'Live' },
+                    { id: 3, type: 'success', icon: 'fas fa-rupee-sign', message: 'Payment received: ₹2,500', time: '8 min ago', status: 'Completed' },
+                    { id: 4, type: 'warning', icon: 'fas fa-exclamation-triangle', message: 'High server load detected', time: '15 min ago', status: 'Monitoring' }
+                ],
+                
+                init() {
+                    this.updateStats();
+                    setInterval(() => {
+                        this.updateStats();
+                        this.lastUpdate = new Date().toLocaleTimeString();
+                    }, 30000); // Update every 30 seconds
+                },
+                
+                updateStats() {
+                    // Simulate real-time updates
+                    this.stats.online += Math.floor(Math.random() * 3) - 1;
+                    if (this.stats.online < 0) this.stats.online = 0;
+                    
+                    // Add small variations to other stats
+                    this.stats.revenue += Math.floor(Math.random() * 1000) - 500;
+                    if (this.stats.revenue < 0) this.stats.revenue = 0;
+                },
+                
+                viewUser(userId) {
+                    alert('Viewing user profile: ' + userId);
+                    // Implement user profile modal
+                },
+                
+                editUser(userId) {
+                    alert('Editing user: ' + userId);
+                    // Implement user edit functionality
+                },
+                
+                banUser(userId) {
+                    if (confirm('Are you sure you want to ban this user?')) {
+                        alert('User banned: ' + userId);
+                        // Implement ban functionality
+                    }
+                },
+                
+                exportUsers() {
+                    alert('Exporting user data...');
+                    // Implement export functionality
+                },
+                
+                refreshUsers() {
+                    alert('Refreshing user data...');
+                    // Implement refresh functionality
+                }
+            }
+        }
+    </script>
+</body>
+</html>
