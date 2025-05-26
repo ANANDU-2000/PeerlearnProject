@@ -895,6 +895,7 @@ function mentorDashboard() {
         init() {
             console.log('Mentor dashboard initialized');
             this.loadRealData();
+            this.loadBookedSessions();
             this.startRealTimeUpdates();
         },
         
@@ -923,6 +924,63 @@ function mentorDashboard() {
             this.mySessions.scheduled.forEach(updateTimer);
         },
         
+        async loadBookedSessions() {
+            try {
+                // Load sessions with enrolled learners and their ready status
+                const response = await fetch('/api/sessions/mentor-data/', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Process sessions with enrolled learners
+                    this.bookedSessions = data.scheduled_sessions.filter(session => 
+                        session.current_participants > 0
+                    ).map(session => ({
+                        ...session,
+                        bookedLearners: [], // Will be loaded separately
+                        bookedCount: session.current_participants,
+                        expectedEarnings: session.price * session.current_participants
+                    }));
+                    
+                    this.bookedSessionsCount = this.bookedSessions.length;
+                    
+                    // Load individual learner details for each session
+                    await this.loadLearnerDetails();
+                }
+            } catch (error) {
+                console.error('Error loading booked sessions:', error);
+            }
+        },
+        
+        async loadLearnerDetails() {
+            // Load enrolled learners for each session
+            for (let session of this.bookedSessions) {
+                try {
+                    const response = await fetch(`/api/sessions/${session.id}/bookings/`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        session.bookedLearners = data.bookings.map(booking => ({
+                            id: booking.learner_id,
+                            name: booking.name,
+                            email: booking.email,
+                            bookedDate: booking.bookedDate,
+                            isReady: booking.isReady,
+                            status: booking.status
+                        }));
+                        
+                        session.readyLearners = session.bookedLearners.filter(l => l.isReady).length;
+                    }
+                } catch (error) {
+                    console.error(`Error loading learners for session ${session.id}:`, error);
+                }
+            }
+        },
+
         async loadRealData() {
             try {
                 // Load real session data from database

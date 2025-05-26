@@ -18,7 +18,66 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50" x-data="sessionDetail()" x-init="init()">
+<div class="min-h-screen bg-gray-50" x-data="{
+    activeTab: 'overview',
+    timeUntilSession: '',
+    enrolledLearners: [],
+    init() {
+        this.updateTimer();
+        setInterval(() => this.updateTimer(), 1000);
+        {% if user == session.mentor %}
+            this.loadEnrolledLearners();
+            setInterval(() => this.loadEnrolledLearners(), 30000);
+        {% endif %}
+    },
+    updateTimer() {
+        const sessionTime = new Date('{{ session.schedule|date:"c" }}').getTime();
+        const now = Date.now();
+        const diffMs = sessionTime - now;
+        
+        if (diffMs > 0) {
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const days = Math.floor(totalSeconds / (24 * 60 * 60));
+            const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+            const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+            const seconds = totalSeconds % 60;
+            
+            if (days > 0) {
+                this.timeUntilSession = `${days}d ${hours}h ${minutes}m`;
+            } else if (hours > 0) {
+                this.timeUntilSession = `${hours}h ${minutes}m ${seconds}s`;
+            } else if (minutes > 0) {
+                this.timeUntilSession = `${minutes}m ${seconds}s`;
+            } else {
+                this.timeUntilSession = `${seconds}s`;
+            }
+        } else if (diffMs > -60000) {
+            this.timeUntilSession = 'Live Now';
+        } else {
+            this.timeUntilSession = 'Session Ended';
+        }
+    },
+    async loadEnrolledLearners() {
+        try {
+            const response = await fetch(`/api/sessions/{{ session.id }}/bookings/`);
+            const data = await response.json();
+            if (data.success) {
+                this.enrolledLearners = data.bookings;
+                this.showLearnerNotifications(data.bookings);
+            }
+        } catch (error) {
+            console.error('Error loading enrolled learners:', error);
+        }
+    },
+    showLearnerNotifications(learners) {
+        const readyLearners = learners.filter(l => l.isReady);
+        if (readyLearners.length > 0) {
+            readyLearners.forEach(learner => {
+                showNotification(`✅ ${learner.name} is ready for the session!`, 'success');
+            });
+        }
+    }
+}" x-init="init()"
     
     <!-- Coursera-Style Header -->
     <div class="bg-white shadow-sm border-b">
