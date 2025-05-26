@@ -1,0 +1,542 @@
+# PeerLearn Platform - Complete Data Flow Diagrams (DFD) Documentation
+# University Standard DFD Analysis - All Levels (0, 1, 2, 3)
+
+===============================================================================
+                        DFD NOTATION STANDARDS & RULES
+===============================================================================
+
+=== UNIVERSITY DFD NOTATION STANDARDS ===
+
+1. SYMBOLS AND SHAPES:
+   ○ CIRCLE/BUBBLE: Processes (numbered: 1.0, 2.0, etc.)
+   □ SQUARE: External Entities (sources/sinks of data)
+   ═ PARALLEL LINES: Data Stores (labeled: D1, D2, etc.)
+   → ARROW: Data Flow (labeled with data description)
+
+2. NUMBERING CONVENTIONS:
+   - Level 0: Single process (0.0)
+   - Level 1: Major processes (1.0, 2.0, 3.0, etc.)
+   - Level 2: Sub-processes (1.1, 1.2, 2.1, 2.2, etc.)
+   - Level 3: Detailed processes (1.1.1, 1.1.2, etc.)
+
+3. DATA FLOW RULES:
+   - No process can have only outputs or only inputs
+   - Data flows between external entities must pass through process
+   - Data stores can only connect to processes
+   - Each data flow must be labeled
+   - Process names should be verb phrases
+
+4. BALANCING RULES:
+   - Inputs/outputs of parent process = sum of inputs/outputs of child processes
+   - Data flows entering/leaving higher level = data flows at lower level
+   - Data stores at one level = data stores at lower levels
+
+===============================================================================
+                            LEVEL 0 DFD (CONTEXT DIAGRAM)
+===============================================================================
+
+=== EXTERNAL ENTITIES ===
+E1: Learners
+E2: Mentors  
+E3: Admin Users
+E4: Payment Gateway
+E5: Email Service Provider
+E6: WebRTC STUN/TURN Servers
+
+=== CENTRAL PROCESS ===
+0.0: PeerLearn Platform
+
+=== CONTEXT DIAGRAM ===
+
+```
+                     Registration Data
+        E1: Learners ─────────────────────► 
+                     Session Bookings     │
+                     ◄─────────────────────┤
+                     Learning Materials   │
+                     Notifications        │
+                                         │
+                     Session Creation     │
+        E2: Mentors ──────────────────────┤
+                     Session Management   │  0.0
+                     ◄─────────────────────┤ PeerLearn
+                     Earnings Reports     │ Platform
+                     Session Feedback     │
+                                         │
+                     User Management      │
+        E3: Admin ───────────────────────┤
+                     Platform Analytics  │
+                     ◄─────────────────────┤
+                     System Reports       │
+                                         │
+                     Payment Requests     │
+     E4: Payment ─────────────────────────┤
+         Gateway     Transaction Results  │
+                     ◄─────────────────────┤
+                                         │
+                     Email Notifications  │
+     E5: Email ──────────────────────────┤
+         Service     Delivery Status     │
+                     ◄─────────────────────┤
+                                         │
+                     Media Streams        │
+     E6: WebRTC ─────────────────────────┤
+         Servers     Connection Data     │
+                     ◄─────────────────────┘
+```
+
+=== DATA FLOWS (LEVEL 0) ===
+
+FROM LEARNERS TO SYSTEM:
+- Registration Data (username, email, password, skills, interests)
+- Session Booking Requests (session_id, payment_info, schedule_preferences)
+- Session Join Requests (session_id, user_credentials)
+- Feedback Submissions (rating, comments, session_evaluation)
+- Profile Updates (bio, skills, profile_image)
+
+FROM SYSTEM TO LEARNERS:
+- Learning Materials (session_content, resources, recordings)
+- Session Confirmations (booking_status, payment_receipt, calendar_invite)
+- Notifications (session_reminders, mentor_updates, recommendations)
+- Personalized Recommendations (suggested_sessions, mentor_matches)
+
+FROM MENTORS TO SYSTEM:
+- Session Creation Data (title, description, schedule, price, requirements)
+- Session Management Commands (start_session, end_session, participant_control)
+- Response to Requests (accept/decline_learner_requests)
+- Content Uploads (session_materials, presentations, resources)
+
+FROM SYSTEM TO MENTORS:
+- Earnings Reports (payment_summary, session_revenue, payout_details)
+- Session Analytics (participant_count, engagement_metrics, feedback_summary)
+- Learner Requests (session_requests, profile_information, preferred_schedule)
+- Platform Notifications (booking_alerts, system_updates, policy_changes)
+
+FROM ADMIN TO SYSTEM:
+- User Management Commands (create/edit/delete_users, role_assignments)
+- Platform Configuration (system_settings, payment_rates, policies)
+- Content Moderation (approve/reject_sessions, handle_disputes)
+
+FROM SYSTEM TO ADMIN:
+- Platform Analytics (user_statistics, revenue_reports, performance_metrics)
+- System Health Reports (server_status, error_logs, usage_patterns)
+- User Activity Logs (login_history, session_participation, violations)
+
+===============================================================================
+                            LEVEL 1 DFD (MAJOR PROCESSES)
+===============================================================================
+
+=== MAJOR PROCESSES ===
+1.0: User Management Process
+2.0: Session Management Process  
+3.0: Communication Process
+4.0: Recommendation Process
+5.0: Payment Process
+6.0: Notification Process
+7.0: Analytics Process
+
+=== DATA STORES ===
+D1: Users
+D2: Sessions
+D3: Bookings
+D4: Feedback
+D5: Notifications
+D6: Payments
+D7: Popularity_Metrics
+
+=== LEVEL 1 DFD DIAGRAM ===
+
+```
+                     Registration_Data
+        E1: Learners ──────────────────► 1.0
+                                      User Mgmt ────► D1: Users
+                     User_Profile        │              │
+                     ◄───────────────────┘              │
+                                                        │ User_Info
+                     Session_Data                       ▼
+        E2: Mentors ──────────────────► 2.0         ┌─────────┐
+                                      Session_Mgmt ──┤         │
+                     Session_Status     │           │         │
+                     ◄───────────────────┤           │ 4.0     │
+                                        │           │Recommend│
+                     User_Queries       │           │Process  │
+        E3: Admin ──────────────────►   │  ┌────────┤         │
+                                        │  │        └─────────┘
+                     Reports             │  │               │
+                     ◄───────────────────┘  │ Session_Info  │ Recommendations
+                                           │               ▼
+                     Payment_Data          ▼               
+     E4: Payment ─────────────────► 5.0 ◄─────── D2: Sessions
+         Gateway                 Payment         │
+                     Results      Process        │ Booking_Data
+                     ◄─────────────── │          ▼
+                                     │      D3: Bookings
+                     Email_Requests   │          │
+     E5: Email ──────────────────► 6.0          │ Feedback_Data
+         Service                 Notification   ▼
+                     Status       Process    D4: Feedback
+                     ◄─────────────── │          │
+                                     │          │ Activity_Data
+                     Media_Streams    │          ▼
+     E6: WebRTC ─────────────────► 3.0      D5: Notifications
+         Servers                 Communication    │
+                     Connection_Data  Process      │ Usage_Data
+                     ◄─────────────── │            ▼
+                                     │        D6: Payments
+                                     │            │
+                                     │            │ Metrics_Data
+                                     │            ▼
+                                     └────► 7.0 ◄── D7: Popularity_Metrics
+                                         Analytics
+                                         Process
+```
+
+=== PROCESS DESCRIPTIONS (LEVEL 1) ===
+
+PROCESS 1.0: User Management Process
+- Input: Registration_Data (from Learners/Mentors), User_Queries (from Admin)
+- Processing: Validate user data, create accounts, manage profiles, authenticate users
+- Output: User_Profile (to Learners/Mentors), User_Info (to other processes)
+- Data Stores: Read/Write D1:Users
+
+PROCESS 2.0: Session Management Process  
+- Input: Session_Data (from Mentors), Booking_Requests (from process 1.0)
+- Processing: Create sessions, manage bookings, track session status
+- Output: Session_Status (to Mentors), Session_Info (to process 4.0)
+- Data Stores: Read/Write D2:Sessions, D3:Bookings
+
+PROCESS 3.0: Communication Process
+- Input: Media_Streams (from WebRTC Servers), Session_Participants (from process 2.0)
+- Processing: Establish peer connections, manage video/audio streams, handle signaling
+- Output: Connection_Data (to WebRTC Servers), Communication_Logs (to process 7.0)
+- Data Stores: Read D2:Sessions, Write activity logs
+
+PROCESS 4.0: Recommendation Process
+- Input: User_Info (from process 1.0), Session_Info (from process 2.0)
+- Processing: Machine learning algorithms, similarity calculations, ranking
+- Output: Recommendations (to Learners), Trending_Data (to process 7.0)
+- Data Stores: Read D1:Users, D2:Sessions, D4:Feedback, D7:Popularity_Metrics
+
+PROCESS 5.0: Payment Process
+- Input: Payment_Data (from Payment Gateway), Booking_Info (from process 2.0)
+- Processing: Validate payments, process transactions, manage refunds
+- Output: Payment_Results (to Payment Gateway), Payment_Status (to processes)
+- Data Stores: Read/Write D6:Payments, D3:Bookings
+
+PROCESS 6.0: Notification Process
+- Input: Email_Requests (from Email Service), Trigger_Events (from all processes)
+- Processing: Generate notifications, manage delivery, track read status
+- Output: Email_Status (to Email Service), Notifications (to Users)
+- Data Stores: Read/Write D5:Notifications, Read D1:Users
+
+PROCESS 7.0: Analytics Process
+- Input: Usage_Data (from all processes), Metrics_Data (from data stores)
+- Processing: Generate reports, calculate statistics, performance analysis
+- Output: Reports (to Admin), Platform_Insights (to process 4.0)
+- Data Stores: Read all data stores, Write D7:Popularity_Metrics
+
+===============================================================================
+                            LEVEL 2 DFD (SUB-PROCESSES)
+===============================================================================
+
+=== LEVEL 2 DFD: USER MANAGEMENT PROCESS (1.0) ===
+
+SUB-PROCESSES:
+1.1: User Registration Process
+1.2: User Authentication Process
+1.3: Profile Management Process
+1.4: Role Management Process
+
+```
+                Registration_Data
+    E1/E2: Users ─────────────────► 1.1
+                                 Register ──────► D1: Users
+               Verification_Status   │              │
+               ◄─────────────────────┘              │ User_Credentials
+                                                    ▼
+               Login_Data                        1.2
+    E1/E2: Users ─────────────────► Authenticate ◄─── D1: Users
+                                     │              │
+               Auth_Token             │              │ User_Data
+               ◄─────────────────────┘              ▼
+                                                 1.3
+               Profile_Updates                  Profile ◄─── D1: Users
+    E1/E2: Users ─────────────────► Management     │
+                                     │              │ Updated_Profile
+               Profile_Data           │              ▼
+               ◄─────────────────────┘           D1: Users
+                                                    │ Role_Info
+               Role_Changes                         ▼
+    E3: Admin ──────────────────► 1.4
+                                Role ◄─────────── D1: Users
+               Role_Status      Management
+               ◄─────────────────┘
+```
+
+=== LEVEL 2 DFD: SESSION MANAGEMENT PROCESS (2.0) ===
+
+SUB-PROCESSES:
+2.1: Session Creation Process
+2.2: Session Booking Process
+2.3: Session Execution Process
+2.4: Session Analytics Process
+
+```
+               Session_Creation_Data
+    E2: Mentors ─────────────────► 2.1
+                                Create ──────► D2: Sessions
+               Session_Confirmation  │              │
+               ◄─────────────────────┘              │ Available_Sessions
+                                                    ▼
+               Booking_Request                   2.2
+    E1: Learners ────────────────► Book_Session ◄─── D2: Sessions
+                                     │              │
+               Booking_Confirmation   │              │ Booking_Data
+               ◄─────────────────────┘              ▼
+                                                 D3: Bookings
+               Session_Commands                      │ Session_Info
+    E2: Mentors ─────────────────► 2.3              ▼
+                                Execute ◄──────── D2: Sessions
+               Session_Updates      │              │
+               ◄─────────────────────┤              │ Execution_Data
+                                    │              ▼
+               Performance_Data      │           D3: Bookings
+               ◄─────────────────────┤              │
+                                    │              │ Analytics_Data
+                                    └─────────► 2.4 ▼
+                                             Analytics ──► D7: Popularity_Metrics
+```
+
+=== LEVEL 2 DFD: RECOMMENDATION PROCESS (4.0) ===
+
+SUB-PROCESSES:
+4.1: Content-Based Filtering
+4.2: Collaborative Filtering  
+4.3: Popularity-Based Filtering
+4.4: Recommendation Ranking
+
+```
+               User_Preferences
+               ◄─────────────────── D1: Users
+                    │
+                    ▼
+                  4.1
+               Content_Based ──────► Session_Matches
+               Filtering              │
+                    │                 ▼
+               User_Behavior         4.4
+               ◄─────────────────── D4: Feedback    Recommendation ──► E1: Learners
+                    │                 │            Ranking
+                    ▼               Similar_Users     │
+                  4.2                 │               │ Final_Recommendations
+               Collaborative ─────────┤               │ ◄──────────────────────
+               Filtering              │               │
+                    │                 │               │
+               Popularity_Data        │               │
+               ◄─────────────────── D7: Popularity_Metrics
+                    │                 │               │
+                    ▼                 │               │
+                  4.3                 │               │
+               Popularity_Based ──────┤               │
+               Filtering              │               │
+                    │                 ▼               │
+               Trending_Sessions    Combined_Scores   │
+               ──────────────────────────────────────┘
+```
+
+===============================================================================
+                            LEVEL 3 DFD (DETAILED PROCESSES)
+===============================================================================
+
+=== LEVEL 3 DFD: SESSION CREATION PROCESS (2.1) ===
+
+DETAILED SUB-PROCESSES:
+2.1.1: Input Validation
+2.1.2: Schedule Conflict Check
+2.1.3: Session Record Creation
+2.1.4: Notification Generation
+
+```
+               Session_Form_Data
+    E2: Mentors ─────────────────► 2.1.1
+                                Validate ──────► Validation_Errors
+               Validation_Results   │              │ (if any)
+               ◄─────────────────────┘              ▼
+                    │                           E2: Mentors
+               Valid_Data                           ▲
+                    ▼                               │
+                  2.1.2                      Error_Messages
+               Check_Conflicts ◄─────────── D2: Sessions
+                    │
+               Conflict_Status
+                    ▼
+                  2.1.3
+               Create_Record ──────► D2: Sessions
+                    │                   │
+               Session_Created          │ Session_Info
+                    ▼                   ▼
+                  2.1.4              2.1.4
+               Generate ──────────► Notification
+               Notification        Generation
+                    │                   │
+               Notification_Data        │ Notification_Request
+                    ▼                   ▼
+               D5: Notifications    6.0: Notification_Process
+```
+
+=== LEVEL 3 DFD: PAYMENT VALIDATION PROCESS (5.1) ===
+
+DETAILED SUB-PROCESSES:
+5.1.1: Payment Data Validation
+5.1.2: Fraud Detection
+5.1.3: Payment Gateway Communication
+5.1.4: Transaction Recording
+
+```
+               Payment_Request
+    E4: Gateway ─────────────────► 5.1.1
+                                Validate ──────► Validation_Errors
+               Validation_Status    │              │ (if any)
+               ◄─────────────────────┘              ▼
+                    │                           E4: Gateway
+               Valid_Payment                        ▲
+                    ▼                               │
+                  5.1.2                      Error_Response
+               Fraud_Check ◄───────────── D6: Payments
+                    │               (Transaction_History)
+               Security_Status
+                    ▼
+                  5.1.3
+               Gateway_Comm ◄────────► E4: Payment_Gateway
+                    │                       │
+               Payment_Result               │ Gateway_Response
+                    ▼                       ▼
+                  5.1.4                 Payment_Status
+               Record_Transaction ──────► D6: Payments
+                    │                       │
+               Transaction_ID              │ Payment_Confirmation
+                    ▼                       ▼
+               D3: Bookings            E1: Learners
+               (Update_Status)
+```
+
+=== LEVEL 3 DFD: CONTENT-BASED FILTERING (4.1) ===
+
+DETAILED SUB-PROCESSES:
+4.1.1: User Profile Analysis
+4.1.2: Session Content Analysis  
+4.1.3: Similarity Calculation
+4.1.4: Score Generation
+
+```
+               User_Profile
+               ◄─────────────────── D1: Users
+                    │
+                    ▼
+                  4.1.1
+               Profile_Analysis ──────► User_Features
+                    │                      │
+               Processed_Profile           ▼
+                    ▼                   4.1.3
+               Session_Data           Similarity ◄─── Session_Features
+               ◄─────────────────── D2: Sessions  Calculation     │
+                    │                      │                     │
+                    ▼                 Similarity_Scores          │
+                  4.1.2                     │                    │
+               Content_Analysis ───────────┘                     │
+                    │                                            │
+               Session_Features ─────────────────────────────────┘
+                                                                 │
+               Content_Scores                                    │
+               ◄─────────────────────────────────────────────────┘
+                    │
+                    ▼
+                  4.1.4
+               Generate_Scores ──────► Content_Based_Recommendations
+                    │                      │
+               Ranked_Sessions             ▼
+               ─────────────────────► 4.4: Recommendation_Ranking
+```
+
+===============================================================================
+                        DATA STORE SPECIFICATIONS
+===============================================================================
+
+=== DATA STORE DEFINITIONS ===
+
+D1: USERS
+- Description: Stores all user account information, profiles, and preferences
+- Contents: id, username, email, password_hash, role, skills, interests, profile_data
+- Access: Read/Write by processes 1.0, 4.0, 6.0, 7.0
+- Update Frequency: Real-time for profile updates, periodic for activity data
+
+D2: SESSIONS  
+- Description: Contains all session information, schedules, and metadata
+- Contents: id, title, description, mentor_id, schedule, status, participants, requirements
+- Access: Read/Write by processes 2.0, 3.0, 4.0, 7.0
+- Update Frequency: Real-time for status changes, scheduled for new sessions
+
+D3: BOOKINGS
+- Description: Tracks all session bookings, payments, and attendance
+- Contents: id, learner_id, session_id, status, payment_status, timestamps
+- Access: Read/Write by processes 2.0, 5.0, 7.0
+- Update Frequency: Real-time for booking status, batch for analytics
+
+D4: FEEDBACK
+- Description: Stores user feedback, ratings, and session evaluations  
+- Contents: id, session_id, user_id, rating, comments, feedback_type
+- Access: Read/Write by processes 2.0, 4.0, 7.0
+- Update Frequency: Real-time for new feedback, periodic aggregation
+
+D5: NOTIFICATIONS
+- Description: Contains all system notifications and delivery status
+- Contents: id, user_id, type, title, message, status, timestamps
+- Access: Read/Write by processes 6.0, 7.0
+- Update Frequency: Real-time for new notifications, periodic cleanup
+
+D6: PAYMENTS
+- Description: Financial transaction records and payment processing data
+- Contents: id, booking_id, amount, payment_method, status, gateway_response
+- Access: Read/Write by processes 5.0, 7.0
+- Update Frequency: Real-time for transactions, daily for reconciliation
+
+D7: POPULARITY_METRICS
+- Description: Session popularity statistics and recommendation metrics
+- Contents: session_id, view_count, booking_count, rating_average, popularity_score
+- Access: Read/Write by processes 4.0, 7.0
+- Update Frequency: Hourly updates, daily recalculation
+
+===============================================================================
+                        DATA FLOW SPECIFICATIONS
+===============================================================================
+
+=== CRITICAL DATA FLOWS ===
+
+1. USER REGISTRATION FLOW:
+   Learners/Mentors → Registration_Data → 1.1:Register → User_Record → D1:Users
+   
+2. SESSION BOOKING FLOW:
+   Learners → Booking_Request → 2.2:Book_Session → Booking_Record → D3:Bookings
+   
+3. PAYMENT PROCESSING FLOW:
+   Payment_Gateway → Payment_Data → 5.0:Payment_Process → Transaction_Record → D6:Payments
+   
+4. RECOMMENDATION GENERATION FLOW:
+   D1:Users → User_Preferences → 4.0:Recommendation_Process → Recommendations → Learners
+   
+5. SESSION EXECUTION FLOW:
+   WebRTC_Servers → Media_Streams → 3.0:Communication_Process → Session_Data → D2:Sessions
+
+=== DATA VOLUME ESTIMATES ===
+
+- User Registrations: 100-500 per day
+- Session Creations: 50-200 per day  
+- Booking Transactions: 200-1000 per day
+- Feedback Submissions: 100-500 per day
+- Notifications Generated: 1000-5000 per day
+- Payment Transactions: 200-1000 per day
+- Analytics Calculations: Hourly batches
+
+This comprehensive DFD documentation provides complete data flow analysis
+at all levels with university standard notation and detailed process 
+specifications for the PeerLearn platform architecture.

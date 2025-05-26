@@ -1,0 +1,74 @@
+# PeerLearn Platform - Complete Requirements Documentation
+# Advanced Peer-to-Peer Learning Platform with Real-time Video Communication
+
+=== CORE DEPENDENCIES ===
+
+# Django Framework & Extensions
+Django==5.2.1
+djangorestframework==3.14.0
+django-extensions==3.2.3
+django-cors-headers==4.3.1
+django-debug-toolbar==4.2.0
+
+# Real-time Communication & WebSockets
+channels==4.0.0
+channels-redis==4.2.0
+daphne==4.2.0
+redis==5.0.1
+
+# Database & Storage
+psycopg2-binary==2.9.7
+Pillow==10.0.0
+django-storages==1.14.2
+
+# Authentication & Security
+djangorestframework-simplejwt==5.3.0
+cryptography==41.0.7
+
+# Machine Learning & Recommendations
+scikit-learn==1.3.2
+numpy==1.25.2
+pandas==2.1.3
+
+# Utilities
+requests==2.31.0
+python-dateutil==2.8.2
+pytz==2023.3
+
+=== INSTALLATION COMMANDS ===
+
+1. Install Python Dependencies:
+   pip install -r PROJECT_REQUIREMENTS.txt
+
+2. Install Node.js Dependencies:
+   npm install
+
+3. Database Setup:
+   python manage.py makemigrations
+   python manage.py migrate
+
+4. Create Superuser:
+   python manage.py createsuperuser
+
+5. Collect Static Files:
+   python manage.py collectstatic
+
+6. Run Development Server:
+   python manage.py runserver 0.0.0.0:5000
+
+=== PRODUCTION DEPLOYMENT ===
+
+1. Environment Variables:
+   - SECRET_KEY: Django secret key
+   - DATABASE_URL: PostgreSQL connection string
+   - REDIS_URL: Redis connection for WebSockets
+   - DEBUG: False for production
+
+2. WebSocket Configuration:
+   - Daphne ASGI server for WebSocket support
+   - Redis backend for channel layers
+   - Proper CORS configuration
+
+3. Static Files:
+   - WhiteNoise for static file serving
+   - CDN integration for media files

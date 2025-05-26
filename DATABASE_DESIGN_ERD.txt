@@ -1,0 +1,427 @@
+# PeerLearn Platform - Entity Relationship Diagram (ERD) Documentation
+# University Standard Database Design with Comprehensive ERD Rules and Relationships
+
+===============================================================================
+                        UNIVERSITY STANDARD ERD DESIGN
+===============================================================================
+
+=== ERD NOTATION RULES (University Standard) ===
+
+1. ENTITY REPRESENTATION:
+   - Rectangles represent entities (tables)
+   - Entity names in UPPERCASE
+   - Attributes listed inside rectangles
+
+2. RELATIONSHIP REPRESENTATION:
+   - Diamonds represent relationships
+   - Lines connect entities to relationships
+   - Relationship names describe the action
+
+3. ATTRIBUTE NOTATION:
+   - Primary Keys: Underlined
+   - Foreign Keys: Italic or marked with (FK)
+   - Composite Keys: Multiple underlines
+   - Derived Attributes: Dashed underline
+
+4. CARDINALITY NOTATION:
+   - 1:1 (One-to-One)
+   - 1:M (One-to-Many)  
+   - M:N (Many-to-Many)
+   - Participation: Total (double line), Partial (single line)
+
+===============================================================================
+                            ENTITY DEFINITIONS
+===============================================================================
+
+=== ENTITY: USERS ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                USERS                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (BigAutoField)                                                       │
+│     username (CharField, Unique)                                            │
+│     email (EmailField, Unique)                                              │
+│     password (CharField, Hashed)                                            │
+│     first_name (CharField)                                                   │
+│     last_name (CharField)                                                    │
+│     role (CharField) [mentor, learner]                                      │
+│     bio (TextField)                                                          │
+│     skills (JSONField)                                                       │
+│     interests (JSONField)                                                    │
+│     profile_image (ImageField)                                               │
+│     hourly_rate (DecimalField)                                               │
+│     is_active (BooleanField)                                                 │
+│     is_staff (BooleanField)                                                  │
+│     is_superuser (BooleanField)                                              │
+│     date_joined (DateTimeField)                                              │
+│     last_login (DateTimeField)                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== ENTITY: SESSIONS ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               SESSIONS                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (UUIDField)                                                          │
+│     title (CharField)                                                        │
+│     description (TextField)                                                  │
+│ FK: mentor_id (ForeignKey → USERS)                                          │
+│     schedule (DateTimeField)                                                 │
+│     duration (IntegerField)                                                  │
+│     max_participants (IntegerField)                                          │
+│     current_participants (IntegerField)                                      │
+│     status (CharField) [draft, scheduled, active, completed, cancelled]     │
+│     meeting_room_id (CharField, Unique)                                      │
+│     skills_required (JSONField)                                              │
+│     price (DecimalField)                                                     │
+│     is_public (BooleanField)                                                 │
+│     created_at (DateTimeField)                                               │
+│     updated_at (DateTimeField)                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== ENTITY: BOOKINGS ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               BOOKINGS                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (BigAutoField)                                                       │
+│ FK: learner_id (ForeignKey → USERS)                                         │
+│ FK: session_id (ForeignKey → SESSIONS)                                      │
+│     status (CharField) [pending, confirmed, completed, cancelled]           │
+│     payment_status (CharField) [pending, paid, failed, refunded]            │
+│     payment_id (CharField)                                                   │
+│     payment_amount (DecimalField)                                            │
+│     booking_time (DateTimeField)                                             │
+│     joined_at (DateTimeField)                                                │
+│     left_at (DateTimeField)                                                  │
+│     is_ready (BooleanField)                                                  │
+│     attendance_status (CharField) [present, absent, late]                   │
+│     created_at (DateTimeField)                                               │
+│     updated_at (DateTimeField)                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== ENTITY: REQUESTS ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               REQUESTS                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (BigAutoField)                                                       │
+│ FK: learner_id (ForeignKey → USERS)                                         │
+│ FK: mentor_id (ForeignKey → USERS)                                          │
+│     subject (CharField)                                                      │
+│     message (TextField)                                                      │
+│     preferred_schedule (DateTimeField)                                       │
+│     duration_requested (IntegerField)                                        │
+│     status (CharField) [pending, accepted, declined, expired]               │
+│     response_message (TextField)                                             │
+│     created_at (DateTimeField)                                               │
+│     responded_at (DateTimeField)                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== ENTITY: FEEDBACK ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               FEEDBACK                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (BigAutoField)                                                       │
+│ FK: session_id (ForeignKey → SESSIONS)                                      │
+│ FK: user_id (ForeignKey → USERS)                                            │
+│     rating (IntegerField) [1-5]                                             │
+│     comment (TextField)                                                      │
+│     feedback_type (CharField) [mentor_feedback, learner_feedback]           │
+│     is_anonymous (BooleanField)                                              │
+│     created_at (DateTimeField)                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== ENTITY: NOTIFICATIONS ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            NOTIFICATIONS                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (BigAutoField)                                                       │
+│ FK: user_id (ForeignKey → USERS)                                            │
+│     title (CharField)                                                        │
+│     message (TextField)                                                      │
+│     notification_type (CharField) [info, success, warning, error]           │
+│     is_read (BooleanField)                                                   │
+│     action_url (URLField)                                                    │
+│     priority (CharField) [low, medium, high, urgent]                        │
+│     created_at (DateTimeField)                                               │
+│     read_at (DateTimeField)                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== ENTITY: POPULARITY_METRICS ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          POPULARITY_METRICS                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (BigAutoField)                                                       │
+│ FK: session_id (OneToOneField → SESSIONS)                                   │
+│     view_count (IntegerField)                                                │
+│     booking_count (IntegerField)                                             │
+│     completion_rate (FloatField)                                             │
+│     rating_average (FloatField)                                              │
+│     popularity_score (FloatField) [Calculated]                              │
+│     created_at (DateTimeField)                                               │
+│     updated_at (DateTimeField)                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== ENTITY: FOLLOWS ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               FOLLOWS                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (BigAutoField)                                                       │
+│ FK: follower_id (ForeignKey → USERS)                                        │
+│ FK: mentor_id (ForeignKey → USERS)                                          │
+│     created_at (DateTimeField)                                               │
+│     is_active (BooleanField)                                                 │
+│ UK: (follower_id, mentor_id) [Unique Together]                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+===============================================================================
+                        RELATIONSHIP DEFINITIONS
+===============================================================================
+
+=== 1. USERS ←→ SESSIONS (One-to-Many) ===
+Relationship: "CREATES"
+- One USER (mentor) can CREATE many SESSIONS
+- Each SESSION is CREATED by exactly one USER (mentor)
+- Cardinality: 1:M
+- Participation: Partial (not all users create sessions)
+
+=== 2. USERS ←→ BOOKINGS (One-to-Many) ===
+Relationship: "MAKES"
+- One USER (learner) can MAKE many BOOKINGS
+- Each BOOKING is MADE by exactly one USER (learner)
+- Cardinality: 1:M
+- Participation: Partial (not all users make bookings)
+
+=== 3. SESSIONS ←→ BOOKINGS (One-to-Many) ===
+Relationship: "HAS"
+- One SESSION can HAVE many BOOKINGS
+- Each BOOKING belongs to exactly one SESSION
+- Cardinality: 1:M
+- Participation: Partial (sessions may have no bookings)
+
+=== 4. USERS ←→ REQUESTS (Many-to-Many through separate relations) ===
+Relationship: "SENDS/RECEIVES"
+- One USER (learner) can SEND many REQUESTS
+- One USER (mentor) can RECEIVE many REQUESTS
+- Cardinality: M:N (resolved through two 1:M relationships)
+- Participation: Partial
+
+=== 5. SESSIONS ←→ FEEDBACK (One-to-Many) ===
+Relationship: "RECEIVES"
+- One SESSION can RECEIVE many FEEDBACK entries
+- Each FEEDBACK belongs to exactly one SESSION
+- Cardinality: 1:M
+- Participation: Partial
+
+=== 6. USERS ←→ FEEDBACK (One-to-Many) ===
+Relationship: "GIVES"
+- One USER can GIVE many FEEDBACK entries
+- Each FEEDBACK is GIVEN by exactly one USER
+- Cardinality: 1:M
+- Participation: Partial
+
+=== 7. USERS ←→ NOTIFICATIONS (One-to-Many) ===
+Relationship: "RECEIVES"
+- One USER can RECEIVE many NOTIFICATIONS
+- Each NOTIFICATION is sent to exactly one USER
+- Cardinality: 1:M
+- Participation: Total (all users can receive notifications)
+
+=== 8. SESSIONS ←→ POPULARITY_METRICS (One-to-One) ===
+Relationship: "HAS"
+- Each SESSION HAS exactly one POPULARITY_METRICS record
+- Each POPULARITY_METRICS belongs to exactly one SESSION
+- Cardinality: 1:1
+- Participation: Total (all sessions have metrics)
+
+=== 9. USERS ←→ FOLLOWS (Many-to-Many) ===
+Relationship: "FOLLOWS"
+- One USER (learner) can FOLLOW many USERS (mentors)
+- One USER (mentor) can be FOLLOWED by many USERS (learners)
+- Cardinality: M:N
+- Participation: Partial
+
+===============================================================================
+                        COMPLETE DATABASE SCHEMA
+===============================================================================
+
+=== DATABASE TABLES WITH UNIVERSITY STANDARD FORMAT ===
+
+Table 1: USERS
+┌─────┬─────────────────┬──────────────────┬─────────────────────────┬──────────────────────────────────┐
+│Sl No│ Field           │ Data Type        │ Constraints             │ Description                      │
+├─────┼─────────────────┼──────────────────┼─────────────────────────┼──────────────────────────────────┤
+│  1  │ id              │ BigAutoField     │ PRIMARY KEY, AUTO_INC   │ Unique user identifier           │
+│  2  │ username        │ CharField(150)   │ UNIQUE, NOT NULL        │ Unique username for login        │
+│  3  │ email           │ EmailField(254)  │ UNIQUE, NOT NULL        │ User email address               │
+│  4  │ password        │ CharField(128)   │ NOT NULL                │ Hashed password                  │
+│  5  │ first_name      │ CharField(100)   │ NULL                    │ User first name                  │
+│  6  │ last_name       │ CharField(100)   │ NULL                    │ User last name                   │
+│  7  │ role            │ CharField(20)    │ NOT NULL, DEFAULT       │ User role: mentor/learner        │
+│  8  │ bio             │ TextField        │ NULL                    │ User biography                   │
+│  9  │ skills          │ JSONField        │ NULL                    │ Array of user skills             │
+│ 10  │ interests       │ JSONField        │ NULL                    │ Array of user interests          │
+│ 11  │ profile_image   │ ImageField       │ NULL                    │ User profile picture             │
+│ 12  │ hourly_rate     │ DecimalField     │ NULL, CHECK >= 0        │ Mentor hourly rate               │
+│ 13  │ is_active       │ BooleanField     │ DEFAULT TRUE            │ Account active status            │
+│ 14  │ is_staff        │ BooleanField     │ DEFAULT FALSE           │ Staff privileges                 │
+│ 15  │ is_superuser    │ BooleanField     │ DEFAULT FALSE           │ Superuser privileges             │
+│ 16  │ date_joined     │ DateTimeField    │ AUTO_NOW_ADD            │ Account creation timestamp       │
+│ 17  │ last_login      │ DateTimeField    │ NULL                    │ Last login timestamp             │
+└─────┴─────────────────┴──────────────────┴─────────────────────────┴──────────────────────────────────┘
+
+Table 2: SESSIONS
+┌─────┬──────────────────┬──────────────────┬─────────────────────────┬──────────────────────────────────┐
+│Sl No│ Field            │ Data Type        │ Constraints             │ Description                      │
+├─────┼──────────────────┼──────────────────┼─────────────────────────┼──────────────────────────────────┤
+│  1  │ id               │ UUIDField        │ PRIMARY KEY, UUID4      │ Unique session identifier        │
+│  2  │ title            │ CharField(200)   │ NOT NULL                │ Session title                    │
+│  3  │ description      │ TextField        │ NOT NULL                │ Session description              │
+│  4  │ mentor_id        │ BigIntegerField  │ FOREIGN KEY, NOT NULL   │ Reference to mentor user         │
+│  5  │ schedule         │ DateTimeField    │ NOT NULL                │ Session scheduled time           │
+│  6  │ duration         │ IntegerField     │ NOT NULL, CHECK > 0     │ Session duration in minutes      │
+│  7  │ max_participants │ IntegerField     │ DEFAULT 10, CHECK > 0   │ Maximum allowed participants     │
+│  8  │ current_participants│ IntegerField  │ DEFAULT 0, CHECK >= 0   │ Current participant count        │
+│  9  │ status           │ CharField(20)    │ NOT NULL, DEFAULT       │ Session status                   │
+│ 10  │ meeting_room_id  │ CharField(100)   │ UNIQUE, NOT NULL        │ WebRTC room identifier           │
+│ 11  │ skills_required  │ JSONField        │ NULL                    │ Required skills array            │
+│ 12  │ price            │ DecimalField     │ DEFAULT 0, CHECK >= 0   │ Session price                    │
+│ 13  │ is_public        │ BooleanField     │ DEFAULT TRUE            │ Public visibility                │
+│ 14  │ created_at       │ DateTimeField    │ AUTO_NOW_ADD            │ Session creation timestamp       │
+│ 15  │ updated_at       │ DateTimeField    │ AUTO_NOW                │ Last update timestamp            │
+└─────┴──────────────────┴──────────────────┴─────────────────────────┴──────────────────────────────────┘
+
+Table 3: BOOKINGS
+┌─────┬─────────────────┬──────────────────┬─────────────────────────┬──────────────────────────────────┐
+│Sl No│ Field           │ Data Type        │ Constraints             │ Description                      │
+├─────┼─────────────────┼──────────────────┼─────────────────────────┼──────────────────────────────────┤
+│  1  │ id              │ BigAutoField     │ PRIMARY KEY, AUTO_INC   │ Unique booking identifier        │
+│  2  │ learner_id      │ BigIntegerField  │ FOREIGN KEY, NOT NULL   │ Reference to learner user        │
+│  3  │ session_id      │ UUIDField        │ FOREIGN KEY, NOT NULL   │ Reference to session             │
+│  4  │ status          │ CharField(20)    │ NOT NULL, DEFAULT       │ Booking status                   │
+│  5  │ payment_status  │ CharField(20)    │ NOT NULL, DEFAULT       │ Payment processing status        │
+│  6  │ payment_id      │ CharField(100)   │ NULL, UNIQUE            │ External payment reference       │
+│  7  │ payment_amount  │ DecimalField     │ DEFAULT 0, CHECK >= 0   │ Amount paid for booking          │
+│  8  │ booking_time    │ DateTimeField    │ AUTO_NOW_ADD            │ Booking creation timestamp       │
+│  9  │ joined_at       │ DateTimeField    │ NULL                    │ Session join timestamp           │
+│ 10  │ left_at         │ DateTimeField    │ NULL                    │ Session leave timestamp          │
+│ 11  │ is_ready        │ BooleanField     │ DEFAULT FALSE           │ Ready for session start         │
+│ 12  │ attendance_status│ CharField(20)   │ NULL                    │ Attendance record                │
+│ 13  │ created_at      │ DateTimeField    │ AUTO_NOW_ADD            │ Record creation timestamp        │
+│ 14  │ updated_at      │ DateTimeField    │ AUTO_NOW                │ Last update timestamp            │
+└─────┴─────────────────┴──────────────────┴─────────────────────────┴──────────────────────────────────┘
+
+Table 4: REQUESTS
+┌─────┬──────────────────┬──────────────────┬─────────────────────────┬──────────────────────────────────┐
+│Sl No│ Field            │ Data Type        │ Constraints             │ Description                      │
+├─────┼──────────────────┼──────────────────┼─────────────────────────┼──────────────────────────────────┤
+│  1  │ id               │ BigAutoField     │ PRIMARY KEY, AUTO_INC   │ Unique request identifier        │
+│  2  │ learner_id       │ BigIntegerField  │ FOREIGN KEY, NOT NULL   │ Reference to requesting learner  │
+│  3  │ mentor_id        │ BigIntegerField  │ FOREIGN KEY, NOT NULL   │ Reference to target mentor       │
+│  4  │ subject          │ CharField(200)   │ NOT NULL                │ Request subject/title            │
+│  5  │ message          │ TextField        │ NOT NULL                │ Request message content          │
+│  6  │ preferred_schedule│ DateTimeField   │ NULL                    │ Learner preferred time           │
+│  7  │ duration_requested│ IntegerField    │ NULL, CHECK > 0         │ Requested session duration       │
+│  8  │ status           │ CharField(20)    │ NOT NULL, DEFAULT       │ Request processing status        │
+│  9  │ response_message │ TextField        │ NULL                    │ Mentor response message          │
+│ 10  │ created_at       │ DateTimeField    │ AUTO_NOW_ADD            │ Request creation timestamp       │
+│ 11  │ responded_at     │ DateTimeField    │ NULL                    │ Response timestamp               │
+└─────┴──────────────────┴──────────────────┴─────────────────────────┴──────────────────────────────────┘
+
+Table 5: FEEDBACK
+┌─────┬─────────────────┬──────────────────┬─────────────────────────┬──────────────────────────────────┐
+│Sl No│ Field           │ Data Type        │ Constraints             │ Description                      │
+├─────┼─────────────────┼──────────────────┼─────────────────────────┼──────────────────────────────────┤
+│  1  │ id              │ BigAutoField     │ PRIMARY KEY, AUTO_INC   │ Unique feedback identifier       │
+│  2  │ session_id      │ UUIDField        │ FOREIGN KEY, NOT NULL   │ Reference to session             │
+│  3  │ user_id         │ BigIntegerField  │ FOREIGN KEY, NOT NULL   │ Reference to feedback giver      │
+│  4  │ rating          │ IntegerField     │ NOT NULL, CHECK 1-5     │ Session rating (1-5 stars)      │
+│  5  │ comment         │ TextField        │ NULL                    │ Detailed feedback comment        │
+│  6  │ feedback_type   │ CharField(30)    │ NOT NULL                │ Type of feedback given           │
+│  7  │ is_anonymous    │ BooleanField     │ DEFAULT FALSE           │ Anonymous feedback flag          │
+│  8  │ created_at      │ DateTimeField    │ AUTO_NOW_ADD            │ Feedback creation timestamp      │
+└─────┴─────────────────┴──────────────────┴─────────────────────────┴──────────────────────────────────┘
+
+===============================================================================
+                        ACTIVITY DIAGRAM DOCUMENTATION
+===============================================================================
+
+=== USER REGISTRATION ACTIVITY FLOW ===
+
+START → User visits landing page
+      ↓
+      User clicks "Register"
+      ↓
+      System displays registration form
+      ↓
+      User selects role (Mentor/Learner)
+      ↓
+      User fills registration details
+      ↓
+      System validates input data
+      ↓
+      [Valid?] → NO → Display error messages → Return to form
+      ↓ YES
+      System creates user account
+      ↓
+      System sends welcome email
+      ↓
+      User redirected to dashboard
+      ↓
+      END
+
+=== SESSION BOOKING ACTIVITY FLOW ===
+
+START → Learner browses sessions
+      ↓
+      Learner selects session
+      ↓
+      System checks availability
+      ↓
+      [Available?] → NO → Show "Session Full" → END
+      ↓ YES
+      System displays booking form
+      ↓
+      Learner confirms booking
+      ↓
+      System processes payment
+      ↓
+      [Payment Success?] → NO → Show payment error → Return to form
+      ↓ YES
+      System creates booking record
+      ↓
+      System sends confirmation email
+      ↓
+      System notifies mentor
+      ↓
+      END
+
+=== VIDEO SESSION ACTIVITY FLOW ===
+
+START → User joins session room
+      ↓
+      System validates session permissions
+      ↓
+      [Authorized?] → NO → Show access denied → END
+      ↓ YES
+      System establishes WebSocket connection
+      ↓
+      System initiates WebRTC signaling
+      ↓
+      User camera/microphone access requested
+      ↓
+      [Permission Granted?] → NO → Audio-only mode
+      ↓ YES
+      System establishes P2P connection
+      ↓
+      Video/Audio streams active
+      ↓
+      Session in progress
+      ↓
+      [Session Ended?] → NO → Continue session
+      ↓ YES
+      System saves session statistics
+      ↓
+      System requests feedback
+      ↓
+      END
+
+This comprehensive database design follows university standards with proper ERD notation, 
+complete relationship mappings, and detailed activity flow documentation.

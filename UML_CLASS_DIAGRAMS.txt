@@ -1,0 +1,488 @@
+# PeerLearn Platform - Complete UML Class Diagrams Documentation
+# University Standard UML Class Structure with Relationships and Methods
+
+===============================================================================
+                        UML CLASS DIAGRAM SPECIFICATIONS
+===============================================================================
+
+=== UML NOTATION STANDARDS (University Rules) ===
+
+1. CLASS REPRESENTATION:
+   - Rectangle divided into 3 sections
+   - Top: Class Name (Bold, Centered)
+   - Middle: Attributes with visibility indicators
+   - Bottom: Methods with parameters and return types
+
+2. VISIBILITY INDICATORS:
+   + Public (accessible from anywhere)
+   - Private (accessible only within class)
+   # Protected (accessible within class and subclasses)
+   ~ Package (accessible within same package)
+
+3. RELATIONSHIP TYPES:
+   ──────► Association (uses-a relationship)
+   ◄────── Dependency (depends-on relationship)
+   ◄──────► Bidirectional Association
+   ───────◄ Inheritance (is-a relationship)
+   ♦────── Aggregation (has-a relationship)
+   ♦────── Composition (part-of relationship)
+
+4. MULTIPLICITY NOTATION:
+   1      Exactly one
+   0..1   Zero or one
+   0..*   Zero or many
+   1..*   One or many
+   n      Exactly n instances
+
+===============================================================================
+                        CORE DOMAIN CLASSES
+===============================================================================
+
+=== CLASS: User ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                  User                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - username: CharField(150)                                                   │
+│ - email: EmailField(254)                                                     │
+│ - password: CharField(128)                                                   │
+│ - first_name: CharField(100)                                                 │
+│ - last_name: CharField(100)                                                  │
+│ - role: CharField(20) [CHOICES: 'mentor', 'learner']                        │
+│ - bio: TextField                                                             │
+│ - skills: JSONField                                                          │
+│ - interests: JSONField                                                       │
+│ - profile_image: ImageField                                                  │
+│ - hourly_rate: DecimalField(10,2)                                            │
+│ - is_active: BooleanField                                                    │
+│ - is_staff: BooleanField                                                     │
+│ - is_superuser: BooleanField                                                 │
+│ - date_joined: DateTimeField                                                 │
+│ - last_login: DateTimeField                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(username: str, email: str, password: str): void                  │
+│ + authenticate(username: str, password: str): Boolean                       │
+│ + register(user_data: dict): Boolean                                         │
+│ + updateProfile(profile_data: dict): Boolean                                 │
+│ + uploadProfileImage(image_file: File): Boolean                              │
+│ + getFullName(): str                                                         │
+│ + isMentor(): Boolean                                                        │
+│ + isLearner(): Boolean                                                       │
+│ + getSkills(): List[str]                                                     │
+│ + addSkill(skill: str): void                                                 │
+│ + removeSkill(skill: str): void                                              │
+│ + getInterests(): List[str]                                                  │
+│ + followMentor(mentor: User): Boolean                                        │
+│ + unfollowMentor(mentor: User): Boolean                                      │
+│ + getFollowedMentors(): List[User]                                           │
+│ + getRecommendations(): List[Session]                                        │
+│ + calculateRating(): float                                                   │
+│ + getTotalEarnings(): Decimal                                                │
+│ + getSessionHistory(): List[Session]                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: Session ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                Session                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: UUIDField                                                             │
+│ - title: CharField(200)                                                      │
+│ - description: TextField                                                     │
+│ - mentor: ForeignKey(User)                                                   │
+│ - schedule: DateTimeField                                                    │
+│ - duration: IntegerField                                                     │
+│ - max_participants: IntegerField                                             │
+│ - current_participants: IntegerField                                         │
+│ - status: CharField(20) [CHOICES: 'draft', 'scheduled', 'active', 'completed', 'cancelled']│
+│ - meeting_room_id: CharField(100)                                            │
+│ - skills_required: JSONField                                                 │
+│ - price: DecimalField(10,2)                                                  │
+│ - is_public: BooleanField                                                    │
+│ - created_at: DateTimeField                                                  │
+│ - updated_at: DateTimeField                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(title: str, mentor: User, schedule: datetime): void              │
+│ + create(session_data: dict): Boolean                                        │
+│ + publish(): Boolean                                                         │
+│ + start(): Boolean                                                           │
+│ + end(): Boolean                                                             │
+│ + cancel(): Boolean                                                          │
+│ + addParticipant(user: User): Boolean                                        │
+│ + removeParticipant(user: User): Boolean                                     │
+│ + isAvailable(): Boolean                                                     │
+│ + isFull(): Boolean                                                          │
+│ + canJoin(user: User): Boolean                                               │
+│ + generateMeetingRoomId(): str                                               │
+│ + getParticipants(): List[User]                                              │
+│ + calculateRating(): float                                                   │
+│ + getTotalBookings(): int                                                    │
+│ + getCompletionRate(): float                                                 │
+│ + updatePopularityMetrics(): void                                            │
+│ + sendNotifications(message: str): void                                      │
+│ + validateSchedule(): Boolean                                                │
+│ + checkConflicts(): List[Session]                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: Booking ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               Booking                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - learner: ForeignKey(User)                                                  │
+│ - session: ForeignKey(Session)                                               │
+│ - status: CharField(20) [CHOICES: 'pending', 'confirmed', 'completed', 'cancelled']│
+│ - payment_status: CharField(20) [CHOICES: 'pending', 'paid', 'failed', 'refunded']│
+│ - payment_id: CharField(100)                                                 │
+│ - payment_amount: DecimalField(10,2)                                         │
+│ - booking_time: DateTimeField                                                │
+│ - joined_at: DateTimeField                                                   │
+│ - left_at: DateTimeField                                                     │
+│ - is_ready: BooleanField                                                     │
+│ - attendance_status: CharField(20) [CHOICES: 'present', 'absent', 'late']   │
+│ - created_at: DateTimeField                                                  │
+│ - updated_at: DateTimeField                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(learner: User, session: Session): void                           │
+│ + book(): Boolean                                                            │
+│ + confirm(): Boolean                                                         │
+│ + cancel(): Boolean                                                          │
+│ + processPayment(payment_data: dict): Boolean                                │
+│ + refundPayment(): Boolean                                                   │
+│ + markAsReady(): Boolean                                                     │
+│ + joinSession(): Boolean                                                     │
+│ + leaveSession(): Boolean                                                    │
+│ + markAttendance(status: str): void                                          │
+│ + calculateDuration(): timedelta                                             │
+│ + sendConfirmationEmail(): void                                              │
+│ + sendReminderNotification(): void                                           │
+│ + isValidForRefund(): Boolean                                                │
+│ + getBookingDetails(): dict                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: Request ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               Request                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - learner: ForeignKey(User)                                                  │
+│ - mentor: ForeignKey(User)                                                   │
+│ - subject: CharField(200)                                                    │
+│ - message: TextField                                                         │
+│ - preferred_schedule: DateTimeField                                          │
+│ - duration_requested: IntegerField                                           │
+│ - status: CharField(20) [CHOICES: 'pending', 'accepted', 'declined', 'expired']│
+│ - response_message: TextField                                                │
+│ - created_at: DateTimeField                                                  │
+│ - responded_at: DateTimeField                                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(learner: User, mentor: User, subject: str, message: str): void   │
+│ + send(): Boolean                                                            │
+│ + accept(response_message: str): Boolean                                     │
+│ + decline(response_message: str): Boolean                                    │
+│ + expire(): void                                                             │
+│ + createSessionFromRequest(): Session                                        │
+│ + sendNotificationToMentor(): void                                           │
+│ + sendResponseToLearner(): void                                              │
+│ + isExpired(): Boolean                                                       │
+│ + canBeAccepted(): Boolean                                                   │
+│ + getRequestDetails(): dict                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: Feedback ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Feedback                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - session: ForeignKey(Session)                                               │
+│ - user: ForeignKey(User)                                                     │
+│ - rating: IntegerField [VALIDATORS: MinValueValidator(1), MaxValueValidator(5)]│
+│ - comment: TextField                                                         │
+│ - feedback_type: CharField(30) [CHOICES: 'mentor_feedback', 'learner_feedback']│
+│ - is_anonymous: BooleanField                                                 │
+│ - created_at: DateTimeField                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(session: Session, user: User, rating: int): void                 │
+│ + submit(feedback_data: dict): Boolean                                       │
+│ + validate(): Boolean                                                        │
+│ + updateSessionRating(): void                                                │
+│ + updateMentorRating(): void                                                 │
+│ + sendAcknowledgment(): void                                                 │
+│ + isValidRating(): Boolean                                                   │
+│ + canEdit(): Boolean                                                         │
+│ + getFeedbackSummary(): dict                                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: Notification ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            Notification                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - user: ForeignKey(User)                                                     │
+│ - title: CharField(200)                                                      │
+│ - message: TextField                                                         │
+│ - notification_type: CharField(50) [CHOICES: 'info', 'success', 'warning', 'error']│
+│ - is_read: BooleanField                                                      │
+│ - action_url: URLField                                                       │
+│ - priority: CharField(20) [CHOICES: 'low', 'medium', 'high', 'urgent']      │
+│ - created_at: DateTimeField                                                  │
+│ - read_at: DateTimeField                                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(user: User, title: str, message: str): void                      │
+│ + send(): Boolean                                                            │
+│ + markAsRead(): void                                                         │
+│ + markAsUnread(): void                                                       │
+│ + delete(): void                                                             │
+│ + sendEmail(): Boolean                                                       │
+│ + sendPushNotification(): Boolean                                            │
+│ + isUrgent(): Boolean                                                        │
+│ + getTimeAgo(): str                                                          │
+│ + getNotificationData(): dict                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: PopularityMetric ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          PopularityMetric                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - session: OneToOneField(Session)                                            │
+│ - view_count: IntegerField                                                   │
+│ - booking_count: IntegerField                                                │
+│ - completion_rate: FloatField                                                │
+│ - rating_average: FloatField                                                 │
+│ - popularity_score: FloatField                                               │
+│ - created_at: DateTimeField                                                  │
+│ - updated_at: DateTimeField                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(session: Session): void                                          │
+│ + incrementViewCount(): void                                                 │
+│ + incrementBookingCount(): void                                              │
+│ + updateCompletionRate(): void                                               │
+│ + updateRatingAverage(): void                                                │
+│ + calculatePopularityScore(): float                                          │
+│ + updateMetrics(): void                                                      │
+│ + getMetricsSummary(): dict                                                  │
+│ + compareWith(other_metric: PopularityMetric): dict                          │
+│ + getTrendingScore(): float                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: Follow ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               Follow                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - follower: ForeignKey(User, related_name='following')                      │
+│ - mentor: ForeignKey(User, related_name='followers')                        │
+│ - created_at: DateTimeField                                                  │
+│ - is_active: BooleanField                                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(follower: User, mentor: User): void                              │
+│ + follow(): Boolean                                                          │
+│ + unfollow(): void                                                           │
+│ + reactivate(): void                                                         │
+│ + sendFollowNotification(): void                                             │
+│ + isActive(): Boolean                                                        │
+│ + getFollowDuration(): timedelta                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+===============================================================================
+                        BUSINESS LOGIC CLASSES
+===============================================================================
+
+=== CLASS: RecommendationEngine ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        RecommendationEngine                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - user: User                                                                │
+│ - session_data: QuerySet[Session]                                           │
+│ - algorithm_weights: dict                                                    │
+│ - similarity_threshold: float                                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + __init__(user: User): void                                                │
+│ + getPersonalizedRecommendations(): List[Session]                           │
+│ + contentBasedFiltering(): List[Session]                                    │
+│ + collaborativeFiltering(): List[Session]                                   │
+│ + popularityBasedFiltering(): List[Session]                                 │
+│ + calculateSkillSimilarity(skills1: List[str], skills2: List[str]): float   │
+│ + calculateUserSimilarity(user1: User, user2: User): float                  │
+│ + getMentorRecommendations(): List[User]                                     │
+│ + getTrendingSessions(): List[Session]                                       │
+│ + updateUserPreferences(): void                                             │
+│ + trainModel(): void                                                         │
+│ + evaluateRecommendations(): dict                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: SessionManager ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           SessionManager                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - current_sessions: dict                                                     │
+│ - websocket_connections: dict                                                │
+│ - webrtc_connections: dict                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + createSession(session_data: dict): Session                                │
+│ + startSession(session_id: UUID): Boolean                                   │
+│ + endSession(session_id: UUID): Boolean                                     │
+│ + joinSession(session_id: UUID, user: User): Boolean                        │
+│ + leaveSession(session_id: UUID, user: User): Boolean                       │
+│ + handleWebRTCSignaling(signal_data: dict): void                            │
+│ + broadcastToSession(session_id: UUID, message: dict): void                 │
+│ + getSessionParticipants(session_id: UUID): List[User]                      │
+│ + validateSessionAccess(session_id: UUID, user: User): Boolean              │
+│ + recordSessionActivity(session_id: UUID, activity: dict): void             │
+│ + generateSessionReport(session_id: UUID): dict                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+=== CLASS: PaymentProcessor ===
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          PaymentProcessor                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - payment_gateway: str                                                       │
+│ - api_credentials: dict                                                       │
+│ - supported_currencies: List[str]                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + processPayment(payment_data: dict): dict                                  │
+│ + validatePayment(payment_id: str): Boolean                                 │
+│ + refundPayment(payment_id: str, amount: Decimal): Boolean                  │
+│ + calculateFees(amount: Decimal): Decimal                                    │
+│ + generateInvoice(booking: Booking): dict                                    │
+│ + handlePaymentWebhook(webhook_data: dict): void                             │
+│ + getPaymentHistory(user: User): List[dict]                                  │
+│ + schedulePayoutToMentor(mentor: User, amount: Decimal): Boolean             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+===============================================================================
+                        CLASS RELATIONSHIPS DIAGRAM
+===============================================================================
+
+=== RELATIONSHIP OVERVIEW ===
+
+User (1) ────────────► (0..*) Session
+   │                        ▲
+   │                        │
+   │ (1)                    │ (1)
+   ▼                        │
+   Booking (0..*)           │
+   │                        │
+   │ (1)                    │
+   ▼                        │
+   Session ◄────────────────┘
+
+User (1) ────────────► (0..*) Request ◄────────────── (1) User
+                                                     (mentor)
+
+User (1) ────────────► (0..*) Feedback ◄──────────── (1) Session
+
+User (1) ────────────► (0..*) Notification
+
+Session (1) ──────────► (1) PopularityMetric
+
+User (1) ────────────► (0..*) Follow ◄──────────────── (1) User
+  (follower)                                         (mentor)
+
+=== DETAILED RELATIONSHIP SPECIFICATIONS ===
+
+1. User ←→ Session (One-to-Many)
+   - Relationship Type: Association
+   - Cardinality: 1:0..*
+   - Role: mentor creates sessions
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+2. User ←→ Booking (One-to-Many)
+   - Relationship Type: Association  
+   - Cardinality: 1:0..*
+   - Role: learner makes bookings
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+3. Session ←→ Booking (One-to-Many)
+   - Relationship Type: Association
+   - Cardinality: 1:0..*
+   - Role: session has bookings
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+4. User ←→ Request (Many-to-Many via two ForeignKeys)
+   - Relationship Type: Association
+   - Cardinality: M:N
+   - Role: learner sends, mentor receives
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+5. Session ←→ Feedback (One-to-Many)
+   - Relationship Type: Association
+   - Cardinality: 1:0..*
+   - Role: session receives feedback
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+6. User ←→ Feedback (One-to-Many)
+   - Relationship Type: Association
+   - Cardinality: 1:0..*
+   - Role: user gives feedback
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+7. Session ←→ PopularityMetric (One-to-One)
+   - Relationship Type: Composition
+   - Cardinality: 1:1
+   - Role: session has metrics
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+8. User ←→ Follow (Many-to-Many via Follow model)
+   - Relationship Type: Association
+   - Cardinality: M:N
+   - Role: learner follows mentor
+   - Navigation: bidirectional
+   - Cascade: ON DELETE CASCADE
+
+===============================================================================
+                        INHERITANCE HIERARCHY
+===============================================================================
+
+=== ABSTRACT BASE CLASSES ===
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          <<abstract>>                                      │
+│                         BaseModel                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ # created_at: DateTimeField                                                 │
+│ # updated_at: DateTimeField                                                 │
+│ # is_active: BooleanField                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + save(): void                                                              │
+│ + delete(): void                                                            │
+│ + getCreatedTimeAgo(): str                                                   │
+│ + getUpdatedTimeAgo(): str                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ▲
+                                    │ (inherits)
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
+│      Session        │  │       Booking       │  │      Request        │
+└─────────────────────┘  └─────────────────────┘  └─────────────────────┘
+
+=== USER ROLE SPECIALIZATIONS ===
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               User                                          │
+│                          (Base Class)                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ▲
+                                    │ (specializes)
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
+│       Mentor        │  │       Learner       │  │       Admin         │
+│    (role='mentor')  │  │   (role='learner')  │  │   (is_staff=True)   │
+│                     │  │                     │  │                     │
+│ + createSession()   │  │ + bookSession()     │  │ + manageUsers()     │
+│ + setHourlyRate()   │  │ + followMentor()    │  │ + viewAnalytics()   │
+│ + manageSessions()  │  │ + submitFeedback()  │  │ + systemControl()   │
+└─────────────────────┘  └─────────────────────┘  └─────────────────────┘
+
+This comprehensive UML Class Diagram documentation follows university standards
+and provides complete class specifications with attributes, methods, and 
+relationship mappings for the PeerLearn platform architecture.

@@ -1,0 +1,628 @@
+# PeerLearn Platform - Complete Project Documentation
+# Advanced Peer-to-Peer Learning Platform with Real-time Video Communication
+
+===============================================================================
+                        PROJECT SYNOPSIS & OVERVIEW
+===============================================================================
+
+=== PROJECT TITLE ===
+PeerLearn: Advanced Peer-to-Peer Learning Platform with Real-time Video Communication
+
+=== PROJECT DESCRIPTION ===
+PeerLearn is a sophisticated web-based platform that revolutionizes online education 
+by connecting mentors and learners through intelligent matching algorithms and seamless 
+real-time video communication. The platform leverages cutting-edge technologies 
+including WebRTC for peer-to-peer video sessions, machine learning for personalized 
+recommendations, and Django Channels for real-time WebSocket communication.
+
+=== KEY FEATURES ===
+1. Smart user registration with role-based authentication
+2. Advanced machine learning recommendation engine
+3. Real-time WebRTC video/audio communication
+4. Comprehensive session management system
+5. Intelligent mentor-learner matching
+6. Real-time notifications and messaging
+7. Advanced admin dashboard with analytics
+8. Payment integration for session bookings
+9. Feedback and rating system
+10. Mobile-responsive design with modern UI/UX
+
+===============================================================================
+                        TECHNICAL IMPLEMENTATION
+===============================================================================
+
+=== WebSocket & Real-time Communication ===
+
+1. Django Channels Implementation:
+   - ASGI server configuration with Daphne
+   - Redis channel layer for message routing
+   - WebSocket consumers for session management
+   - Real-time notification delivery
+
+2. WebRTC Signaling Process:
+   - Peer-to-peer connection establishment
+   - SDP offer/answer exchange via WebSocket
+   - ICE candidate gathering and exchange
+   - Direct media stream transmission
+
+3. Communication Flow:
+   User A → WebSocket → Django Channels → Redis → WebSocket → User B
+   
+   JavaScript WebRTC API:
+   ```javascript
+   // Peer connection setup
+   const peerConnection = new RTCPeerConnection(configuration);
+   
+   // Add local stream
+   localStream.getTracks().forEach(track => {
+       peerConnection.addTrack(track, localStream);
+   });
+   
+   // Handle signaling through WebSocket
+   websocket.onmessage = function(event) {
+       const data = JSON.parse(event.data);
+       if (data.type === 'offer') {
+           peerConnection.setRemoteDescription(data.offer);
+           // Create and send answer
+       }
+   };
+   ```
+
+=== API Architecture & Endpoints ===
+
+1. RESTful API Design:
+   - Authentication APIs for login/register
+   - Session management APIs (CRUD operations)
+   - User profile management APIs
+   - Recommendation engine APIs
+   - Payment processing APIs
+
+2. WebSocket APIs:
+   - Session room management
+   - Real-time messaging
+   - Video call signaling
+   - Notification broadcasting
+
+3. API Response Format:
+   ```json
+   {
+       "success": true,
+       "data": {...},
+       "message": "Operation successful",
+       "timestamp": "2024-01-01T00:00:00Z"
+   }
+   ```
+
+===============================================================================
+                        MODULE STRUCTURE & WORKFLOW
+===============================================================================
+
+=== SYSTEM MODULES (7 Core Modules) ===
+
+MODULE 1: User Authentication & Management
+├── Registration with role selection (Mentor/Learner)
+├── Smart login with automatic role detection
+├── Profile management with skill/interest tracking
+├── Admin user creation and management
+└── Password reset and email verification
+
+MODULE 2: Session Management System
+├── Session creation (Mentor functionality)
+├── Session browsing and filtering (Learner functionality)
+├── Advanced booking system with payment integration
+├── Session scheduling and calendar management
+└── Session status tracking and analytics
+
+MODULE 3: Real-time Communication Engine
+├── WebRTC peer-to-peer video/audio
+├── WebSocket signaling infrastructure
+├── Chat functionality during sessions
+├── Screen sharing capabilities
+└── Network adaptation and quality control
+
+MODULE 4: Machine Learning Recommendation System
+├── Content-based filtering algorithms
+├── Collaborative filtering implementation
+├── Popularity-based recommendations
+├── Real-time learning and adaptation
+└── Personalized mentor matching
+
+MODULE 5: Payment & Transaction Management
+├── Secure payment processing
+├── Transaction history tracking
+├── Refund and cancellation handling
+├── Mentor earnings management
+└── Financial reporting and analytics
+
+MODULE 6: Notification & Communication System
+├── Real-time notification delivery
+├── Email notification integration
+├── In-app messaging system
+├── Push notification support
+└── Communication history tracking
+
+MODULE 7: Admin Control & Analytics
+├── Platform-wide user management
+├── Session monitoring and control
+├── Advanced analytics and reporting
+├── System health monitoring
+└── Owner privileges and controls
+
+===============================================================================
+                        DETAILED USER JOURNEY FLOW
+===============================================================================
+
+=== LEARNER JOURNEY (Step-by-Step) ===
+
+PHASE 1: Registration & Onboarding
+1. Visit landing page → View platform features
+2. Click "Register" → Select "Learner" role
+3. Fill registration form → Add skills/interests
+4. Email verification → Account activation
+5. Complete profile → Upload profile picture
+6. Dashboard tour → Feature introduction
+
+PHASE 2: Session Discovery & Booking
+7. Browse available sessions → Apply filters
+8. View session details → Check mentor profile
+9. Request session or direct booking → Payment process
+10. Receive confirmation → Calendar integration
+11. Pre-session preparation → Technical check
+
+PHASE 3: Session Participation
+12. Join session room → Camera/mic setup
+13. WebRTC connection → Video/audio stream
+14. Interactive learning → Real-time chat
+15. Session completion → Automatic recording
+16. Submit feedback → Rate mentor performance
+
+PHASE 4: Continuous Learning
+17. Receive recommendations → Personalized suggestions
+18. Follow mentors → Get updates
+19. Track learning progress → View statistics
+20. Repeat sessions → Build learning pathway
+
+=== MENTOR JOURNEY (Step-by-Step) ===
+
+PHASE 1: Registration & Profile Setup
+1. Visit landing page → Select "Become a Mentor"
+2. Register with mentor role → Skill verification
+3. Complete detailed profile → Add credentials
+4. Set hourly rates → Define availability
+5. Profile review → Platform approval
+
+PHASE 2: Session Creation & Management
+6. Create new sessions → Set schedule/pricing
+7. Define session objectives → Target audience
+8. Publish sessions → Marketing optimization
+9. Manage booking requests → Accept/decline
+10. Prepare session materials → Content planning
+
+PHASE 3: Session Delivery
+11. Start session → Technical setup
+12. Welcome participants → Introduction
+13. Deliver content → Interactive teaching
+14. Monitor engagement → Real-time feedback
+15. Session wrap-up → Key takeaways
+
+PHASE 4: Growth & Analytics
+16. Review session feedback → Performance analysis
+17. Track earnings → Payment management
+18. Optimize content → Improve ratings
+19. Build follower base → Reputation growth
+20. Scale teaching → Multiple sessions
+
+=== ADMIN JOURNEY (Comprehensive Control) ===
+
+PHASE 1: Platform Monitoring
+1. Admin dashboard access → System overview
+2. User activity monitoring → Real-time stats
+3. Session quality control → Performance metrics
+4. Payment transaction oversight → Financial health
+
+PHASE 2: User & Content Management
+5. User account management → Moderation tools
+6. Session content review → Quality assurance
+7. Dispute resolution → Support system
+8. Platform policy enforcement → Compliance
+
+PHASE 3: Analytics & Optimization
+9. Platform analytics → Usage patterns
+10. Revenue analysis → Business metrics
+11. User satisfaction tracking → Feedback analysis
+12. System performance monitoring → Technical health
+
+===============================================================================
+                        PAGE STRUCTURE & NAVIGATION
+===============================================================================
+
+=== COMPLETE PAGE HIERARCHY ===
+
+LEVEL 1: Main Application Pages (15 Primary Pages)
+
+1. Landing Page (/)
+   ├── Hero section with value proposition
+   ├── Featured sessions showcase
+   ├── Mentor spotlight section
+   ├── Platform statistics display
+   └── Call-to-action registration
+
+2. Authentication Pages (/auth/)
+   ├── Login page with smart role detection
+   ├── Registration with role selection wizard
+   ├── Password reset functionality
+   ├── Email verification confirmation
+   └── Two-factor authentication setup
+
+3. Dashboard Pages (/dashboard/)
+   ├── Learner Dashboard (5 sub-tabs)
+   │   ├── Overview: Statistics and recent activity
+   │   ├── Browse Sessions: Available sessions with advanced filters
+   │   ├── My Bookings: Booked and completed sessions
+   │   ├── Recommendations: ML-powered personalized suggestions
+   │   └── Following: Followed mentors and their activities
+   ├── Mentor Dashboard (6 sub-tabs)
+   │   ├── Overview: Earnings and session statistics
+   │   ├── My Sessions: Created and scheduled sessions
+   │   ├── Create Session: Advanced session creation form
+   │   ├── Requests: Learner requests management
+   │   ├── Analytics: Performance and rating analytics
+   │   └── Earnings: Payment and payout management
+   └── Admin Dashboard (5 sub-tabs)
+       ├── Overview: Platform statistics and metrics
+       ├── User Management: User control and moderation
+       ├── Session Management: Session oversight
+       ├── Analytics: Platform performance analytics
+       └── Admin Control: Owner privileges and system controls
+
+4. Session Pages (/sessions/)
+   ├── Session browsing with advanced filters
+   ├── Session details and booking interface
+   ├── Video session room with WebRTC
+   ├── Session feedback and rating system
+   └── Session history and recordings
+
+5. Profile Pages (/profile/)
+   ├── User profile view and editing
+   ├── Mentor portfolio showcase
+   ├── Follower/Following management
+   ├── Skill and interest management
+   └── Achievement and certificate display
+
+6. Communication Pages (/communication/)
+   ├── Real-time messaging interface
+   ├── Notification center
+   ├── Video call history
+   └── Communication preferences
+
+LEVEL 2: Sub-pages and Modal Interfaces (25+ Sub-pages)
+
+Authentication Sub-pages:
+- Role selection wizard
+- Skill assessment questionnaire
+- Profile completion steps
+- Email verification success
+
+Session Management Sub-pages:
+- Session creation wizard (5 steps)
+- Booking confirmation flow
+- Payment processing interface
+- Feedback submission form
+
+Profile Management Sub-pages:
+- Basic information editing
+- Skill and interest management
+- Profile picture upload
+- Privacy settings configuration
+
+Admin Control Sub-pages:
+- User detailed management
+- Session approval workflow
+- Platform settings configuration
+- Analytics detailed reports
+
+===============================================================================
+                        DATA FLOW DIAGRAMS (DFD)
+===============================================================================
+
+=== LEVEL 0 DFD (Context Diagram) ===
+
+External Entities:
+- Learners
+- Mentors  
+- Admin Users
+- Payment Gateway
+- Email Service
+- Video Streaming Service
+
+Central Process: PeerLearn Platform
+
+Data Flows:
+Learners ←→ [Registration Data, Session Bookings, Feedback] ←→ PeerLearn Platform
+Mentors ←→ [Session Creation, Content Delivery, Earnings] ←→ PeerLearn Platform
+Admin Users ←→ [Management Commands, Analytics] ←→ PeerLearn Platform
+Payment Gateway ←→ [Payment Processing, Transaction Data] ←→ PeerLearn Platform
+Email Service ←→ [Notifications, Confirmations] ←→ PeerLearn Platform
+
+=== LEVEL 1 DFD (System Processes) ===
+
+PROCESS 1: User Management
+Input: Registration data, Profile updates, Authentication requests
+Processing: Validation, Role assignment, Permission management
+Output: User accounts, Authentication tokens, Profile data
+Data Stores: Users table, Sessions table
+
+PROCESS 2: Session Management  
+Input: Session creation data, Booking requests, Schedule changes
+Processing: Availability checking, Conflict resolution, Status updates
+Output: Session confirmations, Calendar entries, Notifications
+Data Stores: Sessions table, Bookings table, Notifications table
+
+PROCESS 3: Real-time Communication
+Input: WebRTC signals, Chat messages, Media streams
+Processing: Signaling relay, Connection establishment, Quality control
+Output: Video/Audio streams, Chat delivery, Connection status
+Data Stores: Session logs, Message history
+
+PROCESS 4: Recommendation Engine
+Input: User behavior, Session data, Ratings, Skills/Interests
+Processing: ML algorithms, Similarity calculations, Ranking
+Output: Personalized recommendations, Trending content, Match scores
+Data Stores: Popularity metrics, User interactions, Feedback data
+
+PROCESS 5: Payment Processing
+Input: Payment requests, Transaction data, Refund requests
+Processing: Payment validation, Transaction recording, Fee calculation
+Output: Payment confirmations, Receipts, Financial reports
+Data Stores: Payment records, Transaction history
+
+=== LEVEL 2 DFD (Detailed Process Flows) ===
+
+RECOMMENDATION ENGINE DETAILED FLOW:
+
+Sub-process 2.1: Content-Based Filtering
+Input: User skills/interests, Session requirements
+Processing: Skill matching, Interest alignment, Compatibility scoring
+Output: Content-based recommendations
+
+Sub-process 2.2: Collaborative Filtering  
+Input: User behavior patterns, Similar user preferences
+Processing: User similarity calculation, Preference prediction
+Output: Collaborative recommendations
+
+Sub-process 2.3: Popularity-Based Filtering
+Input: Session view counts, Booking rates, Completion rates
+Processing: Popularity scoring, Trending analysis
+Output: Popular session recommendations
+
+Sub-process 2.4: Hybrid Recommendation
+Input: All recommendation types, User context
+Processing: Score weighting, Final ranking, Personalization
+Output: Final recommendation list
+
+===============================================================================
+                        UML DIAGRAMS & CLASS STRUCTURE
+===============================================================================
+
+=== CLASS DIAGRAM (University Standard) ===
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                USER                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - username: CharField                                                        │
+│ - email: EmailField                                                          │
+│ - password: CharField                                                        │
+│ - role: CharField                                                            │
+│ - skills: JSONField                                                          │
+│ - interests: JSONField                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + register(): Boolean                                                        │
+│ + login(): Boolean                                                           │
+│ + updateProfile(): Boolean                                                   │
+│ + getRecommendations(): List[Session]                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ 1:M
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               SESSION                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: UUIDField                                                             │
+│ - title: CharField                                                           │
+│ - description: TextField                                                     │
+│ - mentor: ForeignKey(User)                                                   │
+│ - schedule: DateTimeField                                                    │
+│ - status: CharField                                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + create(): Boolean                                                          │
+│ + start(): Boolean                                                           │
+│ + end(): Boolean                                                             │
+│ + addParticipant(): Boolean                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ 1:M
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               BOOKING                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ - id: BigAutoField                                                          │
+│ - learner: ForeignKey(User)                                                  │
+│ - session: ForeignKey(Session)                                               │
+│ - status: CharField                                                          │
+│ - payment_status: CharField                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ + book(): Boolean                                                            │
+│ + confirm(): Boolean                                                         │
+│ + cancel(): Boolean                                                          │
+│ + processPayment(): Boolean                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+=== SEQUENCE DIAGRAM: Session Booking Process ===
+
+```
+Learner    →    Platform    →    Payment    →    Mentor    →    Notification
+   │              │              │              │              │
+   │ Browse Sessions                             │              │
+   │──────────────→│                             │              │
+   │              │                             │              │
+   │ Select Session                              │              │
+   │──────────────→│                             │              │
+   │              │                             │              │
+   │ Book Session  │                             │              │
+   │──────────────→│ Process Payment             │              │
+   │              │──────────────→│              │              │
+   │              │               │ Payment OK   │              │
+   │              │←──────────────│              │              │
+   │              │                             │              │
+   │              │ Notify Mentor               │              │
+   │              │──────────────────────────────→│              │
+   │              │                             │              │
+   │              │ Send Confirmation                          │
+   │              │────────────────────────────────────────────→│
+   │              │                             │              │
+   │ Confirmation │                             │              │
+   │←─────────────│                             │              │
+```
+
+===============================================================================
+                        RECOMMENDATION SYSTEM DETAILS
+===============================================================================
+
+=== MACHINE LEARNING ALGORITHM IMPLEMENTATION ===
+
+1. Content-Based Filtering Algorithm:
+```python
+def content_based_filtering(user_profile, sessions):
+    user_skills = set(user_profile.skills)
+    user_interests = set(user_profile.interests)
+    
+    recommendations = []
+    for session in sessions:
+        session_skills = set(session.skills_required)
+        
+        # Jaccard similarity for skills
+        skill_similarity = len(user_skills & session_skills) / len(user_skills | session_skills)
+        
+        # Interest alignment score
+        interest_score = calculate_interest_alignment(user_interests, session.description)
+        
+        # Combined score
+        final_score = (skill_similarity * 0.7) + (interest_score * 0.3)
+        recommendations.append((session, final_score))
+    
+    return sorted(recommendations, key=lambda x: x[1], reverse=True)
+```
+
+2. Collaborative Filtering Implementation:
+- User-based collaborative filtering
+- Item-based collaborative filtering  
+- Matrix factorization techniques
+- Similarity metrics (Cosine, Pearson correlation)
+
+3. Popularity-Based Scoring:
+```python
+def calculate_popularity_score(session):
+    view_weight = 0.3
+    booking_weight = 0.4
+    completion_weight = 0.3
+    
+    normalized_views = session.view_count / max_views
+    normalized_bookings = session.booking_count / max_bookings  
+    normalized_completion = session.completion_rate / 100
+    
+    popularity_score = (normalized_views * view_weight + 
+                       normalized_bookings * booking_weight +
+                       normalized_completion * completion_weight)
+    
+    return popularity_score
+```
+
+=== RECOMMENDATION WORKFLOW ===
+
+1. Data Collection Phase:
+   - User interaction tracking
+   - Session performance metrics
+   - Feedback and rating analysis
+   - Skill/interest profiling
+
+2. Feature Engineering:
+   - User preference vectors
+   - Session characteristic vectors
+   - Temporal patterns
+   - Context-aware features
+
+3. Model Training:
+   - Offline batch processing
+   - Online learning adaptation
+   - A/B testing for optimization
+   - Performance evaluation metrics
+
+4. Recommendation Generation:
+   - Real-time scoring
+   - Diversity optimization
+   - Novelty consideration
+   - Explanation generation
+
+===============================================================================
+                        TECHNICAL DEPLOYMENT GUIDE
+===============================================================================
+
+=== PRODUCTION DEPLOYMENT STEPS ===
+
+1. Environment Setup:
+```bash
+# Install dependencies
+pip install -r PROJECT_REQUIREMENTS.txt
+
+# Database setup
+python manage.py makemigrations
+python manage.py migrate
+
+# Create superuser
+python manage.py createsuperuser
+
+# Collect static files
+python manage.py collectstatic
+```
+
+2. Server Configuration:
+```nginx
+# Nginx configuration
+server {
+    listen 80;
+    server_name peerlearn.com;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+3. WebSocket Configuration:
+```python
+# ASGI routing
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter([
+            path("ws/session/<uuid:session_id>/", SessionConsumer.as_asgi()),
+        ])
+    ),
+})
+```
+
+This comprehensive documentation covers all aspects of the PeerLearn platform, 
+from technical implementation to business workflow, providing a complete 
+reference for development, deployment, and maintenance.
