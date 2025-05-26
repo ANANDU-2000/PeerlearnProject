@@ -46,20 +46,20 @@ def mentor_dashboard_fixed(request):
                 'participants': real_bookings
             }
             
-            # Categorize based on actual status
-            if session.status == 'draft':
-                draft_sessions.append(session_data)
-                print(f"Added draft session: {session.title}")
-            elif session.status == 'scheduled':
+            # Categorize based on actual status from your database
+            if session.status == 'scheduled':
                 scheduled_sessions.append(session_data)
-                print(f"Added scheduled session: {session.title}")
+                print(f"✓ Added scheduled session: {session.title}")
             elif session.status == 'completed':
                 past_sessions.append(session_data)
-                print(f"Added past session: {session.title}")
+                print(f"✓ Added completed session: {session.title}")
+            elif session.status == 'draft':
+                draft_sessions.append(session_data)
+                print(f"✓ Added draft session: {session.title}")
             else:
-                # Default to scheduled if status is unclear
+                # Add any other status to scheduled by default
                 scheduled_sessions.append(session_data)
-                print(f"Added session to scheduled (default): {session.title} - Status: {session.status}")
+                print(f"✓ Added session to scheduled: {session.title} (status: {session.status})")
         
         # REAL session requests from actual bookings
         session_requests = []
