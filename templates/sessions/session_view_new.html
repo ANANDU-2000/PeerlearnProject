@@ -158,10 +158,10 @@
                             {% endif %}
                         </div>
                         
-                        <!-- Real Countdown Timer -->
-                        <div class="countdown-timer rounded-xl p-4 mb-6 text-white text-center">
-                            <div class="text-sm font-medium mb-1">Session starts in</div>
-                            <div class="text-2xl font-bold font-mono" x-text="timeUntilSession"></div>
+                        <!-- Session Status -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-center">
+                            <div class="text-sm font-medium text-blue-700 mb-1">Session Status</div>
+                            <div class="text-lg font-bold text-blue-900">{{ session.status|title }}</div>
                         </div>
                         
                         <!-- Action Buttons -->
@@ -245,7 +245,7 @@
                                 </a>
                                 
                                 {% if session.status == 'scheduled' %}
-                                <button onclick="joinWaitingRoom()" 
+                                <button onclick="window.location.href='/sessions/{{ session.id }}/room/'" 
                                         class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg">
                                     🏠 Enter Waiting Room
                                 </button>
