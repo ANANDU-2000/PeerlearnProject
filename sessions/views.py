@@ -64,6 +64,24 @@ def session_detail(request, session_id):
     }
     
     return render(request, 'sessions/detail_advanced.html', context)
+
+def session_detail_new(request, session_id):
+    """New Coursera-style session detail view"""
+    session = get_object_or_404(Session, id=session_id)
+    user_booking = None
+    
+    if request.user.is_authenticated:
+        user_booking = Booking.objects.filter(
+            session=session, 
+            learner=request.user
+        ).first()
+    
+    context = {
+        'session': session,
+        'user_booking': user_booking,
+    }
+    
+    return render(request, 'sessions/session_view_new.html', context)
     
     if request.user.is_learner:
         try:

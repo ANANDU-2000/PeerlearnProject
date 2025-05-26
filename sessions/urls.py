@@ -5,7 +5,7 @@ from .create_session_api import create_session_api
 urlpatterns = [
     # Web views
     path('', views.session_list, name='session_list'),
-    path('<uuid:session_id>/', views.session_detail, name='session_detail'),
+    path('<uuid:session_id>/', views.session_detail_new, name='session_detail'),
     path('<uuid:session_id>/book/', views.book_session, name='book_session'),
     path('<uuid:session_id>/room/', views.session_room, name='session_room'),
     path('room/<uuid:session_id>/', views.session_room, name='session_room_alt'),
