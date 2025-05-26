@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn - Advanced Learner Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0056d3',
+                        secondary: '#e8f4fd'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50" x-data="learnerDashboard()">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b border-blue-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-primary">PeerLearn</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button class="p-2 rounded-full text-gray-600 hover:text-primary hover:bg-blue-50 relative">
+                            <i data-feather="bell" class="w-5 h-5"></i>
+                            <span x-show="notifications.length > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" x-text="notifications.length"></span>
+                        </button>
+                    </div>
+                    
+                    <!-- Wallet Balance -->
+                    <div class="bg-green-50 px-3 py-1 rounded-full">
+                        <span class="text-green-700 text-sm font-medium">Balance: ₹<span x-text="walletBalance"></span></span>
+                    </div>
+                    
+                    <!-- Profile -->
+                    <div class="flex items-center space-x-2">
+                        <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name={{ user.username }}&background=0056d3&color=fff" alt="Profile">
+                        <span class="text-gray-700 font-medium">{{ user.username }}</span>
+                    </div>
+                    
+                    <a href="/logout/" class="text-gray-600 hover:text-primary">
+                        <i data-feather="log-out" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Dashboard Tabs -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                    <button @click="activeTab = 'overview'" 
+                            :class="activeTab === 'overview' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i data-feather="home" class="w-4 h-4 inline mr-2"></i>
+                        Overview
+                    </button>
+                    <button @click="activeTab = 'sessions'" 
+                            :class="activeTab === 'sessions' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i data-feather="video" class="w-4 h-4 inline mr-2"></i>
+                        Browse Sessions
+                    </button>
+                    <button @click="activeTab = 'bookings'" 
+                            :class="activeTab === 'bookings' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i data-feather="calendar" class="w-4 h-4 inline mr-2"></i>
+                        My Bookings
+                    </button>
+                    <button @click="activeTab = 'payments'" 
+                            :class="activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i data-feather="credit-card" class="w-4 h-4 inline mr-2"></i>
+                        Payment History
+                    </button>
+                    <button @click="activeTab = 'reviews'" 
+                            :class="activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i data-feather="star" class="w-4 h-4 inline mr-2"></i>
+                        My Reviews
+                    </button>
+                    <button @click="activeTab = 'analytics'" 
+                            :class="activeTab === 'analytics' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        <i data-feather="trending-up" class="w-4 h-4 inline mr-2"></i>
+                        Analytics
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Overview Tab -->
+                <div x-show="activeTab === 'overview'" class="space-y-6">
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-blue-100 text-sm">Total Sessions</p>
+                                    <p class="text-2xl font-bold" x-text="analytics.total_bookings || 0"></p>
+                                </div>
+                                <i data-feather="video" class="w-8 h-8 text-blue-200"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100 text-sm">Completed</p>
+                                    <p class="text-2xl font-bold" x-text="analytics.completed_sessions || 0"></p>
+                                </div>
+                                <i data-feather="check-circle" class="w-8 h-8 text-green-200"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-yellow-100 text-sm">Upcoming</p>
+                                    <p class="text-2xl font-bold" x-text="analytics.upcoming_sessions || 0"></p>
+                                </div>
+                                <i data-feather="clock" class="w-8 h-8 text-yellow-200"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-purple-100 text-sm">Total Spent</p>
+                                    <p class="text-2xl font-bold">₹<span x-text="analytics.total_spent || 0"></span></p>
+                                </div>
+                                <i data-feather="dollar-sign" class="w-8 h-8 text-purple-200"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button @click="activeTab = 'sessions'" class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors">
+                                <div class="text-center">
+                                    <i data-feather="search" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
+                                    <p class="text-sm font-medium text-gray-900">Browse Sessions</p>
+                                    <p class="text-xs text-gray-500">Find new learning opportunities</p>
+                                </div>
+                            </button>
+                            
+                            <button @click="activeTab = 'payments'" class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors">
+                                <div class="text-center">
+                                    <i data-feather="credit-card" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
+                                    <p class="text-sm font-medium text-gray-900">Payment History</p>
+                                    <p class="text-xs text-gray-500">Track your spending</p>
+                                </div>
+                            </button>
+                            
+                            <button @click="activeTab = 'reviews'" class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors">
+                                <div class="text-center">
+                                    <i data-feather="star" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
+                                    <p class="text-sm font-medium text-gray-900">Submit Reviews</p>
+                                    <p class="text-xs text-gray-500">Rate your mentors</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Tab -->
+                <div x-show="activeTab === 'sessions'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Available Sessions</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" x-model="searchQuery" placeholder="Search sessions..." class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                            <button @click="loadSessions()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                                <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <template x-for="session in sessions" :key="session.id">
+                            <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-6">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <h4 class="font-semibold text-gray-900" x-text="session.title"></h4>
+                                        <span class="text-lg font-bold text-primary">₹<span x-text="session.price"></span></span>
+                                    </div>
+                                    
+                                    <div class="space-y-2 mb-4">
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i data-feather="user" class="w-4 h-4 mr-2"></i>
+                                            <span x-text="session.mentor_name"></span>
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i data-feather="clock" class="w-4 h-4 mr-2"></i>
+                                            <span x-text="session.duration + ' minutes'"></span>
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i data-feather="calendar" class="w-4 h-4 mr-2"></i>
+                                            <span x-text="session.schedule"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <button @click="bookSession(session)" 
+                                            class="w-full bg-primary text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                        Book Session
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Payment History Tab -->
+                <div x-show="activeTab === 'payments'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Payment History</h3>
+                        <div class="text-sm text-gray-600">
+                            Total Spent: <span class="font-semibold text-green-600">₹<span x-text="paymentSummary.total_spent || 0"></span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mentor</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <template x-for="payment in paymentHistory" :key="payment.id">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="payment.session_title"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="payment.mentor_name"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹<span x-text="payment.amount"></span></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="payment.booking_date"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span :class="payment.status === 'completed' ? 'bg-green-100 text-green-800' : payment.status === 'confirmed' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'" 
+                                                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="payment.status"></span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button x-show="payment.can_review" @click="openReviewModal(payment)" class="text-primary hover:text-blue-700">
+                                                    <i data-feather="star" class="w-4 h-4"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div x-show="activeTab === 'reviews'" class="space-y-6">
+                    <h3 class="text-lg font-semibold text-gray-900">My Reviews</h3>
+                    
+                    <div class="grid grid-cols-1 gap-6">
+                        <template x-for="review in reviews" :key="review.id">
+                            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900" x-text="review.session_title"></h4>
+                                        <p class="text-sm text-gray-600">Mentor: <span x-text="review.mentor_name"></span></p>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <template x-for="i in 5">
+                                            <i data-feather="star" :class="i <= review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'" class="w-4 h-4"></i>
+                                        </template>
+                                        <span class="ml-2 text-sm text-gray-600" x-text="review.rating + '/5'"></span>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-gray-700 mb-2" x-text="review.comment"></p>
+                                <p class="text-xs text-gray-500">Reviewed on <span x-text="review.created_at"></span></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div x-show="activeTab === 'analytics'" class="space-y-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Learning Analytics</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Spending Chart -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Monthly Spending Trend</h4>
+                            <div class="h-64 flex items-end space-x-2">
+                                <template x-for="month in analytics.monthly_spending" :key="month.month">
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <div class="bg-primary rounded-t" :style="'height: ' + (month.amount / Math.max(...analytics.monthly_spending.map(m => m.amount)) * 200) + 'px; min-height: 4px;'"></div>
+                                        <span class="text-xs text-gray-600 mt-2 transform rotate-45" x-text="month.month"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Learning Progress -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Learning Progress</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Sessions Completed</span>
+                                        <span x-text="analytics.completed_sessions + '/' + analytics.total_bookings"></span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-600 h-2 rounded-full" :style="'width: ' + (analytics.completed_sessions / analytics.total_bookings * 100) + '%'"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Average Rating Given</span>
+                                        <span x-text="analytics.average_rating_given + '/5'"></span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-600 h-2 rounded-full" :style="'width: ' + (analytics.average_rating_given / 5 * 100) + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div x-show="showReviewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Rate Your Session</h3>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                    <div class="flex space-x-1">
+                        <template x-for="i in 5">
+                            <button @click="reviewForm.rating = i" class="text-2xl">
+                                <i data-feather="star" :class="i <= reviewForm.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'" class="w-6 h-6"></i>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Comment</label>
+                    <textarea x-model="reviewForm.comment" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Share your experience..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button @click="showReviewModal = false" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button @click="submitReview()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                        Submit Review
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div x-show="showNotification" x-transition class="fixed top-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+        <div class="flex items-center">
+            <div :class="notificationType === 'success' ? 'text-green-500' : 'text-red-500'" class="mr-3">
+                <i data-feather="check-circle" x-show="notificationType === 'success'" class="w-5 h-5"></i>
+                <i data-feather="alert-circle" x-show="notificationType === 'error'" class="w-5 h-5"></i>
+            </div>
+            <p class="text-gray-900" x-text="notificationMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        function learnerDashboard() {
+            return {
+                activeTab: 'overview',
+                sessions: [],
+                paymentHistory: [],
+                paymentSummary: {},
+                reviews: [],
+                analytics: {},
+                notifications: [],
+                walletBalance: 0,
+                searchQuery: '',
+                
+                showReviewModal: false,
+                reviewForm: {
+                    booking_id: null,
+                    rating: 0,
+                    comment: ''
+                },
+                
+                showNotification: false,
+                notificationMessage: '',
+                notificationType: 'success',
+
+                init() {
+                    this.loadAnalytics();
+                    this.loadPaymentHistory();
+                    this.loadReviews();
+                    this.loadSessions();
+                    feather.replace();
+                },
+
+                async loadAnalytics() {
+                    try {
+                        const response = await fetch('/api/learner/analytics/');
+                        const data = await response.json();
+                        if (data.success) {
+                            this.analytics = data.analytics;
+                        }
+                    } catch (error) {
+                        console.error('Error loading analytics:', error);
+                    }
+                },
+
+                async loadPaymentHistory() {
+                    try {
+                        const response = await fetch('/api/learner/payment-history/');
+                        const data = await response.json();
+                        if (data.success) {
+                            this.paymentHistory = data.payment_history;
+                            this.paymentSummary = {
+                                total_spent: data.total_spent,
+                                total_sessions: data.total_sessions
+                            };
+                        }
+                    } catch (error) {
+                        console.error('Error loading payment history:', error);
+                    }
+                },
+
+                async loadReviews() {
+                    try {
+                        const response = await fetch('/api/learner/reviews/');
+                        const data = await response.json();
+                        if (data.success) {
+                            this.reviews = data.reviews;
+                        }
+                    } catch (error) {
+                        console.error('Error loading reviews:', error);
+                    }
+                },
+
+                async loadSessions() {
+                    try {
+                        const response = await fetch('/recommendations/api/sessions/');
+                        const data = await response.json();
+                        if (data.success) {
+                            this.sessions = data.sessions;
+                        }
+                    } catch (error) {
+                        console.error('Error loading sessions:', error);
+                    }
+                },
+
+                async bookSession(session) {
+                    try {
+                        const response = await fetch('/api/learner/create-payment/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCsrfToken()
+                            },
+                            body: JSON.stringify({
+                                session_id: session.id
+                            })
+                        });
+
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            const options = {
+                                key: data.key,
+                                amount: data.amount * 100,
+                                currency: data.currency,
+                                order_id: data.order_id,
+                                name: data.name,
+                                description: data.description,
+                                prefill: data.prefill,
+                                theme: data.theme,
+                                handler: (response) => {
+                                    this.verifyPayment(response);
+                                },
+                                modal: {
+                                    ondismiss: () => {
+                                        this.showNotificationToast('Payment cancelled', 'error');
+                                    }
+                                }
+                            };
+
+                            const rzp = new Razorpay(options);
+                            rzp.open();
+                        } else {
+                            this.showNotificationToast(data.error, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error booking session:', error);
+                        this.showNotificationToast('Error booking session', 'error');
+                    }
+                },
+
+                async verifyPayment(response) {
+                    try {
+                        const verifyResponse = await fetch('/api/learner/verify-payment/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature
+                            })
+                        });
+
+                        const data = await verifyResponse.json();
+                        
+                        if (data.success) {
+                            this.showNotificationToast('Session booked successfully!', 'success');
+                            this.loadPaymentHistory();
+                            this.loadAnalytics();
+                            this.activeTab = 'bookings';
+                        } else {
+                            this.showNotificationToast('Payment verification failed', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Payment verification error:', error);
+                        this.showNotificationToast('Payment verification failed', 'error');
+                    }
+                },
+
+                openReviewModal(payment) {
+                    this.reviewForm.booking_id = payment.id;
+                    this.reviewForm.rating = 0;
+                    this.reviewForm.comment = '';
+                    this.showReviewModal = true;
+                },
+
+                async submitReview() {
+                    if (this.reviewForm.rating === 0) {
+                        this.showNotificationToast('Please select a rating', 'error');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/learner/submit-review/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCsrfToken()
+                            },
+                            body: JSON.stringify(this.reviewForm)
+                        });
+
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.showNotificationToast('Review submitted successfully!', 'success');
+                            this.showReviewModal = false;
+                            this.loadReviews();
+                            this.loadPaymentHistory();
+                        } else {
+                            this.showNotificationToast(data.error, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error submitting review:', error);
+                        this.showNotificationToast('Error submitting review', 'error');
+                    }
+                },
+
+                showNotificationToast(message, type) {
+                    this.notificationMessage = message;
+                    this.notificationType = type;
+                    this.showNotification = true;
+                    setTimeout(() => {
+                        this.showNotification = false;
+                    }, 3000);
+                },
+
+                getCsrfToken() {
+                    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                }
+            }
+        }
+    </script>
+    
+    <script>
+        // Initialize Feather icons after Alpine loads
+        document.addEventListener('alpine:init', () => {
+            setTimeout(() => feather.replace(), 100);
+        });
+    </script>
+    
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</body>
+</html>

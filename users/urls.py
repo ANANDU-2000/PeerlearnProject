@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from . import views, api_views, admin_api, real_admin_api
+from . import views, api_views, admin_api, real_admin_api, learner_payment_api
 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
@@ -38,4 +38,12 @@ urlpatterns = [
     path('api/admin/stats/', admin_api.real_time_stats_endpoint, name='admin_stats'),
     path('api/admin/emergency/', admin_api.emergency_actions_endpoint, name='admin_emergency'),
     path('api/admin/create-admin/', admin_api.create_admin_endpoint, name='admin_create_admin'),
+    
+    # Learner Payment & Analytics API
+    path('api/learner/payment-history/', learner_payment_api.get_learner_payment_history, name='learner_payment_history'),
+    path('api/learner/analytics/', learner_payment_api.get_learner_analytics, name='learner_analytics'),
+    path('api/learner/create-payment/', learner_payment_api.create_session_payment, name='create_session_payment'),
+    path('api/learner/verify-payment/', learner_payment_api.verify_session_payment, name='verify_session_payment'),
+    path('api/learner/submit-review/', learner_payment_api.submit_mentor_review, name='submit_mentor_review'),
+    path('api/learner/reviews/', learner_payment_api.get_mentor_reviews, name='get_mentor_reviews'),
 ]

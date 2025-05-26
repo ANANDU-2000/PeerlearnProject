@@ -1,0 +1,985 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn - Advanced Learner Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .premium-gradient {
+            background: linear-gradient(135deg, #0056d3 0%, #004bb5 100%);
+        }
+        .payment-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .payment-card:hover {
+            border-color: #0056d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 86, 211, 0.15);
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen" x-data="learnerDashboard()">
+
+    <!-- Header with Navigation -->
+    <nav class="premium-gradient text-white shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i data-feather="book-open" class="w-6 h-6"></i>
+                    </div>
+                    <h1 class="text-xl font-bold">PeerLearn Dashboard</h1>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <!-- Wallet Balance -->
+                    <div class="glass-effect px-4 py-2 rounded-lg">
+                        <span class="text-sm opacity-80">Wallet Balance</span>
+                        <div class="font-bold text-lg">₹<span x-text="walletBalance"></span></div>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button @click="showNotifications = !showNotifications" class="glass-effect p-2 rounded-lg">
+                            <i data-feather="bell" class="w-5 h-5"></i>
+                            <span x-show="notificationCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" x-text="notificationCount"></span>
+                        </button>
+                    </div>
+                    
+                    <!-- Profile Menu -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center space-x-2 glass-effect px-3 py-2 rounded-lg">
+                            <div class="w-8 h-8 bg-white/30 rounded-full flex items-center justify-center">
+                                <i data-feather="user" class="w-4 h-4"></i>
+                            </div>
+                            <span class="font-medium">{{ user.username }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Dashboard Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Sessions Booked -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Sessions Booked</p>
+                        <p class="text-3xl font-bold text-blue-600" x-text="stats.sessionsBooked"></p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i data-feather="calendar-check" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Spent -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Spent</p>
+                        <p class="text-3xl font-bold text-green-600">₹<span x-text="stats.totalSpent"></span></p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i data-feather="credit-card" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hours Learned -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Hours Learned</p>
+                        <p class="text-3xl font-bold text-purple-600" x-text="stats.hoursLearned"></p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i data-feather="clock" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mentors Followed -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Mentors Followed</p>
+                        <p class="text-3xl font-bold text-orange-600" x-text="stats.mentorsFollowed"></p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <i data-feather="users" class="w-6 h-6 text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-2xl shadow-lg mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6">
+                    <button @click="activeTab = 'browse'" :class="activeTab === 'browse' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-feather="search" class="w-4 h-4 inline mr-2"></i>Browse Sessions
+                    </button>
+                    <button @click="activeTab = 'booked'" :class="activeTab === 'booked' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-feather="calendar" class="w-4 h-4 inline mr-2"></i>My Bookings
+                    </button>
+                    <button @click="activeTab = 'payments'" :class="activeTab === 'payments' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-feather="credit-card" class="w-4 h-4 inline mr-2"></i>Payment History
+                    </button>
+                    <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-feather="star" class="w-4 h-4 inline mr-2"></i>My Reviews
+                    </button>
+                    <button @click="activeTab = 'mentors'" :class="activeTab === 'mentors' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-feather="users" class="w-4 h-4 inline mr-2"></i>Following
+                    </button>
+                    <button @click="activeTab = 'wallet'" :class="activeTab === 'wallet' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-feather="wallet" class="w-4 h-4 inline mr-2"></i>Wallet
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                
+                <!-- Browse Sessions Tab -->
+                <div x-show="activeTab === 'browse'" class="space-y-6">
+                    <!-- Search and Filters -->
+                    <div class="flex flex-col lg:flex-row gap-4">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <input type="text" x-model="searchQuery" @input="searchSessions()" placeholder="Search sessions by title, mentor, or skill..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <i data-feather="search" class="w-5 h-5 text-gray-400 absolute left-3 top-3.5"></i>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <select x-model="filterCategory" @change="filterSessions()" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Categories</option>
+                                <option value="programming">Programming</option>
+                                <option value="design">Design</option>
+                                <option value="business">Business</option>
+                                <option value="language">Language</option>
+                            </select>
+                            <select x-model="sortBy" @change="sortSessions()" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                                <option value="newest">Newest First</option>
+                                <option value="price_low">Price: Low to High</option>
+                                <option value="price_high">Price: High to Low</option>
+                                <option value="rating">Highest Rated</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sessions Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <template x-for="session in filteredSessions" :key="session.id">
+                            <div class="payment-card bg-white rounded-2xl shadow-lg overflow-hidden">
+                                <div class="relative">
+                                    <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                                        <i data-feather="book-open" class="w-16 h-16 text-white opacity-80"></i>
+                                    </div>
+                                    <div class="absolute top-4 right-4">
+                                        <span x-show="session.price === 0" class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">Free</span>
+                                        <span x-show="session.price > 0" class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium" x-text="'₹' + session.price"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-6">
+                                    <h3 class="font-bold text-xl mb-2 text-gray-900" x-text="session.title"></h3>
+                                    <p class="text-gray-600 text-sm mb-4" x-text="session.description"></p>
+                                    
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i data-feather="user" class="w-4 h-4 text-blue-600"></i>
+                                            </div>
+                                            <span class="text-sm text-gray-600" x-text="session.mentor"></span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <i data-feather="star" class="w-4 h-4 text-yellow-400"></i>
+                                            <span class="text-sm text-gray-600" x-text="session.rating"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                            <i data-feather="calendar" class="w-4 h-4"></i>
+                                            <span x-text="session.date"></span>
+                                        </div>
+                                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                            <i data-feather="clock" class="w-4 h-4"></i>
+                                            <span x-text="session.duration + ' min'"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <button @click="bookSession(session)" :disabled="session.isBooked" class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-xl transition-colors">
+                                        <span x-show="!session.isBooked">Book Session</span>
+                                        <span x-show="session.isBooked" class="flex items-center justify-center space-x-2">
+                                            <i data-feather="check" class="w-4 h-4"></i>
+                                            <span>Booked</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- My Bookings Tab -->
+                <div x-show="activeTab === 'booked'" class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-gray-900">My Bookings</h2>
+                        <div class="flex space-x-3">
+                            <button @click="bookingFilter = 'all'" :class="bookingFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-medium text-sm">All</button>
+                            <button @click="bookingFilter = 'upcoming'" :class="bookingFilter === 'upcoming' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-medium text-sm">Upcoming</button>
+                            <button @click="bookingFilter = 'completed'" :class="bookingFilter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded-lg font-medium text-sm">Completed</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <template x-for="booking in filteredBookings" :key="booking.id">
+                            <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <h3 class="font-bold text-lg text-gray-900" x-text="booking.sessionTitle"></h3>
+                                        <p class="text-gray-600 text-sm mb-2" x-text="'Mentor: ' + booking.mentor"></p>
+                                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                            <div class="flex items-center space-x-1">
+                                                <i data-feather="calendar" class="w-4 h-4"></i>
+                                                <span x-text="booking.date"></span>
+                                            </div>
+                                            <div class="flex items-center space-x-1">
+                                                <i data-feather="clock" class="w-4 h-4"></i>
+                                                <span x-text="booking.time"></span>
+                                            </div>
+                                            <div class="flex items-center space-x-1">
+                                                <i data-feather="credit-card" class="w-4 h-4"></i>
+                                                <span x-text="'₹' + booking.amount"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-3">
+                                        <span :class="booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'" class="px-3 py-1 rounded-full text-sm font-medium" x-text="booking.status"></span>
+                                        
+                                        <div class="flex space-x-2">
+                                            <button x-show="booking.status === 'confirmed' && booking.canJoin" @click="joinSession(booking)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                                Join Session
+                                            </button>
+                                            <button x-show="booking.status === 'completed' && !booking.reviewed" @click="reviewSession(booking)" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                                Review
+                                            </button>
+                                            <button @click="viewBookingDetails(booking)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                                Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Payment History Tab -->
+                <div x-show="activeTab === 'payments'" class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-gray-900">Payment History</h2>
+                        <button @click="downloadPaymentReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2">
+                            <i data-feather="download" class="w-4 h-4"></i>
+                            <span>Download Report</span>
+                        </button>
+                    </div>
+
+                    <!-- Payment Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl p-6 text-white">
+                            <h3 class="text-lg font-medium opacity-90">Total Paid</h3>
+                            <p class="text-3xl font-bold">₹<span x-text="paymentSummary.totalPaid"></span></p>
+                            <p class="text-sm opacity-80" x-text="paymentSummary.totalTransactions + ' transactions'"></p>
+                        </div>
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+                            <h3 class="text-lg font-medium opacity-90">This Month</h3>
+                            <p class="text-3xl font-bold">₹<span x-text="paymentSummary.thisMonth"></span></p>
+                            <p class="text-sm opacity-80" x-text="paymentSummary.monthlyTransactions + ' transactions'"></p>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
+                            <h3 class="text-lg font-medium opacity-90">Average/Session</h3>
+                            <p class="text-3xl font-bold">₹<span x-text="paymentSummary.averagePerSession"></span></p>
+                            <p class="text-sm opacity-80">Per session average</p>
+                        </div>
+                    </div>
+
+                    <!-- Payment Transactions -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mentor</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <template x-for="payment in paymentHistory" :key="payment.id">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="payment.date"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="payment.sessionTitle"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" x-text="payment.mentor"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="'₹' + payment.amount"></td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span :class="payment.status === 'success' ? 'bg-green-100 text-green-800' : payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 rounded-full text-xs font-medium" x-text="payment.status"></span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" x-text="payment.paymentId"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Reviews Tab -->
+                <div x-show="activeTab === 'reviews'" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-900">My Reviews & Ratings</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <template x-for="review in myReviews" :key="review.id">
+                            <div class="bg-white rounded-2xl shadow-lg p-6">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h3 class="font-bold text-lg text-gray-900" x-text="review.sessionTitle"></h3>
+                                        <p class="text-gray-600 text-sm" x-text="'Mentor: ' + review.mentor"></p>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <template x-for="star in 5" :key="star">
+                                            <i data-feather="star" :class="star <= review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'" class="w-4 h-4"></i>
+                                        </template>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-gray-700 mb-4" x-text="review.comment"></p>
+                                
+                                <div class="flex items-center justify-between text-sm text-gray-500">
+                                    <span x-text="review.date"></span>
+                                    <button @click="editReview(review)" class="text-blue-600 hover:text-blue-800">Edit Review</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Following Tab -->
+                <div x-show="activeTab === 'mentors'" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Following Mentors</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <template x-for="mentor in followingMentors" :key="mentor.id">
+                            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                    <i data-feather="user" class="w-8 h-8 text-white"></i>
+                                </div>
+                                
+                                <h3 class="font-bold text-lg text-gray-900 mb-1" x-text="mentor.name"></h3>
+                                <p class="text-gray-600 text-sm mb-3" x-text="mentor.expertise"></p>
+                                
+                                <div class="flex items-center justify-center space-x-4 mb-4 text-sm text-gray-500">
+                                    <div class="flex items-center space-x-1">
+                                        <i data-feather="star" class="w-4 h-4 text-yellow-400"></i>
+                                        <span x-text="mentor.rating"></span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <i data-feather="users" class="w-4 h-4"></i>
+                                        <span x-text="mentor.students"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <button @click="viewMentorProfile(mentor)" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium">
+                                        View Profile
+                                    </button>
+                                    <button @click="unfollowMentor(mentor)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium">
+                                        Unfollow
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Wallet Tab -->
+                <div x-show="activeTab === 'wallet'" class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-gray-900">Wallet Management</h2>
+                        <button @click="showAddFunds = true" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2">
+                            <i data-feather="plus" class="w-4 h-4"></i>
+                            <span>Add Funds</span>
+                        </button>
+                    </div>
+
+                    <!-- Wallet Balance Card -->
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium opacity-90">Wallet Balance</h3>
+                                <p class="text-4xl font-bold">₹<span x-text="walletBalance"></span></p>
+                                <p class="text-sm opacity-80">Available for payments</p>
+                            </div>
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                                <i data-feather="wallet" class="w-8 h-8"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="font-bold text-lg text-gray-900 mb-4">Quick Add Funds</h3>
+                            <div class="grid grid-cols-3 gap-3 mb-4">
+                                <button @click="addFunds(500)" class="bg-blue-100 hover:bg-blue-200 text-blue-700 py-3 rounded-lg font-medium text-sm">₹500</button>
+                                <button @click="addFunds(1000)" class="bg-blue-100 hover:bg-blue-200 text-blue-700 py-3 rounded-lg font-medium text-sm">₹1000</button>
+                                <button @click="addFunds(2000)" class="bg-blue-100 hover:bg-blue-200 text-blue-700 py-3 rounded-lg font-medium text-sm">₹2000</button>
+                            </div>
+                            <div class="flex space-x-3">
+                                <input type="number" x-model="customAmount" placeholder="Custom amount" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <button @click="addFunds(customAmount)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">Add</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="font-bold text-lg text-gray-900 mb-4">Wallet Statistics</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Total Added</span>
+                                    <span class="font-medium">₹<span x-text="walletStats.totalAdded"></span></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Total Spent</span>
+                                    <span class="font-medium">₹<span x-text="walletStats.totalSpent"></span></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">This Month</span>
+                                    <span class="font-medium">₹<span x-text="walletStats.thisMonth"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Wallet Transactions -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Wallet Activity</h3>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            <template x-for="transaction in walletTransactions" :key="transaction.id">
+                                <div class="px-6 py-4 flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div :class="transaction.type === 'credit' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="w-10 h-10 rounded-full flex items-center justify-center">
+                                            <i :data-feather="transaction.type === 'credit' ? 'plus' : 'minus'" class="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900" x-text="transaction.description"></p>
+                                            <p class="text-sm text-gray-500" x-text="transaction.date"></p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p :class="transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'" class="font-bold" x-text="(transaction.type === 'credit' ? '+' : '-') + '₹' + transaction.amount"></p>
+                                        <p class="text-sm text-gray-500" x-text="transaction.status"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Funds Modal -->
+    <div x-show="showAddFunds" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-transition>
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Add Funds to Wallet</h2>
+                <button @click="showAddFunds = false" class="text-gray-400 hover:text-gray-600">
+                    <i data-feather="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                    <input type="number" x-model="fundAmount" placeholder="Enter amount" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="grid grid-cols-3 gap-3">
+                    <button @click="fundAmount = 500" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium">₹500</button>
+                    <button @click="fundAmount = 1000" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium">₹1000</button>
+                    <button @click="fundAmount = 2000" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium">₹2000</button>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button @click="showAddFunds = false" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-medium">Cancel</button>
+                    <button @click="processAddFunds()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium">Add Funds</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        function learnerDashboard() {
+            return {
+                activeTab: 'browse',
+                searchQuery: '',
+                filterCategory: '',
+                sortBy: 'newest',
+                bookingFilter: 'all',
+                showAddFunds: false,
+                fundAmount: '',
+                customAmount: '',
+                showNotifications: false,
+                notificationCount: 3,
+                walletBalance: 2500,
+                
+                // Stats
+                stats: {
+                    sessionsBooked: 12,
+                    totalSpent: 8500,
+                    hoursLearned: 48,
+                    mentorsFollowed: 5
+                },
+                
+                // Sample data
+                availableSessions: [
+                    {
+                        id: 1,
+                        title: "Advanced Python Programming",
+                        description: "Learn advanced Python concepts including decorators, generators, and metaclasses",
+                        mentor: "Dr. Sarah Johnson",
+                        rating: 4.8,
+                        price: 1200,
+                        date: "2025-01-30",
+                        duration: 90,
+                        isBooked: false
+                    },
+                    {
+                        id: 2,
+                        title: "React.js Fundamentals",
+                        description: "Master the basics of React.js and build dynamic web applications",
+                        mentor: "Mike Chen",
+                        rating: 4.9,
+                        price: 0,
+                        date: "2025-01-28",
+                        duration: 60,
+                        isBooked: false
+                    },
+                    {
+                        id: 3,
+                        title: "Data Science with Python",
+                        description: "Introduction to data analysis and machine learning with Python",
+                        mentor: "Prof. Emily Davis",
+                        rating: 4.7,
+                        price: 1500,
+                        date: "2025-02-01",
+                        duration: 120,
+                        isBooked: true
+                    }
+                ],
+                
+                bookedSessions: [
+                    {
+                        id: 1,
+                        sessionTitle: "Advanced Python Programming",
+                        mentor: "Dr. Sarah Johnson",
+                        date: "2025-01-30",
+                        time: "10:00 AM",
+                        amount: 1200,
+                        status: "confirmed",
+                        canJoin: true,
+                        reviewed: false
+                    },
+                    {
+                        id: 2,
+                        sessionTitle: "Machine Learning Basics",
+                        mentor: "Prof. Emily Davis",
+                        date: "2025-01-25",
+                        time: "2:00 PM",
+                        amount: 1500,
+                        status: "completed",
+                        canJoin: false,
+                        reviewed: true
+                    }
+                ],
+                
+                paymentHistory: [
+                    {
+                        id: 1,
+                        date: "2025-01-25",
+                        sessionTitle: "Machine Learning Basics",
+                        mentor: "Prof. Emily Davis",
+                        amount: 1500,
+                        status: "success",
+                        paymentId: "pay_123456789"
+                    },
+                    {
+                        id: 2,
+                        date: "2025-01-20",
+                        sessionTitle: "Web Development Bootcamp",
+                        mentor: "John Smith",
+                        amount: 2000,
+                        status: "success",
+                        paymentId: "pay_987654321"
+                    }
+                ],
+                
+                paymentSummary: {
+                    totalPaid: 8500,
+                    totalTransactions: 12,
+                    thisMonth: 3500,
+                    monthlyTransactions: 5,
+                    averagePerSession: 708
+                },
+                
+                myReviews: [
+                    {
+                        id: 1,
+                        sessionTitle: "Machine Learning Basics",
+                        mentor: "Prof. Emily Davis",
+                        rating: 5,
+                        comment: "Excellent session! Very well explained and practical examples.",
+                        date: "2025-01-25"
+                    }
+                ],
+                
+                followingMentors: [
+                    {
+                        id: 1,
+                        name: "Dr. Sarah Johnson",
+                        expertise: "Python & Data Science",
+                        rating: 4.8,
+                        students: 250
+                    },
+                    {
+                        id: 2,
+                        name: "Mike Chen",
+                        expertise: "Web Development",
+                        rating: 4.9,
+                        students: 180
+                    }
+                ],
+                
+                walletStats: {
+                    totalAdded: 10000,
+                    totalSpent: 7500,
+                    thisMonth: 2500
+                },
+                
+                walletTransactions: [
+                    {
+                        id: 1,
+                        type: "credit",
+                        description: "Wallet Top-up",
+                        amount: 2000,
+                        date: "2025-01-26",
+                        status: "completed"
+                    },
+                    {
+                        id: 2,
+                        type: "debit",
+                        description: "Session Payment - Machine Learning",
+                        amount: 1500,
+                        date: "2025-01-25",
+                        status: "completed"
+                    }
+                ],
+                
+                init() {
+                    this.loadDashboardData();
+                    feather.replace();
+                },
+                
+                get filteredSessions() {
+                    let sessions = [...this.availableSessions];
+                    
+                    if (this.searchQuery) {
+                        sessions = sessions.filter(session => 
+                            session.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                            session.mentor.toLowerCase().includes(this.searchQuery.toLowerCase())
+                        );
+                    }
+                    
+                    if (this.filterCategory) {
+                        // Filter by category logic here
+                    }
+                    
+                    return sessions;
+                },
+                
+                get filteredBookings() {
+                    if (this.bookingFilter === 'all') return this.bookedSessions;
+                    return this.bookedSessions.filter(booking => 
+                        this.bookingFilter === 'upcoming' ? booking.status === 'confirmed' : booking.status === 'completed'
+                    );
+                },
+                
+                async loadDashboardData() {
+                    try {
+                        // Load real data from API
+                        const response = await fetch('/api/learner/dashboard-data/', {
+                            headers: {
+                                'X-CSRFToken': this.getCSRFToken()
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.stats = data.stats;
+                            this.availableSessions = data.sessions;
+                            this.bookedSessions = data.bookings;
+                            this.paymentHistory = data.payments;
+                            this.walletBalance = data.walletBalance;
+                        }
+                    } catch (error) {
+                        console.error('Error loading dashboard data:', error);
+                    }
+                },
+                
+                async bookSession(session) {
+                    if (session.price === 0) {
+                        // Free session - direct booking
+                        await this.processBooking(session, 'free');
+                    } else {
+                        // Paid session - show payment options
+                        await this.showPaymentModal(session);
+                    }
+                },
+                
+                async showPaymentModal(session) {
+                    const useWallet = this.walletBalance >= session.price;
+                    
+                    if (useWallet && confirm(`Pay ₹${session.price} from wallet balance?`)) {
+                        await this.processBooking(session, 'wallet');
+                    } else {
+                        await this.processRazorpayPayment(session);
+                    }
+                },
+                
+                async processRazorpayPayment(session) {
+                    try {
+                        const response = await fetch('/api/create-payment/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            },
+                            body: JSON.stringify({
+                                session_id: session.id,
+                                amount: session.price,
+                                payment_type: 'session_booking'
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            const options = {
+                                key: data.key,
+                                amount: data.amount * 100,
+                                currency: data.currency,
+                                order_id: data.order_id,
+                                name: "PeerLearn",
+                                description: `Session: ${session.title}`,
+                                prefill: data.prefill,
+                                theme: { color: "#0056d3" },
+                                handler: (response) => {
+                                    this.verifyPayment(response, session);
+                                }
+                            };
+                            
+                            const rzp = new Razorpay(options);
+                            rzp.open();
+                        }
+                    } catch (error) {
+                        console.error('Payment error:', error);
+                        alert('Payment failed. Please try again.');
+                    }
+                },
+                
+                async verifyPayment(response, session) {
+                    try {
+                        const verifyResponse = await fetch('/api/verify-payment/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                session_id: session.id
+                            })
+                        });
+                        
+                        const data = await verifyResponse.json();
+                        
+                        if (data.success) {
+                            session.isBooked = true;
+                            this.showNotification('Session booked successfully!', 'success');
+                            this.loadDashboardData();
+                        }
+                    } catch (error) {
+                        console.error('Payment verification error:', error);
+                    }
+                },
+                
+                async processBooking(session, paymentMethod) {
+                    try {
+                        const response = await fetch('/api/book-session/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            },
+                            body: JSON.stringify({
+                                session_id: session.id,
+                                payment_method: paymentMethod
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            session.isBooked = true;
+                            this.showNotification('Session booked successfully!', 'success');
+                            this.loadDashboardData();
+                        }
+                    } catch (error) {
+                        console.error('Booking error:', error);
+                    }
+                },
+                
+                async addFunds(amount) {
+                    if (!amount || amount < 100) {
+                        alert('Minimum amount is ₹100');
+                        return;
+                    }
+                    
+                    await this.processRazorpayWalletTopup(amount);
+                },
+                
+                async processRazorpayWalletTopup(amount) {
+                    try {
+                        const response = await fetch('/api/wallet/add-funds/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            },
+                            body: JSON.stringify({ amount: amount })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            const options = {
+                                key: data.key,
+                                amount: data.amount * 100,
+                                currency: data.currency,
+                                order_id: data.order_id,
+                                name: "PeerLearn Wallet",
+                                description: "Add funds to wallet",
+                                prefill: data.prefill,
+                                theme: { color: "#0056d3" },
+                                handler: (response) => {
+                                    this.verifyWalletTopup(response, amount);
+                                }
+                            };
+                            
+                            const rzp = new Razorpay(options);
+                            rzp.open();
+                        }
+                    } catch (error) {
+                        console.error('Wallet topup error:', error);
+                    }
+                },
+                
+                async verifyWalletTopup(response, amount) {
+                    try {
+                        const verifyResponse = await fetch('/api/wallet/verify-topup/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                amount: amount
+                            })
+                        });
+                        
+                        const data = await verifyResponse.json();
+                        
+                        if (data.success) {
+                            this.walletBalance += amount;
+                            this.showAddFunds = false;
+                            this.fundAmount = '';
+                            this.showNotification('Funds added successfully!', 'success');
+                            this.loadDashboardData();
+                        }
+                    } catch (error) {
+                        console.error('Wallet verification error:', error);
+                    }
+                },
+                
+                joinSession(booking) {
+                    window.location.href = `/sessions/${booking.sessionId}/room/`;
+                },
+                
+                reviewSession(booking) {
+                    // Open review modal
+                    console.log('Review session:', booking);
+                },
+                
+                showNotification(message, type) {
+                    // Implement notification system
+                    alert(message);
+                },
+                
+                getCSRFToken() {
+                    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+                }
+            }
+        }
+        
+        // Initialize Feather icons
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+        });
+    </script>
+</body>
+</html>
