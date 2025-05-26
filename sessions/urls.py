@@ -11,6 +11,7 @@ urlpatterns = [
     path('room/<uuid:session_id>/', views.session_room, name='session_room_alt'),
     path('<uuid:session_id>/feedback/', views.submit_feedback, name='submit_feedback'),
     path('create/', views.create_session, name='create_session'),
+    path('<uuid:session_id>/edit/', views.edit_session, name='edit_session'),
     
     # API endpoints
     path('api/sessions/', api_views.get_sessions_api, name='get_sessions_api'),

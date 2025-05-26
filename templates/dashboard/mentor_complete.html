@@ -935,6 +935,14 @@ function mentorDashboard() {
         startSession(sessionId) {
             window.location.href = `/room/${sessionId}/`;
         },
+
+        editSession(sessionId) {
+            window.location.href = `/sessions/${sessionId}/edit/`;
+        },
+
+        viewSession(sessionId) {
+            window.location.href = `/sessions/${sessionId}/`;
+        },
         
         async acceptRequest(requestId) {
             try {

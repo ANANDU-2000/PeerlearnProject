@@ -112,6 +112,25 @@ def create_session(request):
     return redirect('mentor_dashboard')
 
 @login_required
+def edit_session(request, session_id):
+    """Edit an existing session"""
+    session = get_object_or_404(Session, id=session_id, mentor=request.user)
+    
+    if request.method == 'POST':
+        form = SessionForm(request.POST, instance=session)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Session updated successfully!')
+            return redirect('mentor_dashboard')
+    else:
+        form = SessionForm(instance=session)
+    
+    return render(request, 'sessions/edit_session.html', {
+        'form': form,
+        'session': session
+    })
+
+@login_required
 def session_room(request, session_id):
     """WebRTC room for live sessions"""
     session = get_object_or_404(Session, id=session_id)
