@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from sessions import api_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -12,7 +13,7 @@ urlpatterns = [
     path('api/sessions/', include('sessions.urls')),
     
     # Direct API endpoints
-    path('api/sessions/mentor-data/', sessions.api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
+    path('api/sessions/mentor-data/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
     path('recommendations/', include('recommendations.urls')),
 ]
 
