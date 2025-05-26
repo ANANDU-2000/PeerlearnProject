@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn - Transform Your Learning Journey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        .hero-gradient { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50" x-data="{ mobileMenuOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">P</span>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">PeerLearn</span>
+                    </div>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
+                    <a href="#mentors" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Find Mentors</a>
+                    <a href="#sessions" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Live Sessions</a>
+                    <a href="{% url 'login' %}" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">Sign In</a>
+                    <a href="{% url 'register' %}" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg">Get Started</a>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-700 hover:text-blue-600">
+                        <i data-feather="menu" class="h-6 w-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenuOpen" class="md:hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="#features" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Features</a>
+                <a href="#mentors" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Find Mentors</a>
+                <a href="#sessions" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Live Sessions</a>
+                <a href="{% url 'login' %}" class="block px-3 py-2 text-blue-600">Sign In</a>
+                <a href="{% url 'register' %}" class="block px-3 py-2 bg-blue-600 text-white rounded-lg">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white py-24">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                    Transform Your Learning with
+                    <span class="text-blue-200">Expert Mentors</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-4xl mx-auto">
+                    Connect with world-class mentors, join live interactive sessions, and accelerate your career with AI-powered recommendations.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'register' %}" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-lg">
+                        Start Learning Now
+                    </a>
+                    <a href="#creator-story" class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all">
+                        Meet the Creator
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ total_users }}+</div>
+                    <div class="text-gray-600 font-medium">Active Learners</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ total_mentors }}+</div>
+                    <div class="text-gray-600 font-medium">Expert Mentors</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ total_sessions }}+</div>
+                    <div class="text-gray-600 font-medium">Live Sessions</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ online_count }}</div>
+                    <div class="text-gray-600 font-medium">Online Now</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Why Choose PeerLearn?</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Experience learning like never before with our cutting-edge platform</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="video" class="h-8 w-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Live Video Sessions</h3>
+                    <p class="text-gray-600">Real-time interactive sessions with industry experts using WebRTC technology</p>
+                </div>
+                
+                <div class="text-center p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="brain" class="h-8 w-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">AI Recommendations</h3>
+                    <p class="text-gray-600">Personalized learning paths powered by advanced machine learning algorithms</p>
+                </div>
+                
+                <div class="text-center p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="users" class="h-8 w-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Expert Mentors</h3>
+                    <p class="text-gray-600">Connect with verified industry professionals and experienced educators</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Minimal Creator Section -->
+    <section id="creator-story" class="py-12 bg-blue-600">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="bg-white rounded-2xl p-8 shadow-xl">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <!-- Creator Avatar -->
+                    <div class="flex-shrink-0">
+                        <div class="w-20 h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                            <span class="text-white font-bold text-2xl">AK</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Creator Info -->
+                    <div class="flex-1 text-center md:text-left">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Anandu Krishna</h3>
+                        <p class="text-blue-600 font-medium mb-3">Founder & CEO • Thrissur, Kerala, India</p>
+                        <p class="text-gray-700 text-sm leading-relaxed">
+                            Built PeerLearn to democratize learning through AI-powered mentorship. 
+                            Passionate about connecting learners with expert mentors worldwide.
+                        </p>
+                    </div>
+                    
+                    <!-- Portfolio Button -->
+                    <div class="flex-shrink-0">
+                        <a href="{% url 'anandu_portfolio' %}" target="_blank" class="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-all shadow-lg">
+                            <i data-feather="external-link" class="h-4 w-4 mr-2"></i>
+                            View Portfolio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">P</span>
+                        </div>
+                        <span class="ml-3 text-xl font-bold">PeerLearn</span>
+                    </div>
+                    <p class="text-gray-400">Empowering learners worldwide with expert mentorship and interactive learning experiences.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">Platform</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Find Mentors</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Live Sessions</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">AI Recommendations</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Career Guidance</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">Community</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Become a Mentor</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Success Stories</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Blog</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Help Center</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">Company</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Careers</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 PeerLearn. All rights reserved. Made with ❤️ for learners worldwide.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        });
+    </script>
+</body>
+</html>

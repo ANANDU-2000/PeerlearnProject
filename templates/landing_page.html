@@ -85,60 +85,23 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-gradient text-white py-20 md:py-32">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div class="text-center lg:text-left">
-                    <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6">
-                        Transform Your Learning Journey with
-                        <span class="bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent">Expert Mentors</span>
-                    </h1>
-                    <p class="text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed">
-                        Connect with world-class mentors, join live interactive sessions, and accelerate your career growth with AI-powered recommendations.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <a href="{% url 'register' %}" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-lg">
-                            Start Learning Now
-                        </a>
-                        <a href="#creator-story" class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all">
-                            Meet the Creator
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Hero Animation/Image -->
-                <div class="text-center lg:text-right">
-                    <div class="floating-animation">
-                        <div class="bg-white rounded-3xl p-8 shadow-2xl max-w-md mx-auto">
-                            <div class="space-y-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full"></div>
-                                    <div>
-                                        <p class="font-semibold text-gray-800">Live Mentoring Session</p>
-                                        <p class="text-sm text-gray-500">Python Development</p>
-                                    </div>
-                                </div>
-                                <div class="bg-gray-100 rounded-xl p-4">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                                            <i data-feather="video" class="h-4 w-4 text-white"></i>
-                                        </div>
-                                        <span class="text-sm font-medium text-gray-700">12 participants</span>
-                                    </div>
-                                    <div class="flex space-x-1">
-                                        <div class="w-6 h-6 bg-blue-400 rounded-full"></div>
-                                        <div class="w-6 h-6 bg-green-400 rounded-full"></div>
-                                        <div class="w-6 h-6 bg-purple-400 rounded-full"></div>
-                                        <div class="w-6 h-6 bg-yellow-400 rounded-full"></div>
-                                        <div class="w-6 h-6 bg-red-400 rounded-full"></div>
-                                        <div class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                                            <span class="text-xs text-gray-600">+7</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <section class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-24">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                    Transform Your Learning with
+                    <span class="text-blue-200">Expert Mentors</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-4xl mx-auto">
+                    Connect with world-class mentors, join live interactive sessions, and accelerate your career with AI-powered recommendations.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                    <a href="{% url 'register' %}" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-lg">
+                        Start Learning Now
+                    </a>
+                    <a href="#creator-story" class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all">
+                        Meet the Creator
+                    </a>
                 </div>
             </div>
         </div>
@@ -147,36 +110,28 @@
 
 
     <!-- Stats Section -->
-    <section class="py-16 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-                <div class="stats-counter">
-                    <div class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">{{ total_users }}+</div>
-                    <div class="text-lg text-gray-600">Active Learners</div>
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ total_users }}+</div>
+                    <div class="text-gray-600 font-medium">Active Learners</div>
                 </div>
-                <div class="stats-counter">
-                    <div class="text-4xl md:text-5xl font-bold text-green-600 mb-2">{{ total_mentors }}+</div>
-                    <div class="text-lg text-gray-600">Expert Mentors</div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ total_mentors }}+</div>
+                    <div class="text-gray-600 font-medium">Expert Mentors</div>
                 </div>
-                <div class="stats-counter">
-                    <div class="text-4xl md:text-5xl font-bold text-purple-600 mb-2">{{ total_sessions }}+</div>
-                    <div class="text-lg text-gray-600">Live Sessions</div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ total_sessions }}+</div>
+                    <div class="text-gray-600 font-medium">Live Sessions</div>
                 </div>
-                <div class="stats-counter">
-                    <div class="text-4xl md:text-5xl font-bold text-orange-600 mb-2">{{ online_count }}</div>
-                    <div class="text-lg text-gray-600">Online Now</div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{{ online_count }}</div>
+                    <div class="text-gray-600 font-medium">Online Now</div>
                 </div>
             </div>
         </div>
-    </section> 
-                           class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-xl">
-                            Start Learning Today
-                        </a>
-                        <a href="#features" 
-                           class="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all">
-                            Explore Features
-                        </a>
-                    </div>
+    </section>
                     
                     <!-- Hero Stats -->
                     <div class="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-blue-400">

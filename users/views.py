@@ -39,7 +39,7 @@ def landing_page(request):
         'featured_sessions': featured_sessions,
         'featured_mentors': featured_mentors,
     }
-    return render(request, 'landing_page.html', context)
+    return render(request, 'landing_clean.html', context)
 
 def anandu_portfolio(request):
     """Premium portfolio page for Anandu Krishna - PeerLearn Founder"""
