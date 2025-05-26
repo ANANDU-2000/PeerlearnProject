@@ -174,7 +174,7 @@ def learner_dashboard(request):
         learner=request.user
     ).order_by('-created_at')
     
-    # Recommended sessions (simple algorithm)
+    # Enhanced Recommended sessions with popularity metrics
     user_interests = request.user.expertise or []
     recommended_sessions = Session.objects.filter(
         status='scheduled',
@@ -182,12 +182,18 @@ def learner_dashboard(request):
     ).exclude(
         bookings__learner=request.user,
         bookings__status='confirmed'
-    )
+    ).select_related('mentor', 'popularity').order_by('-popularity__rating_average', '-popularity__booking_count')[:10]
     
-    if user_interests:
-        recommended_sessions = recommended_sessions.filter(
+    # If no recommendations from popularity, use interest-based
+    if not recommended_sessions.exists() and user_interests:
+        recommended_sessions = Session.objects.filter(
+            status='scheduled',
+            schedule__gte=timezone.now(),
             description__icontains=user_interests[0] if user_interests else ''
-        )
+        ).exclude(
+            bookings__learner=request.user,
+            bookings__status='confirmed'
+        )[:5]
     
     # Learning stats
     attended_sessions = Feedback.objects.filter(user=request.user).count()
