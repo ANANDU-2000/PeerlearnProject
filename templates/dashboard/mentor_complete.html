@@ -629,6 +629,32 @@ function mentorDashboard() {
         init() {
             console.log('Mentor dashboard initialized');
             this.loadRealData();
+            this.startRealTimeUpdates();
+        },
+        
+        startRealTimeUpdates() {
+            // Update timers every minute
+            setInterval(() => {
+                this.updateSessionTimers();
+            }, 60000);
+            
+            // Refresh data every 5 minutes
+            setInterval(() => {
+                this.loadRealData();
+            }, 300000);
+        },
+        
+        updateSessionTimers() {
+            const updateTimer = (session) => {
+                if (session.timeToStart > 0) {
+                    session.timeToStart--;
+                } else if (session.timeToStart === 0) {
+                    // Session starting now, refresh data
+                    this.loadRealData();
+                }
+            };
+            
+            this.mySessions.scheduled.forEach(updateTimer);
         },
         
         async loadRealData() {

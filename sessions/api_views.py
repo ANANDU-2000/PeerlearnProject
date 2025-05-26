@@ -477,10 +477,17 @@ def mentor_dashboard_data(request):
             bookings_count = session.bookings.filter(status='confirmed').count()
             # Calculate time to start for session readiness
             time_to_start = 999
+            session_status = session.status
             if session.schedule:
                 from django.utils import timezone
                 time_diff = session.schedule - timezone.now()
-                time_to_start = max(0, int(time_diff.total_seconds() / 60))
+                time_to_start = int(time_diff.total_seconds() / 60)
+                
+                # Auto-move past sessions to completed
+                if time_to_start < -60:  # Session ended more than 1 hour ago
+                    session_status = 'completed'
+                    session.status = 'completed'
+                    session.save()
             
             session_data = {
                 'id': str(session.id),
@@ -499,11 +506,13 @@ def mentor_dashboard_data(request):
                 'publishing': False
             }
             
-            if session.status == 'draft':
+            if session_status == 'draft':
                 draft_sessions.append(session_data)
-            elif session.status == 'scheduled':
+            elif session_status == 'scheduled' and time_to_start > -60:
                 scheduled_sessions.append(session_data)
             else:
+                # Move to past sessions if completed or session time has passed
+                session_data['status'] = 'completed'
                 past_sessions.append(session_data)
         
         # Real pending requests from database
