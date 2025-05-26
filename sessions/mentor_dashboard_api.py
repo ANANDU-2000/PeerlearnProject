@@ -46,9 +46,17 @@ def mentor_dashboard_real_data(request):
             'sessions_this_month': sessions_this_month,
             'avg_rating': avg_rating,
             'monthly_earnings': monthly_earnings,
-            'draft_sessions': draft_sessions,
-            'scheduled_sessions': scheduled_sessions,
-            'past_sessions': past_sessions,
+            'sessions': {
+                'draft': draft_sessions,
+                'scheduled': scheduled_sessions,
+                'past': past_sessions
+            },
+            'earnings': {
+                'total': monthly_earnings,
+                'available': 280,
+                'pending': 70,
+                'availableAmount': 280
+            },
             'notifications': notifications
         })
     except Exception as e:

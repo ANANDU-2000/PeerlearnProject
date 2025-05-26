@@ -807,16 +807,7 @@ function mentorDashboard() {
         mySessions: {
             draft: [],
             scheduled: [],
-            past: [
-                {
-                    id: 3,
-                    title: 'React Fundamentals',
-                    completedDate: 'Jan 20, 2024',
-                    participants: 10,
-                    averageRating: 5,
-                    earnings: 120
-                }
-            ]
+            past: []
         },
         
         sessionRequests: [
@@ -892,6 +883,14 @@ function mentorDashboard() {
         bookedSessions: [],
         bookedSessionsCount: 0,
         
+        // Initialize earnings data structure
+        earnings: {
+            total: 0,
+            available: 0,
+            pending: 0,
+            availableAmount: 0
+        },
+        
         init() {
             console.log('Mentor dashboard initialized');
             this.loadRealData();
@@ -935,9 +934,9 @@ function mentorDashboard() {
                 if (response.ok) {
                     const data = await response.json();
                     this.updateStatsWithRealData(data);
-                    this.mySessions = data.sessions;
-                    this.sessionRequests = data.requests;
-                    this.earnings = data.earnings;
+                    this.mySessions = data.sessions || { draft: [], scheduled: [], past: [] };
+                    this.sessionRequests = data.requests || [];
+                    this.earnings = data.earnings || { total: 0, available: 0, pending: 0, availableAmount: 0 };
                 }
             } catch (error) {
                 console.log('Loading real data...');
