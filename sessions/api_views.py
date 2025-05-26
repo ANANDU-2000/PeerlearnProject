@@ -481,9 +481,6 @@ def mentor_dashboard_data(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 
-# All broken code removed - API functions now work properly
-
-
 @login_required  
 @require_http_methods(["POST"])
 def mark_ready(request, session_id):

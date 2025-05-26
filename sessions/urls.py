@@ -4,6 +4,7 @@ from . import views, api_views
 from .create_session_api import create_session_api
 from .mentor_dashboard_api import mentor_dashboard_real_data
 from .fix_mentor_dashboard import mentor_dashboard_fixed
+from .working_mentor_api import working_mentor_dashboard
 
 urlpatterns = [
     # Web views
@@ -38,7 +39,7 @@ urlpatterns = [
     path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
     
     # Dashboard data endpoints
-    path('api/sessions/mentor-dashboard/', mentor_dashboard_fixed, name='mentor_dashboard_data'),
+    path('api/sessions/mentor-dashboard/', working_mentor_dashboard, name='mentor_dashboard_data'),
     
     # Use existing working API endpoint
     # path('api/mentor-data/', mentor_dashboard_clean, name='mentor_data_clean'),
