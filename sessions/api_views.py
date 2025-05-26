@@ -526,3 +526,64 @@ def mentor_dashboard_data(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required  
+@require_http_methods(["POST"])
+def create_session_api(request):
+    """Create session from modal - Complete workflow with recommendations"""
+    try:
+        if request.user.role != 'mentor':
+            return JsonResponse({'error': 'Only mentors can create sessions'}, status=403)
+        
+        # Get form data
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip() 
+        schedule_str = request.POST.get('schedule', '')
+        duration = int(request.POST.get('duration', 60))
+        max_participants = int(request.POST.get('max_participants', 10))
+        status = request.POST.get('status', 'draft')
+        
+        # Validation
+        if not all([title, description, schedule_str]):
+            return JsonResponse({'error': 'All fields are required'}, status=400)
+            
+        # Parse schedule
+        from datetime import datetime
+        from django.utils import timezone
+        
+        schedule = datetime.strptime(schedule_str, '%Y-%m-%dT%H:%M')
+        if timezone.is_naive(schedule):
+            schedule = timezone.make_aware(schedule)
+            
+        if schedule <= timezone.now():
+            return JsonResponse({'error': 'Session must be scheduled for future'}, status=400)
+        
+        # Create session in database
+        session = Session.objects.create(
+            mentor=request.user,
+            title=title,
+            description=description, 
+            schedule=schedule,
+            duration=duration,
+            max_participants=max_participants,
+            status=status
+        )
+        
+        # If published, make available for learner booking & recommendations
+        if status == 'scheduled':
+            from recommendations.models import PopularityMetric
+            PopularityMetric.objects.get_or_create(
+                session=session,
+                defaults={'view_count': 0, 'booking_count': 0}
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Session "{title}" created successfully!',
+            'session_id': str(session.id),
+            'status': session.status
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
