@@ -1,126 +1,144 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from sessions.models import Session
+from django.http import JsonResponse
+from django.db.models import Q, Count, Avg
+from django.utils import timezone
+from sessions.models import Session, Booking, Feedback
+from users.models import User
 from .models import PopularityMetric
+from .recommendation_engine import get_recommendations_for_user, get_mentor_recommendations_for_user
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@login_required
+def recommendations_page(request):
+    """Dedicated recommendations page with advanced ML engine"""
+    
+    # Get personalized recommendations
+    try:
+        recommended_sessions = get_recommendations_for_user(request.user)
+        recommended_mentors = get_mentor_recommendations_for_user(request.user)
+    except Exception as e:
+        # Fallback to showing available sessions
+        recommended_sessions = Session.objects.filter(
+            status='scheduled',
+            schedule__gte=timezone.now()
+        ).exclude(
+            bookings__learner=request.user,
+            bookings__status='confirmed'
+        ).select_related('mentor')[:8]
+        recommended_mentors = []
+    
+    # Get trending sessions (last 7 days activity)
+    from datetime import timedelta
+    recent_date = timezone.now() - timedelta(days=7)
+    trending_sessions = Session.objects.filter(
+        status='scheduled',
+        schedule__gte=timezone.now(),
+        bookings__created_at__gte=recent_date
+    ).exclude(
+        bookings__learner=request.user,
+        bookings__status='confirmed'
+    ).annotate(
+        recent_bookings=Count('bookings', filter=Q(bookings__created_at__gte=recent_date))
+    ).filter(recent_bookings__gte=1).order_by('-recent_bookings')[:5]
+    
+    # Get popular sessions with ratings
+    popular_sessions = Session.objects.filter(
+        status='scheduled',
+        schedule__gte=timezone.now(),
+        popularity__isnull=False
+    ).exclude(
+        bookings__learner=request.user,
+        bookings__status='confirmed'
+    ).select_related('popularity', 'mentor').order_by(
+        '-popularity__rating_average',
+        '-popularity__booking_count'
+    )[:5]
+    
+    # Get all available sessions as backup
+    all_sessions = Session.objects.filter(
+        status='scheduled',
+        schedule__gte=timezone.now()
+    ).exclude(
+        bookings__learner=request.user,
+        bookings__status='confirmed'
+    ).select_related('mentor')[:10]
+    
+    context = {
+        'recommended_sessions': recommended_sessions,
+        'recommended_mentors': recommended_mentors,
+        'trending_sessions': trending_sessions,
+        'popular_sessions': popular_sessions,
+        'all_sessions': all_sessions,
+        'user_skills': request.user.expertise or [],
+        'user_interests': request.user.interests or []
+    }
+    
+    return render(request, 'recommendations/recommendations_page.html', context)
+
+@login_required
 def trending_sessions(request):
     """Get trending sessions based on popularity metrics"""
-    limit = int(request.GET.get('limit', 5))
+    from datetime import timedelta
+    recent_date = timezone.now() - timedelta(days=7)
     
-    # Get sessions with popularity metrics, ordered by score
-    popular_sessions = []
-    metrics = PopularityMetric.objects.select_related('session').all()
-    
-    # Calculate scores and sort
-    session_scores = []
-    for metric in metrics:
-        if metric.session.status == 'scheduled':
-            score = metric.calculate_score()
-            session_scores.append((metric.session, score))
-    
-    # Sort by score and take top N
-    session_scores.sort(key=lambda x: x[1], reverse=True)
-    top_sessions = session_scores[:limit]
+    trending = Session.objects.filter(
+        status='scheduled',
+        schedule__gte=timezone.now(),
+        bookings__created_at__gte=recent_date
+    ).exclude(
+        bookings__learner=request.user,
+        bookings__status='confirmed'
+    ).annotate(
+        recent_bookings=Count('bookings', filter=Q(bookings__created_at__gte=recent_date)),
+        avg_rating=Avg('feedback__rating')
+    ).filter(recent_bookings__gte=1).order_by('-recent_bookings', '-avg_rating')
     
     data = []
-    for session, score in top_sessions:
+    for session in trending:
         data.append({
-            'id': str(session.id),
+            'id': session.id,
             'title': session.title,
             'description': session.description,
+            'mentor': session.mentor.first_name,
+            'price': float(session.price) if session.price else 0,
             'schedule': session.schedule.isoformat(),
-            'mentor': session.mentor.username,
-            'current_participants': session.current_participants,
-            'max_participants': session.max_participants,
-            'score': score,
+            'recent_bookings': session.recent_bookings,
+            'rating': float(session.avg_rating) if session.avg_rating else 0
         })
     
-    return Response(data)
+    return JsonResponse({'trending_sessions': data})
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@login_required 
 def recommended_sessions(request):
     """Get personalized recommendations for the user"""
-    # Simple recommendation: trending sessions that user hasn't booked
-    user = request.user
-    limit = int(request.GET.get('limit', 5))
-    
-    if user.is_learner:
-        # Get sessions user hasn't booked
-        booked_session_ids = user.bookings.values_list('session_id', flat=True)
-        available_sessions = Session.objects.exclude(
-            id__in=booked_session_ids
-        ).filter(status='scheduled')
-        
-        # Get top trending from available sessions
-        recommendations = []
-        for session in available_sessions[:limit]:
-            try:
-                metric = session.popularity
-                score = metric.calculate_score()
-            except PopularityMetric.DoesNotExist:
-                score = 0
-            
-            recommendations.append({
-                'id': str(session.id),
+    try:
+        recommendations = get_recommendations_for_user(request.user)
+        data = []
+        for session in recommendations:
+            data.append({
+                'id': session.id,
                 'title': session.title,
                 'description': session.description,
+                'mentor': session.mentor.first_name,
+                'price': float(session.price) if session.price else 0,
                 'schedule': session.schedule.isoformat(),
-                'mentor': session.mentor.username,
-                'current_participants': session.current_participants,
-                'max_participants': session.max_participants,
-                'score': score,
+                'reason': 'AI Recommended based on your profile'
             })
-        
-        # Sort by score
-        recommendations.sort(key=lambda x: x['score'], reverse=True)
-        return Response(recommendations[:limit])
-    
-    else:
-        # For mentors, show trending sessions in their domain
-        return Response([])
+        return JsonResponse({'recommended_sessions': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 def update_session_popularity(session_id, action):
     """Helper function to update popularity metrics"""
     try:
         session = Session.objects.get(id=session_id)
-        metric, created = PopularityMetric.objects.get_or_create(
-            session=session,
-            defaults={
-                'view_count': 0,
-                'booking_count': 0,
-                'completion_rate': 0.0,
-                'rating_average': 0.0,
-            }
-        )
+        popularity, created = PopularityMetric.objects.get_or_create(session=session)
         
         if action == 'view':
-            metric.view_count += 1
+            popularity.view_count += 1
         elif action == 'book':
-            metric.booking_count += 1
-        elif action == 'complete':
-            # Update completion rate
-            total_bookings = session.bookings.filter(status='confirmed').count()
-            completed_bookings = session.bookings.filter(
-                status='confirmed',
-                session__status='completed'
-            ).count()
-            
-            if total_bookings > 0:
-                metric.completion_rate = (completed_bookings / total_bookings) * 100
+            popularity.booking_count += 1
         
-        # Update rating average
-        feedbacks = session.feedback.all()
-        if feedbacks:
-            total_rating = sum(f.rating for f in feedbacks)
-            metric.rating_average = total_rating / len(feedbacks)
-        
-        metric.save()
-        
-    except Session.DoesNotExist:
+        popularity.save()
+    except:
         pass
