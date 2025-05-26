@@ -926,7 +926,7 @@ function mentorDashboard() {
         async loadRealData() {
             try {
                 // Load real session data from database
-                const response = await fetch('/api/sessions/mentor-data/', {
+                const response = await fetch('/api/sessions/mentor-dashboard/', {
                     headers: {
                         'X-CSRFToken': this.getCSRFToken()
                     }

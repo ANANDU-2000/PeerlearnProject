@@ -8,7 +8,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.db.models import Count, Avg
 from .models import Session, Booking, Feedback
-from users.models import Request
+from users.models import User
 
 
 @login_required
@@ -123,6 +123,8 @@ def mentor_dashboard_clean(request):
         # Get real pending requests
         pending_requests = []
         try:
+            # Import Request model locally to avoid circular import
+            from users.models import Request
             requests = Request.objects.filter(mentor=request.user, status='pending')
             for req in requests:
                 pending_requests.append({
