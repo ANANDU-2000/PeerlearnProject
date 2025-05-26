@@ -637,7 +637,17 @@ function mentorDashboard() {
             }
         ],
         
+        // Initialize state variables that were causing errors
+        wsConnected: true,
+        unreadNotifications: 3,
+        urgentSessions: 1,
+        isMobile: false,
+        showCreateModal: false,
+        showNotifications: false,
+        
         init() {
+            this.initNotificationSystem();
+            this.initMobileNavigation();
             this.updateIcons();
             this.startRealTimeUpdates();
         },

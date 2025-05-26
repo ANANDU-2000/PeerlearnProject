@@ -23,7 +23,8 @@ urlpatterns = [
     
     # Request endpoints
     path('api/requests/create/', api_views.create_session_request, name='api_create_request'),
-    path('api/requests/<uuid:request_id>/accept/', api_views.accept_request, name='api_accept_request'),
+    path('api/requests/<int:request_id>/accept/', api_views.accept_request, name='api_accept_request'),
+    path('api/requests/<int:request_id>/decline/', api_views.decline_request, name='api_decline_request'),
     
     # Notification endpoints
     path('api/notifications/', api_views.get_notifications_api, name='get_notifications_api'),

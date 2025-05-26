@@ -14,4 +14,5 @@ urlpatterns = [
     
     # API endpoints for live validation
     path('api/check-email/', api_views.check_email_exists, name='check_email_exists'),
+    path('api/users/profile/update/', views.update_profile_api, name='api_update_profile'),
 ]

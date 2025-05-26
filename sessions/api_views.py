@@ -376,3 +376,26 @@ def publish_session(request, session_id):
         'success': True,
         'message': 'Session published successfully!'
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def decline_request(request, request_id):
+    """Decline a learner request"""
+    try:
+        from sessions.models import Request
+        session_request = get_object_or_404(Request, id=request_id)
+        
+        if session_request.mentor != request.user:
+            return JsonResponse({'error': 'Not authorized'}, status=403)
+        
+        session_request.status = 'rejected'
+        session_request.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Request declined successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
