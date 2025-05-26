@@ -12,6 +12,7 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('dashboard/mentor/', views.mentor_dashboard, name='mentor_dashboard'),
     path('dashboard/learner/', views.learner_dashboard, name='learner_dashboard'),
+    path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('portfolio/anandu/', views.anandu_portfolio, name='anandu_portfolio'),
     
     # API endpoints for live validation

@@ -276,3 +276,64 @@ def update_profile_api(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+def admin_dashboard(request):
+    """Advanced admin dashboard with owner privileges for Anandu Krishna"""
+    # Only allow superusers/staff (admins)
+    if not (request.user.is_superuser or request.user.is_staff):
+        messages.error(request, 'Access denied. Admin privileges required.')
+        return redirect('learner_dashboard')
+    
+    from django.contrib.auth import get_user_model
+    from sessions.models import Session, Booking, Feedback
+    from django.db.models import Count, Avg, Q
+    from datetime import datetime, timedelta
+    
+    User = get_user_model()
+    
+    # Platform Analytics
+    total_users = User.objects.count()
+    total_mentors = User.objects.filter(role='mentor').count()
+    total_learners = User.objects.filter(role='learner').count()
+    total_sessions = Session.objects.count()
+    total_bookings = Booking.objects.count()
+    
+    # Recent Activities
+    recent_users = User.objects.order_by('-date_joined')[:10]
+    recent_sessions = Session.objects.order_by('-created_at')[:10]
+    recent_bookings = Booking.objects.order_by('-created_at')[:10]
+    
+    # Online Users (active in last 30 minutes)
+    thirty_minutes_ago = datetime.now() - timedelta(minutes=30)
+    online_users = User.objects.filter(last_login__gte=thirty_minutes_ago)
+    
+    # Performance Metrics
+    avg_rating = Feedback.objects.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
+    completion_rate = Booking.objects.filter(status='completed').count() / max(total_bookings, 1) * 100
+    
+    # Top Performers
+    top_mentors = User.objects.filter(role='mentor').annotate(
+        session_count=Count('mentor_sessions'),
+        avg_rating=Avg('mentor_sessions__feedback__rating')
+    ).order_by('-session_count')[:5]
+    
+    context = {
+        'total_users': total_users,
+        'total_mentors': total_mentors,
+        'total_learners': total_learners,
+        'total_sessions': total_sessions,
+        'total_bookings': total_bookings,
+        'recent_users': recent_users,
+        'recent_sessions': recent_sessions,
+        'recent_bookings': recent_bookings,
+        'online_users': online_users,
+        'online_count': online_users.count(),
+        'avg_rating': round(avg_rating, 2),
+        'completion_rate': round(completion_rate, 2),
+        'top_mentors': top_mentors,
+        'is_owner': request.user.is_superuser,
+    }
+    
+    return render(request, 'dashboard/admin_dashboard.html', context)
