@@ -18,8 +18,8 @@ class RecommendationEngine:
     
     def __init__(self, user):
         self.user = user
-        self.user_skills = self.parse_skills(user.expertise or [])
-        self.user_interests = self.parse_skills(user.interests or [])
+        self.user_skills = self.parse_skills(user.skills or '')
+        self.user_interests = self.parse_skills(user.expertise or '')
         
     def parse_skills(self, skills_data):
         """Parse skills from various formats"""
