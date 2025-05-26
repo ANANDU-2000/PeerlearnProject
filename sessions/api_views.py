@@ -718,3 +718,108 @@ def create_session_api(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+# Critical Session Management API Endpoints for Mentor Dashboard
+
+@login_required
+@require_http_methods(["POST"])
+def mark_mentor_ready(request, session_id):
+    """Mark mentor as ready for session - Critical for Start Session button"""
+    if request.user.role != 'mentor':
+        return JsonResponse({'success': False, 'error': 'Only mentors can mark ready'}, status=403)
+    
+    try:
+        session = Session.objects.get(id=session_id, mentor=request.user)
+        
+        # Update session mentor ready status
+        session.mentor_ready = True
+        session.save()
+        
+        # Create notification for learners
+        from users.models import Notification
+        bookings = Booking.objects.filter(session=session, status='confirmed')
+        for booking in bookings:
+            Notification.objects.create(
+                user=booking.learner,
+                type='mentor_ready',
+                title='Mentor is Ready!',
+                message=f'Your mentor is ready for the session: {session.title}',
+                related_object_id=session.id
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Marked as ready successfully!'
+        })
+    except Session.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def start_session_mentor_api(request, session_id):
+    """Start a session - Critical for Start Session button"""
+    if request.user.role != 'mentor':
+        return JsonResponse({'success': False, 'error': 'Only mentors can start sessions'}, status=403)
+    
+    try:
+        session = Session.objects.get(id=session_id, mentor=request.user)
+        
+        # Update session status
+        session.status = 'in_progress'
+        session.save()
+        
+        # Notify all learners that session has started
+        from users.models import Notification
+        bookings = Booking.objects.filter(session=session, status='confirmed')
+        for booking in bookings:
+            Notification.objects.create(
+                user=booking.learner,
+                type='session_started',
+                title='Session Started!',
+                message=f'The session "{session.title}" has started. Join now!',
+                related_object_id=session.id
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Session started successfully!',
+            'room_url': f'/sessions/{session_id}/room/'
+        })
+    except Session.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def send_session_reminders(request, session_id):
+    """Send reminders to all booked learners"""
+    if request.user.role != 'mentor':
+        return JsonResponse({'success': False, 'error': 'Only mentors can send reminders'}, status=403)
+    
+    try:
+        session = Session.objects.get(id=session_id, mentor=request.user)
+        
+        # Send reminders to all booked learners
+        from users.models import Notification
+        bookings = Booking.objects.filter(session=session, status='confirmed')
+        
+        for booking in bookings:
+            Notification.objects.create(
+                user=booking.learner,
+                type='session_reminder',
+                title='Session Reminder',
+                message=f'Reminder: Your session "{session.title}" is coming up soon!',
+                related_object_id=session.id
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Reminders sent to {bookings.count()} learners!'
+        })
+    except Session.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

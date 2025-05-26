@@ -40,6 +40,11 @@ urlpatterns = [
     # Session status endpoints
     path('api/mark-ready/<uuid:session_id>/', api_views.mark_ready, name='api_mark_ready'),
     
+    # Critical Session Management Endpoints for Mentor Dashboard
+    path('api/sessions/<uuid:session_id>/mark-ready/', api_views.mark_mentor_ready, name='api_mark_mentor_ready'),
+    path('api/sessions/<uuid:session_id>/start/', api_views.start_session_mentor_api, name='api_start_session_mentor'),
+    path('api/sessions/<uuid:session_id>/send-reminders/', api_views.send_session_reminders, name='api_send_reminders'),
+    
     # Room access endpoints
     path('room/<uuid:session_id>/', views.session_room, name='session_room'),
 ]
