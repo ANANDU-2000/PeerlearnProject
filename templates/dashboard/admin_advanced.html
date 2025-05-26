@@ -1363,6 +1363,38 @@
                     avgDuration: '45m'
                 },
                 
+                // Chat and Communication
+                showAiChat: false,
+                showNotifications: false,
+                chatInput: '',
+                chatMessages: [
+                    { id: 1, type: 'ai', content: 'Hello! I\'m your AI assistant. How can I help you manage the platform today?' }
+                ],
+                
+                // Notifications
+                notifications: [
+                    { id: 1, type: 'info', title: 'System Update', message: 'Platform maintenance scheduled for tonight', timestamp: '1 hour ago', read: false, icon: 'fas fa-info-circle' },
+                    { id: 2, type: 'warning', title: 'High Server Load', message: 'Server experiencing heavy traffic', timestamp: '2 hours ago', read: false, icon: 'fas fa-exclamation-triangle' },
+                    { id: 3, type: 'success', title: 'Backup Complete', message: 'Daily backup completed successfully', timestamp: '3 hours ago', read: true, icon: 'fas fa-check-circle' }
+                ],
+                
+                // Automation settings
+                automation: {
+                    welcomeUsers: true,
+                    sessionFollowup: false,
+                    issueDetection: true
+                },
+                
+                // Owner data
+                adminList: [
+                    { id: 1, name: 'Anandu Krishna', email: 'anandu@peerlearn.com' },
+                    { id: 2, name: 'Platform Admin', email: 'admin@peerlearn.com' }
+                ],
+                platformRevenue: 124580,
+                growthRate: 24.5,
+                satisfactionScore: 94.2,
+                currentUserId: {{ user.id }},
+                
                 // Sample data
                 liveActivities: [
                     { id: 1, icon: 'fas fa-user-plus', message: 'New user registered: John Doe', timestamp: '2 minutes ago', status: 'Active', statusColor: 'bg-green-100 text-green-800' },
@@ -1389,6 +1421,35 @@
                     { id: 1, title: 'Python for Beginners', mentor: { name: 'Alice Smith', avatar: '/static/images/default-avatar.png' }, participants: { current: 8, max: 15 }, duration: '32 min', quality: 'Excellent' },
                     { id: 2, title: 'Web Development Basics', mentor: { name: 'Bob Johnson', avatar: '/static/images/default-avatar.png' }, participants: { current: 12, max: 20 }, duration: '45 min', quality: 'Good' }
                 ],
+                
+                // Communication History
+                communicationHistory: [
+                    { id: 1, type: 'email', subject: 'Weekly Platform Update', recipients: 'All Users (245)', timestamp: '2 hours ago', status: 'Delivered', statusColor: 'bg-green-100 text-green-800', icon: 'fas fa-envelope' },
+                    { id: 2, type: 'notification', subject: 'New Features Available', recipients: 'Active Users (189)', timestamp: '1 day ago', status: 'Sent', statusColor: 'bg-blue-100 text-blue-800', icon: 'fas fa-bell' },
+                    { id: 3, type: 'email', subject: 'Security Update', recipients: 'All Mentors (56)', timestamp: '3 days ago', status: 'Delivered', statusColor: 'bg-green-100 text-green-800', icon: 'fas fa-shield-alt' }
+                ],
+                
+                // AI Stats and Interactions
+                aiStats: {
+                    totalQueries: 1245,
+                    avgResponseTime: '0.8s'
+                },
+                
+                aiInteractions: [
+                    { id: 1, query: 'Show me user activity trends', user: 'Admin User', timestamp: '10:30 AM' },
+                    { id: 2, query: 'How many sessions today?', user: 'Manager', timestamp: '09:45 AM' },
+                    { id: 3, query: 'Revenue analysis for this week', user: 'Owner', timestamp: '09:15 AM' },
+                    { id: 4, query: 'Any platform issues?', user: 'Admin User', timestamp: '08:30 AM' }
+                ],
+                
+                // Pagination
+                userPagination: {
+                    currentPage: 1,
+                    totalPages: 5,
+                    start: 1,
+                    end: 20,
+                    total: {{ total_users }}
+                },
                 
                 notifications: [
                     { id: 1, type: 'info', title: 'System Update', message: 'Platform maintenance scheduled for tonight', timestamp: '1 hour ago', read: false, icon: 'fas fa-info-circle' },
