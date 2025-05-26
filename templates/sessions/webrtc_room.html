@@ -221,7 +221,7 @@
         // WebRTC Configuration
         const roomId = '{{ room_id }}';
         const userRole = '{{ user_role }}';
-        const isWaitingRoom = {{ is_waiting_room|yojson }};
+        const isWaitingRoom = {{ is_waiting_room|yesno:"true,false" }};
         const sessionTitle = '{{ session.title }}';
         
         let localStream = null;
