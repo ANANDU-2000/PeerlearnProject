@@ -41,6 +41,10 @@ def landing_page(request):
     }
     return render(request, 'landing_page.html', context)
 
+def anandu_portfolio(request):
+    """Premium portfolio page for Anandu Krishna - PeerLearn Founder"""
+    return render(request, 'portfolio/anandu_portfolio.html')
+
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
     

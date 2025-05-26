@@ -10,10 +10,11 @@ class UserRegistrationForm(UserCreationForm):
     skills = forms.CharField(max_length=500, required=True, help_text="Skills for recommendation system")
     expertise = forms.CharField(max_length=100, required=True, help_text="Domain expertise")
     bio = forms.CharField(widget=forms.Textarea, required=False)
+    profile_image = forms.ImageField(required=False, help_text="Upload your profile picture for trust and credibility")
     
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'skills', 'expertise', 'bio', 'password1', 'password2')
+        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'skills', 'expertise', 'bio', 'profile_image', 'password1', 'password2')
     
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -52,6 +53,8 @@ class UserRegistrationForm(UserCreationForm):
         user.bio = self.cleaned_data.get('bio', '')
         user.skills = self.cleaned_data.get('skills', '')
         user.expertise = self.cleaned_data.get('expertise', '')
+        if self.cleaned_data.get('profile_image'):
+            user.profile_image = self.cleaned_data['profile_image']
         if commit:
             user.save()
         return user

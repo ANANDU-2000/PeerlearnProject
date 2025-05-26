@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anandu Krishna P A - AI/ML Engineer & PeerLearn Founder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .blue-gradient { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); }
+        .floating { animation: floating 6s ease-in-out infinite; }
+        .slide-up { animation: slideUp 0.8s ease-out forwards; opacity: 0; transform: translateY(30px); }
+        .fade-in { animation: fadeIn 1s ease-out forwards; opacity: 0; }
+        .bounce-in { animation: bounceIn 1s ease-out forwards; opacity: 0; transform: scale(0.3); }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .tech-badge { 
+            transition: all 0.3s ease; 
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+        }
+        .tech-badge:hover { 
+            transform: translateY(-2px) scale(1.05); 
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .project-card { 
+            backdrop-filter: blur(10px); 
+            background: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+        }
+        .project-card:hover { 
+            transform: translateY(-10px); 
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .social-icon { 
+            transition: all 0.3s ease; 
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+        }
+        .social-icon:hover { 
+            transform: translateY(-3px) scale(1.1); 
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-white shadow-lg z-50">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'landing' %}" class="text-2xl font-bold text-blue-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to PeerLearn
+                </a>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#about" class="text-gray-700 hover:text-blue-600 transition-colors">About</a>
+                    <a href="#projects" class="text-gray-700 hover:text-blue-600 transition-colors">Projects</a>
+                    <a href="#contact" class="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="min-h-screen blue-gradient text-white relative overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-black opacity-20"></div>
+        <div class="container mx-auto px-6 py-20 relative z-10">
+            <div class="flex flex-col lg:flex-row items-center min-h-screen">
+                <!-- Profile Content -->
+                <div class="lg:w-1/2 text-center lg:text-left mb-12 lg:mb-0">
+                    <h1 class="text-5xl lg:text-7xl font-bold mb-6 slide-up" style="animation-delay: 0.2s;">
+                        ANANDU<br>
+                        <span class="text-yellow-300">KRISHNA</span>
+                    </h1>
+                    <div class="text-xl lg:text-2xl mb-6 fade-in" style="animation-delay: 0.4s;">
+                        AI/ML Engineer & PeerLearn Founder
+                    </div>
+                    <p class="text-lg lg:text-xl text-blue-100 mb-8 slide-up max-w-2xl" style="animation-delay: 0.6s;">
+                        MCA Final Year Student crafting the future of EdTech with AI-powered mentorship platforms. 
+                        Passionate about Machine Learning, Full-Stack Development, and innovative AI solutions.
+                    </p>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start slide-up" style="animation-delay: 0.8s;">
+                        <a href="#projects" class="bg-white text-blue-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-yellow-300 hover:text-blue-800 transition-all transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-rocket mr-2"></i>View Projects
+                        </a>
+                        <a href="#contact" class="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105">
+                            <i class="fas fa-download mr-2"></i>Download CV
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Profile Image -->
+                <div class="lg:w-1/2 flex justify-center">
+                    <div class="relative bounce-in" style="animation-delay: 0.5s;">
+                        <div class="w-80 h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden shadow-2xl floating">
+                            <div class="w-full h-full blue-gradient flex items-center justify-center text-white text-6xl font-bold">
+                                AK
+                            </div>
+                        </div>
+                        <div class="absolute -bottom-4 -right-4 bg-yellow-300 text-blue-800 rounded-full p-4 shadow-lg">
+                            <i class="fas fa-code text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-800 mb-6">About Me</h2>
+                <div class="w-24 h-1 blue-gradient mx-auto rounded-full"></div>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="slide-up">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Building the Future of EdTech</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed mb-6">
+                        Currently pursuing MCA at Calicut University, I'm an aspiring Machine Learning Engineer with 
+                        comprehensive expertise in supervised, unsupervised, reinforcement, and deep learning techniques.
+                    </p>
+                    <p class="text-gray-600 text-lg leading-relaxed mb-6">
+                        As the founder of <strong>PeerLearn</strong>, I'm developing an advanced AI-powered mentorship 
+                        platform that leverages recommendation systems and real-time mentor matching to transform the 
+                        educational technology landscape.
+                    </p>
+                    <p class="text-gray-600 text-lg leading-relaxed">
+                        With 9 years of ERP billing and team management experience, I bring a unique blend of 
+                        technical expertise and business acumen to every project I undertake.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-6 rounded-2xl text-center project-card">
+                        <div class="w-16 h-16 blue-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 mb-2">Education</h4>
+                        <p class="text-gray-600 text-sm">MCA Final Year<br>Calicut University</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-6 rounded-2xl text-center project-card">
+                        <div class="w-16 h-16 blue-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-briefcase text-white text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 mb-2">Experience</h4>
+                        <p class="text-gray-600 text-sm">9+ Years<br>Team Management</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-6 rounded-2xl text-center project-card">
+                        <div class="w-16 h-16 blue-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-rocket text-white text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 mb-2">Projects</h4>
+                        <p class="text-gray-600 text-sm">AI/ML<br>Full-Stack Apps</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-6 rounded-2xl text-center project-card">
+                        <div class="w-16 h-16 blue-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-trophy text-white text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 mb-2">Goal</h4>
+                        <p class="text-gray-600 text-sm">AI Innovation<br>CTO/PM Leader</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-800 mb-6">Technical Skills</h2>
+                <div class="w-24 h-1 blue-gradient mx-auto rounded-full"></div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- AI/ML Skills -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg project-card">
+                    <div class="w-16 h-16 blue-gradient rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-brain text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">AI & Machine Learning</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Python</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Scikit-learn</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">TensorFlow</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Pandas</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">NumPy</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Deep Learning</span>
+                    </div>
+                </div>
+                
+                <!-- Web Development -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg project-card">
+                    <div class="w-16 h-16 blue-gradient rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-code text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Web Development</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">React</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Node.js</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Django</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">MongoDB</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">JavaScript</span>
+                    </div>
+                </div>
+                
+                <!-- Tools & Cloud -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg project-card">
+                    <div class="w-16 h-16 blue-gradient rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-cloud text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Tools & Automation</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">n8n</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Google Colab</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">AWS</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">Docker</span>
+                        <span class="tech-badge text-white text-sm px-3 py-1 rounded-full">AI Agents</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-800 mb-6">Featured Projects</h2>
+                <div class="w-24 h-1 blue-gradient mx-auto rounded-full"></div>
+            </div>
+            
+            <!-- PeerLearn Project -->
+            <div class="mb-16 project-card p-8 rounded-3xl shadow-xl">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 blue-gradient rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-graduation-cap text-white"></i>
+                            </div>
+                            <span class="bg-yellow-300 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">ONGOING - MCA PROJECT</span>
+                        </div>
+                        <h3 class="text-3xl font-bold text-gray-800 mb-4">PeerLearn - AI-Powered Mentorship Platform</h3>
+                        <p class="text-gray-600 text-lg leading-relaxed mb-6">
+                            Leading the development of PeerLearn as Project Lead and Frontend Developer. An advanced EdTech platform 
+                            featuring AI-driven recommendations, real-time mentor matching, and personalized learning experiences.
+                        </p>
+                        <div class="mb-6">
+                            <h4 class="font-bold text-gray-800 mb-2">Key Features:</h4>
+                            <ul class="text-gray-600 space-y-1">
+                                <li><i class="fas fa-check text-blue-600 mr-2"></i>AI Recommendation Engine using Scikit-learn & TensorFlow</li>
+                                <li><i class="fas fa-check text-blue-600 mr-2"></i>Real-time WebRTC Video Sessions</li>
+                                <li><i class="fas fa-check text-blue-600 mr-2"></i>Django Backend with React Frontend</li>
+                                <li><i class="fas fa-check text-blue-600 mr-2"></i>Personalized Learning Pathways</li>
+                            </ul>
+                        </div>
+                        <a href="{% url 'landing' %}" class="blue-gradient text-white px-6 py-3 rounded-full font-bold hover:shadow-lg transition-all">
+                            <i class="fas fa-external-link-alt mr-2"></i>Visit PeerLearn
+                        </a>
+                    </div>
+                    
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl p-8 shadow-2xl">
+                            <div class="bg-white rounded-lg p-6">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-white font-bold text-sm">P</span>
+                                    </div>
+                                    <span class="font-bold text-gray-800">PeerLearn Dashboard</span>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="h-3 bg-blue-200 rounded-full"></div>
+                                    <div class="h-3 bg-blue-300 rounded-full w-4/5"></div>
+                                    <div class="h-3 bg-blue-200 rounded-full w-3/5"></div>
+                                </div>
+                                <div class="mt-4 grid grid-cols-3 gap-2">
+                                    <div class="h-16 bg-blue-100 rounded-lg"></div>
+                                    <div class="h-16 bg-blue-200 rounded-lg"></div>
+                                    <div class="h-16 bg-blue-300 rounded-lg"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 blue-gradient text-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-6">Get In Touch</h2>
+                <div class="w-24 h-1 bg-yellow-300 mx-auto rounded-full"></div>
+                <p class="text-xl text-blue-100 mt-6 max-w-2xl mx-auto">
+                    Ready to collaborate on innovative AI projects or discuss opportunities? Let's connect!
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Contact Info -->
+                <div>
+                    <div class="space-y-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-envelope text-yellow-300"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">Email</h4>
+                                <a href="mailto:anandukrishna2999@gmail.com" class="text-blue-100 hover:text-yellow-300 transition-colors">anandukrishna2999@gmail.com</a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-phone text-yellow-300"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">Phone</h4>
+                                <a href="tel:+917591999365" class="text-blue-100 hover:text-yellow-300 transition-colors">+91 7591 9993 65</a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-map-marker-alt text-yellow-300"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">Location</h4>
+                                <p class="text-blue-100">Thrissur, Kerala, India</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Social Links -->
+                    <div class="mt-12">
+                        <h4 class="font-bold text-lg mb-6">Connect With Me</h4>
+                        <div class="flex space-x-4">
+                            <a href="https://linkedin.com/in/anandu-krishnapa2000" target="_blank" class="social-icon w-12 h-12 rounded-full flex items-center justify-center text-white">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                            <a href="https://github.com/ANANDU-2000" target="_blank" class="social-icon w-12 h-12 rounded-full flex items-center justify-center text-white">
+                                <i class="fab fa-github"></i>
+                            </a>
+                            <a href="mailto:anandukrishna2999@gmail.com" class="social-icon w-12 h-12 rounded-full flex items-center justify-center text-white">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                            <a href="tel:+917591999365" class="social-icon w-12 h-12 rounded-full flex items-center justify-center text-white">
+                                <i class="fas fa-phone"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CV Download -->
+                <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8">
+                    <div class="text-center">
+                        <div class="w-24 h-24 bg-yellow-300 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-file-download text-blue-800 text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Download My CV</h3>
+                        <p class="text-blue-100 mb-6">Get detailed information about my experience, projects, and technical skills.</p>
+                        <a href="mailto:anandukrishna2999@gmail.com?subject=CV Request&body=Hi Anandu, I would like to request your CV." class="bg-yellow-300 text-blue-800 px-8 py-4 rounded-full font-bold text-lg hover:bg-white transition-all transform hover:scale-105 inline-block">
+                            <i class="fas fa-download mr-2"></i>Request CV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-4">Anandu Krishna P A</h3>
+                <p class="text-gray-400 mb-6">AI/ML Engineer & PeerLearn Founder</p>
+                <div class="flex justify-center space-x-6 mb-6">
+                    <a href="https://linkedin.com/in/anandu-krishnapa2000" target="_blank" class="text-gray-400 hover:text-blue-400 transition-colors">
+                        <i class="fab fa-linkedin-in text-xl"></i>
+                    </a>
+                    <a href="https://github.com/ANANDU-2000" target="_blank" class="text-gray-400 hover:text-blue-400 transition-colors">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                    <a href="mailto:anandukrishna2999@gmail.com" class="text-gray-400 hover:text-blue-400 transition-colors">
+                        <i class="fas fa-envelope text-xl"></i>
+                    </a>
+                </div>
+                <div class="border-t border-gray-700 pt-6">
+                    <p class="text-gray-400">
+                        &copy; 2025 Anandu Krishna. All rights reserved. 
+                        <span class="text-blue-400">Built with passion for AI & Innovation</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Feather Icons
+        feather.replace();
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Add scroll-triggered animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.slide-up, .fade-in, .bounce-in').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
