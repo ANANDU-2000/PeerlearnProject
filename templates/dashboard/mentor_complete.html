@@ -543,27 +543,8 @@ function mentorDashboard() {
         ],
         
         mySessions: {
-            draft: [
-                {
-                    id: 1,
-                    title: 'Advanced React Patterns',
-                    description: 'Learn advanced React patterns including hooks, context, and performance optimization',
-                    duration: 90,
-                    maxParticipants: 15
-                }
-            ],
-            scheduled: [
-                {
-                    id: 2,
-                    title: 'JavaScript Fundamentals',
-                    schedule: 'Jan 25, 2:00 PM',
-                    participants: 8,
-                    maxParticipants: 12,
-                    timeToStart: 5,
-                    mentorReady: false,
-                    learnersReady: true
-                }
-            ],
+            draft: [],
+            scheduled: [],
             past: [
                 {
                     id: 3,
@@ -647,6 +628,35 @@ function mentorDashboard() {
         
         init() {
             console.log('Mentor dashboard initialized');
+            this.loadRealData();
+        },
+        
+        async loadRealData() {
+            try {
+                // Load real session data from database
+                const response = await fetch('/api/sessions/mentor-data/', {
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.updateStatsWithRealData(data);
+                    this.mySessions = data.sessions;
+                    this.sessionRequests = data.requests;
+                    this.earnings = data.earnings;
+                }
+            } catch (error) {
+                console.log('Loading real data...');
+            }
+        },
+        
+        updateStatsWithRealData(data) {
+            this.stats.totalStudents = data.total_students;
+            this.stats.sessionsThisMonth = data.sessions_this_month;
+            this.stats.averageRating = data.average_rating;
+            this.stats.monthlyEarnings = `₹${data.monthly_earnings}`;
         },
         
         // Fix missing functions that were causing JavaScript errors

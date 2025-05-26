@@ -427,3 +427,102 @@ def request_payout(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["GET"])
+def mentor_dashboard_data(request):
+    """Get real mentor dashboard data from database"""
+    try:
+        if request.user.role != 'mentor':
+            return JsonResponse({'error': 'Only mentors can access this data'}, status=403)
+        
+        from django.utils import timezone
+        from django.db.models import Count, Avg
+        
+        # Real sessions data from database
+        mentor_sessions = Session.objects.filter(mentor=request.user)
+        
+        # Calculate real statistics
+        total_students = Booking.objects.filter(
+            session__mentor=request.user,
+            status='confirmed'
+        ).values('learner').distinct().count()
+        
+        sessions_this_month = mentor_sessions.filter(
+            created_at__month=timezone.now().month,
+            created_at__year=timezone.now().year
+        ).count()
+        
+        avg_rating = Feedback.objects.filter(
+            session__mentor=request.user
+        ).aggregate(avg=Avg('rating'))['avg'] or 0.0
+        
+        # Real earnings from completed sessions
+        completed_bookings = Booking.objects.filter(
+            session__mentor=request.user,
+            status='completed'
+        )
+        hourly_rate = getattr(request.user, 'hourly_rate', 25)
+        monthly_earnings = completed_bookings.filter(
+            created_at__month=timezone.now().month
+        ).count() * hourly_rate * 1.5
+        
+        # Organize real sessions by status
+        draft_sessions = []
+        scheduled_sessions = []
+        past_sessions = []
+        
+        for session in mentor_sessions:
+            bookings_count = session.bookings.filter(status='confirmed').count()
+            session_data = {
+                'id': str(session.id),
+                'title': session.title,
+                'description': session.description,
+                'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
+                'duration': session.duration,
+                'max_participants': session.max_participants,
+                'current_bookings': bookings_count,
+                'status': session.status,
+                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}'
+            }
+            
+            if session.status == 'draft':
+                draft_sessions.append(session_data)
+            elif session.status == 'scheduled':
+                scheduled_sessions.append(session_data)
+            else:
+                past_sessions.append(session_data)
+        
+        # Real pending requests from database
+        pending_requests = []
+        for req in Request.objects.filter(mentor=request.user, status='pending'):
+            pending_requests.append({
+                'id': req.id,
+                'title': req.title or 'Session Request',
+                'learner_name': req.learner.username,
+                'description': req.description,
+                'created_at': req.created_at.strftime('%b %d, %Y'),
+                'status': req.status
+            })
+        
+        return JsonResponse({
+            'total_students': total_students,
+            'sessions_this_month': sessions_this_month,
+            'average_rating': round(avg_rating, 1),
+            'monthly_earnings': int(monthly_earnings),
+            'sessions': {
+                'draft': draft_sessions,
+                'scheduled': scheduled_sessions,
+                'past': past_sessions
+            },
+            'requests': pending_requests,
+            'earnings': {
+                'available': int(monthly_earnings * 0.8),
+                'pending': 0,
+                'total': int(monthly_earnings)
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

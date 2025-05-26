@@ -10,6 +10,9 @@ urlpatterns = [
     path('', include('users.urls')),
     path('sessions/', include('sessions.urls')),
     path('api/sessions/', include('sessions.urls')),
+    
+    # Direct API endpoints
+    path('api/sessions/mentor-data/', sessions.api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
     path('recommendations/', include('recommendations.urls')),
 ]
 

@@ -33,6 +33,8 @@ urlpatterns = [
     # Earnings endpoints
     path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
     
+    # Dashboard data endpoints
+    
     # Room access endpoints
     path('room/<uuid:session_id>/', views.session_room, name='session_room'),
 ]
