@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from . import views, api_views
+from . import views, api_views, admin_api
 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
@@ -18,4 +18,15 @@ urlpatterns = [
     # API endpoints for live validation
     path('api/check-email/', api_views.check_email_exists, name='check_email_exists'),
     path('api/users/profile/update/', views.update_profile_api, name='api_update_profile'),
+    
+    # Advanced Admin API endpoints
+    path('api/ai-chat/', admin_api.ai_chat_endpoint, name='admin_ai_chat'),
+    path('api/admin/bulk-email/', admin_api.bulk_email_endpoint, name='admin_bulk_email'),
+    path('api/admin/send-notification/', admin_api.send_notification_endpoint, name='admin_send_notification'),
+    path('api/admin/ban-user/<int:user_id>/', admin_api.ban_user_endpoint, name='admin_ban_user'),
+    path('api/admin/delete-user/<int:user_id>/', admin_api.delete_user_endpoint, name='admin_delete_user'),
+    path('api/admin/users/', admin_api.admin_users_endpoint, name='admin_users'),
+    path('api/admin/stats/', admin_api.real_time_stats_endpoint, name='admin_stats'),
+    path('api/admin/emergency/', admin_api.emergency_actions_endpoint, name='admin_emergency'),
+    path('api/admin/create-admin/', admin_api.create_admin_endpoint, name='admin_create_admin'),
 ]

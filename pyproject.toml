@@ -9,4 +9,5 @@ dependencies = [
     "django>=4.2",
     "djangorestframework>=3.16.0",
     "pillow>=11.2.1",
+    "requests>=2.32.3",
 ]
