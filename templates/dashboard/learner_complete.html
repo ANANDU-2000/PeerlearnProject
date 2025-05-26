@@ -293,37 +293,34 @@
                 <div x-show="sessionView === 'upcoming'" class="space-y-3">
                     {% if user_bookings %}
                         {% for booking in user_bookings %}
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                                <div class="flex items-center justify-between">
-                                    <!-- Left: Session Info -->
-                                    <div class="flex items-center space-x-4 flex-1">
-                                        <!-- Thumbnail -->
-                                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
-                                            {{ booking.session.title|first|upper }}
+                            <!-- Smaller Horizontal Rectangle Session Cards -->
+                            <div class="bg-white border border-gray-100 rounded-lg p-3 hover:shadow-md transition-all duration-200">
+                                <div class="flex items-center space-x-3">
+                                    <!-- Smaller Thumbnail -->
+                                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                        {{ booking.session.title|first|upper }}
+                                    </div>
+                                    
+                                    <!-- Session Info -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <h4 class="font-medium text-gray-900 text-sm truncate">{{ booking.session.title }}</h4>
+                                            {% if booking.session.price > 0 %}
+                                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 text-xs font-medium rounded-full">
+                                                    ₹{{ booking.session.price }}
+                                                </span>
+                                            {% else %}
+                                                <span class="bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium rounded-full">
+                                                    Free
+                                                </span>
+                                            {% endif %}
                                         </div>
-                                        
-                                        <!-- Session Details -->
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-2 mb-1">
-                                                <h4 class="font-semibold text-gray-900">{{ booking.session.title }}</h4>
-                                                {% if booking.session.price > 0 %}
-                                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-semibold rounded-full">
-                                                        ₹{{ booking.session.price }}
-                                                    </span>
-                                                {% else %}
-                                                    <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-semibold rounded-full">
-                                                        Free
-                                                    </span>
-                                                {% endif %}
-                                            </div>
-                                            <p class="text-sm text-gray-600 mb-2">{{ booking.session.description|truncatewords:10 }}</p>
-                                            <div class="flex items-center space-x-4 text-xs text-gray-500">
-                                                <span>{{ booking.session.schedule|date:"M d, g:i A" }}</span>
-                                                <span>•</span>
-                                                <span>{{ booking.session.duration }} min</span>
-                                                <span>•</span>
-                                                <span>{{ booking.session.mentor.get_full_name|default:booking.session.mentor.username }}</span>
-                                            </div>
+                                        <div class="flex items-center text-xs text-gray-500 space-x-2">
+                                            <span>{{ booking.session.schedule|date:"M d, g:i A" }}</span>
+                                            <span>•</span>
+                                            <span>{{ booking.session.duration }} min</span>
+                                            <span>•</span>
+                                            <span>{{ booking.session.mentor.get_full_name|default:booking.session.mentor.username }}</span>
                                         </div>
                                     </div>
                                     
@@ -497,51 +494,43 @@
                         Based on Your Interests
                     </h4>
                     <div class="space-y-3">
-                        {% for session in recommended_sessions %}
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                                <div class="flex items-center justify-between">
-                                    <!-- Left: Session Info -->
-                                    <div class="flex items-center space-x-4 flex-1">
-                                        <!-- Thumbnail -->
-                                        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
-                                            {{ session.title|first|upper }}
-                                        </div>
-                                        
-                                        <!-- Session Details -->
-                                        <div class="flex-1">
-                                            <h5 class="font-semibold text-gray-900 mb-1">{{ session.title }}</h5>
-                                            <p class="text-sm text-gray-600 mb-2">{{ session.description|truncatewords:10 }}</p>
-                                            <div class="flex items-center space-x-4 text-xs text-gray-500">
-                                                <span>By {{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
-                                                <span>•</span>
-                                                <span>{{ session.schedule|date:"M d, g:i A" }}</span>
-                                            </div>
+                        {% for session in available_sessions|slice:":5" %}
+                            <!-- Smaller Horizontal Rectangle Cards -->
+                            <div class="bg-white border border-gray-100 rounded-lg p-3 hover:shadow-md transition-all duration-200">
+                                <div class="flex items-center space-x-3">
+                                    <!-- Smaller Thumbnail -->
+                                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                        {{ session.title|first|upper }}
+                                    </div>
+                                    
+                                    <!-- Session Info -->
+                                    <div class="flex-1 min-w-0">
+                                        <h5 class="font-medium text-gray-900 text-sm truncate">{{ session.title }}</h5>
+                                        <p class="text-xs text-gray-600 mb-1 line-clamp-1">{{ session.description|truncatewords:8 }}</p>
+                                        <div class="flex items-center text-xs text-gray-500 space-x-2">
+                                            <span>{{ session.mentor.first_name }}</span>
+                                            <span>•</span>
+                                            <span>{{ session.schedule|date:"M d" }}</span>
                                         </div>
                                     </div>
                                     
-                                    <!-- Right: Price & Actions -->
-                                    <div class="flex items-center space-x-3">
-                                        <!-- Price Tag -->
+                                    <!-- Price & Action -->
+                                    <div class="flex items-center space-x-2 flex-shrink-0">
                                         {% if session.price > 0 %}
-                                            <span class="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-semibold rounded-full">
+                                            <span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">
                                                 ₹{{ session.price }}
                                             </span>
                                         {% else %}
-                                            <span class="bg-green-100 text-green-800 px-3 py-1 text-sm font-semibold rounded-full">
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">
                                                 Free
                                             </span>
                                         {% endif %}
                                         
-                                        <!-- Action Buttons -->
-                                        <a href="{% url 'session_detail' session.id %}"
-                                           class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
-                                            Details
-                                        </a>
                                         <form method="post" action="{% url 'book_session' session.id %}" class="inline">
                                             {% csrf_token %}
                                             <button type="submit"
-                                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                                                Book Now
+                                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium">
+                                                Book
                                             </button>
                                         </form>
                                     </div>
