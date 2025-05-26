@@ -89,6 +89,82 @@ class UserRegistrationView(CreateView):
         context['role'] = self.request.GET.get('role', 'learner')
         return context
 
+def register_steps_view(request):
+    """Enhanced step-by-step registration with profile image upload"""
+    if request.method == 'GET':
+        return render(request, 'registration/register_steps.html')
+    
+    elif request.method == 'POST':
+        try:
+            # Get form data
+            role = request.POST.get('role')
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            username = request.POST.get('username')
+            email = request.POST.get('email')
+            password1 = request.POST.get('password1')
+            password2 = request.POST.get('password2')
+            
+            # Optional fields
+            skills = request.POST.get('skills', '')
+            interests = request.POST.get('interests', '')
+            domain = request.POST.get('domain', '')
+            expertise = request.POST.get('expertise', '')
+            bio = request.POST.get('bio', '')
+            career_goals = request.POST.get('career_goals', '')
+            profile_image = request.FILES.get('profile_image')
+            
+            # Validation
+            if not all([role, first_name, last_name, username, email, password1, password2]):
+                return JsonResponse({'success': False, 'error': 'All required fields must be filled'})
+            
+            if password1 != password2:
+                return JsonResponse({'success': False, 'error': 'Passwords do not match'})
+            
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'success': False, 'error': 'Username already exists'})
+            
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({'success': False, 'error': 'Email already registered'})
+            
+            # Create user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password1,
+                first_name=first_name,
+                last_name=last_name,
+                role=role,
+                skills=skills,
+                interests=interests,
+                domain=domain,
+                expertise=expertise,
+                bio=bio,
+                career_goals=career_goals
+            )
+            
+            # Handle profile image upload
+            if profile_image:
+                user.profile_image = profile_image
+                user.save()
+            
+            # Authenticate and login
+            user = authenticate(username=username, password=password1)
+            if user:
+                login(request, user)
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Registration successful!',
+                    'redirect_url': '/dashboard/mentor/' if role == 'mentor' else '/dashboard/learner/'
+                })
+            else:
+                return JsonResponse({'success': False, 'error': 'Authentication failed'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
 def logout_view(request):
     """Handle logout for both GET and POST requests"""
     logout(request)

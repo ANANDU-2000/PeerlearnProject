@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join PeerLearn - Step by Step Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0056d3',
+                        secondary: '#e8f4fd'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-white min-h-screen" x-data="registrationWizard()">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm border-b border-blue-100">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">PeerLearn</h1>
+                </div>
+                <div class="flex items-center">
+                    <a href="/login/" class="text-gray-600 hover:text-primary">Already have an account? Sign in</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Registration Container -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Progress Indicator -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center space-x-4">
+                <template x-for="(step, index) in steps" :key="step.number">
+                    <div class="flex items-center">
+                        <div :class="currentStep >= step.number ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'"
+                             class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm">
+                            <span x-show="currentStep > step.number">✓</span>
+                            <span x-show="currentStep <= step.number" x-text="step.number"></span>
+                        </div>
+                        <div x-show="index < steps.length - 1" class="w-16 h-1 mx-2 bg-gray-200">
+                            <div :class="currentStep > step.number ? 'bg-primary' : 'bg-gray-200'"
+                                 class="h-full transition-all duration-300"
+                                 :style="'width: ' + (currentStep > step.number ? '100%' : '0%')"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="flex justify-center mt-4">
+                <div class="text-center">
+                    <h2 class="text-xl font-semibold text-gray-900" x-text="steps[currentStep - 1].title"></h2>
+                    <p class="text-sm text-gray-600" x-text="steps[currentStep - 1].description"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Form Card -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <form @submit.prevent="submitForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Step 1: Role Selection -->
+                <div x-show="currentStep === 1" class="p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Choose Your Learning Path</h3>
+                        <p class="text-gray-600">Select how you want to participate in PeerLearn</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Learner Option -->
+                        <div @click="formData.role = 'learner'" 
+                             :class="formData.role === 'learner' ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-blue-300'"
+                             class="border-2 rounded-xl p-6 cursor-pointer transition-all duration-200">
+                            <div class="text-center">
+                                <div class="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i data-feather="book-open" class="w-8 h-8 text-primary"></i>
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-2">I want to Learn</h4>
+                                <p class="text-sm text-gray-600">Connect with mentors and expand your knowledge through personalized learning sessions</p>
+                                <div class="mt-4 flex items-center justify-center">
+                                    <input type="radio" name="role" value="learner" x-model="formData.role" class="text-primary">
+                                    <span class="ml-2 text-sm font-medium text-primary" x-show="formData.role === 'learner'">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mentor Option -->
+                        <div @click="formData.role = 'mentor'" 
+                             :class="formData.role === 'mentor' ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-blue-300'"
+                             class="border-2 rounded-xl p-6 cursor-pointer transition-all duration-200">
+                            <div class="text-center">
+                                <div class="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i data-feather="users" class="w-8 h-8 text-green-600"></i>
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-2">I want to Teach & Mentor</h4>
+                                <p class="text-sm text-gray-600">Share your expertise and help others grow while earning from your knowledge</p>
+                                <div class="mt-4 flex items-center justify-center">
+                                    <input type="radio" name="role" value="mentor" x-model="formData.role" class="text-primary">
+                                    <span class="ml-2 text-sm font-medium text-primary" x-show="formData.role === 'mentor'">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Basic Information -->
+                <div x-show="currentStep === 2" class="p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Personal Information</h3>
+                        <p class="text-gray-600">Tell us about yourself</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                            <input type="text" x-model="formData.first_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="Your first name">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                            <input type="text" x-model="formData.last_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="Your last name">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                            <input type="text" x-model="formData.username" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="Choose a username">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                            <input type="email" x-model="formData.email" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="your.email@example.com">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                            <input type="password" x-model="formData.password1" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="Create a strong password">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+                            <input type="password" x-model="formData.password2" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="Confirm your password">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Profile & Skills -->
+                <div x-show="currentStep === 3" class="p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Profile & Skills</h3>
+                        <p class="text-gray-600">Help us personalize your experience</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Profile Image Upload -->
+                        <div class="text-center">
+                            <label class="block text-sm font-medium text-gray-700 mb-4">Profile Picture</label>
+                            <div class="flex flex-col items-center">
+                                <div class="w-32 h-32 rounded-full border-4 border-gray-200 overflow-hidden mb-4 bg-gray-50 flex items-center justify-center">
+                                    <img x-show="imagePreview" :src="imagePreview" alt="Profile Preview" class="w-full h-full object-cover">
+                                    <div x-show="!imagePreview" class="text-gray-400">
+                                        <i data-feather="camera" class="w-8 h-8"></i>
+                                    </div>
+                                </div>
+                                <input type="file" @change="handleImageUpload" accept="image/*"
+                                       class="hidden" id="profile-image">
+                                <label for="profile-image" 
+                                       class="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
+                                    Choose Photo
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Skills & Technologies</label>
+                                <input type="text" x-model="formData.skills"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       placeholder="e.g., Python, Design, Marketing">
+                                <p class="text-xs text-gray-500 mt-1">Separate with commas</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Primary Domain</label>
+                                <select x-model="formData.domain"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="">Select your primary domain</option>
+                                    <option value="Technology">Technology</option>
+                                    <option value="Design">Design</option>
+                                    <option value="Business">Business</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Data Science">Data Science</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div x-show="formData.role === 'learner'">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Learning Interests</label>
+                            <input type="text" x-model="formData.interests"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="What would you like to learn?">
+                        </div>
+                        
+                        <div x-show="formData.role === 'mentor'">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Area of Expertise</label>
+                            <input type="text" x-model="formData.expertise"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                   placeholder="What can you teach others?">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Bio (Optional)</label>
+                            <textarea x-model="formData.bio" rows="3"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      placeholder="Tell us about yourself and your experience..."></textarea>
+                        </div>
+                        
+                        <div x-show="formData.role === 'learner'">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Career Goals (Optional)</label>
+                            <textarea x-model="formData.career_goals" rows="2"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      placeholder="What are your career aspirations?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Review & Confirm -->
+                <div x-show="currentStep === 4" class="p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Review Your Information</h3>
+                        <p class="text-gray-600">Please confirm your details before creating your account</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6 space-y-4">
+                        <div class="text-center">
+                            <div class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-gray-200 overflow-hidden bg-white">
+                                <img x-show="imagePreview" :src="imagePreview" alt="Profile" class="w-full h-full object-cover">
+                                <div x-show="!imagePreview" class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <i data-feather="user" class="w-8 h-8"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-semibold text-gray-900" x-text="formData.first_name + ' ' + formData.last_name"></h4>
+                            <p class="text-sm text-gray-600" x-text="'@' + formData.username"></p>
+                            <span :class="formData.role === 'mentor' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                                  class="inline-block px-3 py-1 rounded-full text-xs font-medium mt-2"
+                                  x-text="formData.role === 'mentor' ? 'Mentor' : 'Learner'"></span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="font-medium text-gray-700">Email:</span>
+                                <span class="text-gray-600" x-text="formData.email"></span>
+                            </div>
+                            <div x-show="formData.domain">
+                                <span class="font-medium text-gray-700">Domain:</span>
+                                <span class="text-gray-600" x-text="formData.domain"></span>
+                            </div>
+                            <div x-show="formData.skills">
+                                <span class="font-medium text-gray-700">Skills:</span>
+                                <span class="text-gray-600" x-text="formData.skills"></span>
+                            </div>
+                            <div x-show="formData.interests || formData.expertise">
+                                <span class="font-medium text-gray-700" x-text="formData.role === 'mentor' ? 'Expertise:' : 'Interests:'"></span>
+                                <span class="text-gray-600" x-text="formData.role === 'mentor' ? formData.expertise : formData.interests"></span>
+                            </div>
+                        </div>
+                        
+                        <div x-show="formData.bio" class="border-t pt-4">
+                            <span class="font-medium text-gray-700">Bio:</span>
+                            <p class="text-gray-600 mt-1" x-text="formData.bio"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" required class="text-primary">
+                            <span class="text-sm text-gray-600">
+                                I agree to the <a href="#" class="text-primary hover:underline">Terms of Service</a> 
+                                and <a href="#" class="text-primary hover:underline">Privacy Policy</a>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="px-8 py-6 bg-gray-50 border-t flex justify-between">
+                    <button type="button" @click="previousStep()" x-show="currentStep > 1"
+                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                        <i data-feather="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                        Previous
+                    </button>
+                    
+                    <div x-show="currentStep === 1"></div>
+                    
+                    <button type="button" @click="nextStep()" x-show="currentStep < 4"
+                            :disabled="!canProceed()"
+                            :class="canProceed() ? 'bg-primary hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                            class="px-6 py-3 rounded-lg font-medium transition-colors">
+                        Next
+                        <i data-feather="arrow-right" class="w-4 h-4 inline ml-2"></i>
+                    </button>
+                    
+                    <button type="submit" x-show="currentStep === 4"
+                            :disabled="isSubmitting"
+                            :class="isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                            class="px-8 py-3 text-white rounded-lg font-medium transition-colors">
+                        <span x-show="!isSubmitting">Create Account</span>
+                        <span x-show="isSubmitting">Creating...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div x-show="showSuccessModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                    <i data-feather="check-circle" class="w-8 h-8 text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Welcome to PeerLearn!</h3>
+                <p class="text-gray-600 mb-6">Your account has been created successfully.</p>
+                <button @click="redirectToDashboard()" 
+                        class="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 font-medium">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function registrationWizard() {
+            return {
+                currentStep: 1,
+                isSubmitting: false,
+                showSuccessModal: false,
+                imagePreview: null,
+                
+                steps: [
+                    { number: 1, title: "Choose Your Role", description: "Select how you want to participate" },
+                    { number: 2, title: "Basic Information", description: "Tell us about yourself" },
+                    { number: 3, title: "Profile & Skills", description: "Customize your profile" },
+                    { number: 4, title: "Review & Confirm", description: "Complete your registration" }
+                ],
+                
+                formData: {
+                    role: '',
+                    first_name: '',
+                    last_name: '',
+                    username: '',
+                    email: '',
+                    password1: '',
+                    password2: '',
+                    skills: '',
+                    interests: '',
+                    domain: '',
+                    expertise: '',
+                    bio: '',
+                    career_goals: '',
+                    profile_image: null
+                },
+
+                init() {
+                    feather.replace();
+                },
+
+                canProceed() {
+                    switch (this.currentStep) {
+                        case 1:
+                            return this.formData.role !== '';
+                        case 2:
+                            return this.formData.first_name && this.formData.last_name && 
+                                   this.formData.username && this.formData.email && 
+                                   this.formData.password1 && this.formData.password2;
+                        case 3:
+                            return true; // Optional step
+                        default:
+                            return true;
+                    }
+                },
+
+                nextStep() {
+                    if (this.canProceed() && this.currentStep < 4) {
+                        this.currentStep++;
+                        this.$nextTick(() => feather.replace());
+                    }
+                },
+
+                previousStep() {
+                    if (this.currentStep > 1) {
+                        this.currentStep--;
+                        this.$nextTick(() => feather.replace());
+                    }
+                },
+
+                handleImageUpload(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.formData.profile_image = file;
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.imagePreview = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+
+                async submitForm() {
+                    this.isSubmitting = true;
+                    
+                    try {
+                        const formData = new FormData();
+                        
+                        // Add all form fields
+                        Object.keys(this.formData).forEach(key => {
+                            if (this.formData[key] !== null && this.formData[key] !== '') {
+                                formData.append(key, this.formData[key]);
+                            }
+                        });
+                        
+                        // Add CSRF token
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        formData.append('csrfmiddlewaretoken', csrfToken);
+
+                        const response = await fetch('/register/steps/', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.showSuccessModal = true;
+                        } else {
+                            alert('Registration failed: ' + (result.error || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Registration error:', error);
+                        alert('Registration failed. Please try again.');
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+                },
+
+                redirectToDashboard() {
+                    window.location.href = this.formData.role === 'mentor' ? '/dashboard/mentor/' : '/dashboard/learner/';
+                }
+            }
+        }
+    </script>
+    
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</body>
+</html>
