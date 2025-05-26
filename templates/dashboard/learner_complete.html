@@ -337,62 +337,19 @@
                                             </div>
                                         </div>
                                         
-                                        <script>
-                                        function updateCountdown{{ booking.session.id }}() {
-                                            const scheduledTime = new Date('{{ booking.session.schedule|date:"c" }}');
-                                            const now = new Date();
-                                            const timeDiff = scheduledTime - now;
-                                            
-                                            if (timeDiff > 0) {
-                                                const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-                                                const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-                                                document.getElementById('countdown-{{ booking.session.id }}').textContent = `${hours}h ${minutes}m`;
-                                            } else {
-                                                document.getElementById('countdown-{{ booking.session.id }}').textContent = 'Session time!';
-                                            }
-                                        }
-                                        updateCountdown{{ booking.session.id }}();
-                                        setInterval(updateCountdown{{ booking.session.id }}, 60000);
-                                        </script>
-                                    </div>
-                                    
-                                    <!-- Action Buttons -->
-                                    <div class="flex flex-col space-y-2 ml-4">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                            {% if booking.session.status == 'scheduled' %}bg-green-100 text-green-800
-                                            {% elif booking.session.status == 'live' %}bg-red-100 text-red-800
-                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                            {{ booking.session.status|title }}
-                                        </span>
-                                        
+                                        <!-- Action Buttons -->
                                         {% if booking.session.status == 'live' %}
-                                            <a href="/sessions/{{ booking.session.id }}/join/"
-                                               class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors animate-pulse">
-                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                                </svg>
+                                            <a href="/sessions/{{ booking.session.id }}/"
+                                               class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 animate-pulse">
                                                 Join Now
                                             </a>
-                                        {% elif booking.session.status == 'scheduled' %}
-                                            <button onclick="joinEarlyRoom('{{ booking.session.id }}')"
-                                                    class="inline-flex items-center justify-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
-                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h6m2-6h6m-6 4h6"/>
-                                                </svg>
-                                                Join Early
-                                            </button>
+                                        {% else %}
                                             <button onclick="markReady('{{ booking.session.id }}')"
-                                                    class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors ready-button">
-                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                                Mark as Ready
+                                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+                                                I'm Ready
                                             </button>
                                             <a href="/sessions/{{ booking.session.id }}/"
-                                               class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                </svg>
+                                               class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">
                                                 View Details
                                             </a>
                                         {% endif %}
