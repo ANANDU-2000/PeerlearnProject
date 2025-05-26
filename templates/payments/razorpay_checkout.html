@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment - PeerLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Payment Header -->
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Complete Payment
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Secure payment powered by Razorpay
+            </p>
+        </div>
+
+        <!-- Session Details Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center space-x-4 mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                    {{ session.title|first|upper }}
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ session.title }}</h3>
+                    <p class="text-sm text-gray-600">with {{ session.mentor.get_full_name }}</p>
+                    <p class="text-sm text-gray-500">{{ session.schedule|date:"M d, Y - g:i A" }}</p>
+                </div>
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="border-t border-gray-200 pt-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Session Fee</span>
+                    <span class="font-medium">₹{{ session.price }}</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span class="text-lg font-semibold">Total Amount</span>
+                    <span class="text-lg font-bold text-blue-600">₹{{ session.price }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Button -->
+        <div>
+            <button id="razorpay-btn" 
+                    class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                Pay ₹{{ session.price }} Securely
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Payment Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('razorpay-btn').onclick = function(e) {
+    e.preventDefault();
+    
+    var options = {
+        "key": "{{ razorpay_key_id }}", 
+        "amount": {{ session.price|mul:100 }}, 
+        "currency": "INR",
+        "name": "PeerLearn",
+        "description": "Payment for {{ session.title }}",
+        "handler": function (response) {
+            // Payment successful - redirect to dashboard
+            window.location.href = `/dashboard/learner/?payment_success=true&session_id={{ session.id }}`;
+        },
+        "prefill": {
+            "name": "{{ user.get_full_name }}",
+            "email": "{{ user.email }}"
+        },
+        "theme": {
+            "color": "#2563eb"
+        }
+    };
+    
+    var rzp1 = new Razorpay(options);
+    rzp1.open();
+};
+</script>
+{% endblock %}
