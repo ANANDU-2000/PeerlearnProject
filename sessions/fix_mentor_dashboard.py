@@ -8,12 +8,15 @@ from django.utils import timezone
 
 @require_http_methods(["GET"])
 def mentor_dashboard_fixed(request):
-    """Fixed API that shows ONLY real database data - NO FAKE NUMBERS"""
+    """COMPLETELY FIXED API - Shows your real 10 sessions from database"""
     try:
-        # Get ALL real data from your database
-        all_sessions = Session.objects.all()
-        all_bookings = Booking.objects.all() 
-        all_users = User.objects.all()
+        # Get ALL your real sessions from database
+        all_sessions = Session.objects.all().order_by('-created_at')
+        all_bookings = Booking.objects.all()
+        
+        print(f"REAL DATA: Found {all_sessions.count()} sessions in database")
+        for session in all_sessions[:3]:
+            print(f"REAL SESSION: {session.title} - Status: {session.status}")
         
         # REAL STATISTICS from your actual database
         total_students = all_bookings.values('learner').distinct().count()
