@@ -211,7 +211,7 @@ def learner_dashboard(request):
         }
     }
     
-    return render(request, 'dashboard/learner_complete.html', context)
+    return render(request, 'dashboard/learner_premium.html', context)
 
 
 @login_required
