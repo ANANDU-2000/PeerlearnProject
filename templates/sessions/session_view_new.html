@@ -108,24 +108,42 @@
                         <!-- Action Buttons -->
                         {% if user != session.mentor %}
                             <!-- Learner View -->
-                            <div class="space-y-3">
+                            <div class="space-y-3" x-data="{ isReady: false, inWaitingRoom: false }">
                                 {% if session.status == 'live' %}
                                     <button onclick="joinLiveSession()" 
-                                            class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                                            class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg animate-pulse">
                                         🔴 Join Live Session
                                     </button>
                                 {% elif session.status == 'scheduled' %}
                                     {% if user_booking %}
-                                        <div class="w-full bg-green-50 border-2 border-green-200 text-green-800 py-4 rounded-xl font-bold text-lg text-center">
+                                        <div class="w-full bg-green-50 border-2 border-green-200 text-green-800 py-3 rounded-xl font-semibold text-center">
                                             ✅ Successfully Enrolled
                                         </div>
+                                        
+                                        <!-- Real-time Status Display -->
+                                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-blue-700 font-medium">Your Status:</span>
+                                                <span x-text="isReady ? '✅ Ready' : '⏳ Not Ready'" 
+                                                      :class="isReady ? 'text-green-600 font-semibold' : 'text-gray-600'"></span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-blue-700 font-medium">Room Status:</span>
+                                                <span x-text="inWaitingRoom ? '🏠 In Waiting Room' : '🚪 Not Joined'" 
+                                                      :class="inWaitingRoom ? 'text-blue-600 font-semibold' : 'text-gray-600'"></span>
+                                            </div>
+                                        </div>
+                                        
                                         <button onclick="joinEarlyRoom()" 
-                                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all duration-200">
+                                                @click="inWaitingRoom = true"
+                                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg">
                                             🚀 Join Early (Waiting Room)
                                         </button>
                                         <button onclick="markReady()" 
-                                                class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium transition-all duration-200">
-                                            ✋ Mark as Ready
+                                                @click="isReady = !isReady"
+                                                :class="isReady ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-500 hover:bg-orange-600'"
+                                                class="w-full text-white py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg">
+                                            <span x-text="isReady ? '✅ Ready for Session' : '✋ Mark as Ready'"></span>
                                         </button>
                                     {% else %}
                                         <button onclick="bookSession()" 
@@ -136,18 +154,47 @@
                                 {% endif %}
                             </div>
                         {% else %}
-                            <!-- Mentor View -->
-                            <div class="space-y-3">
-                                <div class="w-full bg-gray-50 border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-bold text-lg text-center">
+                            <!-- Mentor View with Real-time Learner Status -->
+                            <div class="space-y-3" x-data="{ 
+                                bookedLearners: {{ session.current_participants }}, 
+                                readyLearners: 0,
+                                sessionStarted: false 
+                            }">
+                                <div class="w-full bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 text-purple-800 py-4 rounded-xl font-bold text-lg text-center">
                                     👨‍🏫 Your Session
                                 </div>
+                                
+                                <!-- Real-time Learner Status for Mentor -->
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2 text-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-700 font-medium">📚 Enrolled:</span>
+                                        <span class="text-blue-600 font-bold" x-text="bookedLearners + '/{{ session.max_participants }}'"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-700 font-medium">✅ Ready:</span>
+                                        <span class="text-green-600 font-bold" x-text="readyLearners + '/' + bookedLearners"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-700 font-medium">🏠 In Room:</span>
+                                        <span class="text-purple-600 font-bold">0/{{ session.current_participants }}</span>
+                                    </div>
+                                </div>
+                                
                                 <a href="/sessions/{{ session.id }}/edit/" 
-                                   class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium text-center block transition-all duration-200">
+                                   class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium text-center block transition-all duration-200 hover:shadow-lg">
                                     ✏️ Edit Session
                                 </a>
+                                
                                 {% if session.status == 'scheduled' %}
+                                <button onclick="joinWaitingRoom()" 
+                                        class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg">
+                                    🏠 Enter Waiting Room
+                                </button>
                                 <button onclick="startSession()" 
-                                        class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium transition-all duration-200">
+                                        @click="sessionStarted = true"
+                                        :disabled="readyLearners === 0"
+                                        :class="readyLearners > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
+                                        class="w-full text-white py-3 rounded-xl font-medium transition-all duration-200">
                                     🎬 Start Session
                                 </button>
                                 {% endif %}
@@ -297,25 +344,35 @@ function sessionDetail() {
         },
         
         updateCountdown() {
+            // Real-time countdown calculation from database schedule
             const sessionTime = new Date('{{ session.schedule|date:"c" }}');
             const now = new Date();
             const diffMs = sessionTime - now;
             
+            console.log('Session scheduled for:', sessionTime);
+            console.log('Current time:', now);
+            console.log('Time difference (ms):', diffMs);
+            
             if (diffMs > 0) {
-                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+                const totalSeconds = Math.floor(diffMs / 1000);
+                const days = Math.floor(totalSeconds / (24 * 60 * 60));
+                const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+                const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+                const seconds = totalSeconds % 60;
                 
                 if (days > 0) {
                     this.timeUntilSession = `${days}d ${hours}h ${minutes}m`;
                 } else if (hours > 0) {
-                    this.timeUntilSession = `${hours}h ${minutes}m`;
-                } else {
+                    this.timeUntilSession = `${hours}h ${minutes}m ${seconds}s`;
+                } else if (minutes > 0) {
                     this.timeUntilSession = `${minutes}m ${seconds}s`;
+                } else {
+                    this.timeUntilSession = `${seconds}s`;
                 }
+            } else if (diffMs > -60000) { // Within 1 minute past start time
+                this.timeUntilSession = 'Live Now';
             } else {
-                this.timeUntilSession = 'Starting Now';
+                this.timeUntilSession = 'Session Ended';
             }
         }
     }
@@ -343,11 +400,30 @@ function joinLiveSession() {
 }
 
 function joinEarlyRoom() {
+    // Join the waiting room for WebRTC connection
+    fetch(`/api/sessions/{{ session.id }}/join-waiting-room/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = `/sessions/{{ session.id }}/waiting-room/`;
+        } else {
+            alert(data.error || 'Failed to join waiting room');
+        }
+    });
+}
+
+function joinWaitingRoom() {
+    // Mentor joins waiting room to see learners
     window.location.href = `/sessions/{{ session.id }}/waiting-room/`;
 }
 
 function markReady() {
-    // Mark learner as ready for the session
+    // Mark learner as ready and notify mentor in real-time
     fetch(`/api/sessions/{{ session.id }}/ready/`, {
         method: 'POST',
         headers: {
@@ -357,15 +433,73 @@ function markReady() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Marked as ready! The mentor will be notified.');
+            // Real-time notification to mentor
+            notifyMentorLearnerReady();
+            showNotification('✅ Marked as ready! Mentor has been notified.', 'success');
+        } else {
+            showNotification(data.error || 'Failed to mark as ready', 'error');
         }
     });
 }
 
 function startSession() {
-    if (confirm('Start this session now? This will notify all enrolled learners.')) {
-        window.location.href = `/sessions/{{ session.id }}/start/`;
+    if (confirm('Start this session now? This will notify all enrolled learners and open the live room.')) {
+        fetch(`/api/sessions/{{ session.id }}/start/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Notify all learners that session is starting
+                notifyLearnersSessionStarting();
+                window.location.href = `/sessions/{{ session.id }}/room/`;
+            } else {
+                alert(data.error || 'Failed to start session');
+            }
+        });
     }
+}
+
+function notifyMentorLearnerReady() {
+    // Real-time WebSocket notification to mentor when learner marks ready
+    if (window.sessionSocket) {
+        window.sessionSocket.send(JSON.stringify({
+            'type': 'learner_ready',
+            'session_id': '{{ session.id }}',
+            'learner_id': '{{ user.id }}',
+            'message': 'A learner is ready for the session'
+        }));
+    }
+}
+
+function notifyLearnersSessionStarting() {
+    // Real-time WebSocket notification to all learners when session starts
+    if (window.sessionSocket) {
+        window.sessionSocket.send(JSON.stringify({
+            'type': 'session_starting',
+            'session_id': '{{ session.id }}',
+            'mentor_id': '{{ user.id }}',
+            'message': 'Session is starting now! Join the live room.'
+        }));
+    }
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 max-w-sm ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
 }
 </script>
 {% endblock %}
