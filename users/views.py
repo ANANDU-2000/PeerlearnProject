@@ -155,10 +155,10 @@ def learner_dashboard(request):
     from django.db.models import Q
     from django.utils import timezone
     
-    # Available sessions
+    # Available sessions - Only FUTURE sessions with proper scheduling
     available_sessions = Session.objects.filter(
         status='scheduled',
-        schedule__gte=timezone.now()
+        schedule__gt=timezone.now()  # Only future sessions
     ).exclude(
         bookings__learner=request.user,
         bookings__status='confirmed'
