@@ -9,7 +9,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
     path('sessions/', include('sessions.urls')),
-    path('api/sessions/', include('sessions.urls')),
+    path('api/sessions/<uuid:session_id>/bookings/', api_views.session_bookings, name='api_session_bookings'),
+    path('api/sessions/<uuid:session_id>/send-reminders/', api_views.send_session_reminders, name='api_send_reminders'),
+    path('api/sessions/<uuid:session_id>/ready/', api_views.mark_ready, name='api_mark_ready'),
+    path('api/sessions/<uuid:session_id>/start/', api_views.start_session_api, name='api_start_session'),
     
     # Direct API endpoints
     path('api/sessions/mentor-data/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),

@@ -532,6 +532,7 @@ def mentor_dashboard_data(request):
             })
         
         return JsonResponse({
+            'success': True,
             'total_students': total_students,
             'sessions_this_month': sessions_this_month,
             'average_rating': round(avg_rating, 1),
@@ -541,6 +542,7 @@ def mentor_dashboard_data(request):
                 'scheduled': scheduled_sessions,
                 'past': past_sessions
             },
+            'scheduled_sessions': scheduled_sessions,  # Add this for booked sessions loading
             'requests': pending_requests,
             'earnings': {
                 'available': int(monthly_earnings * 0.8),
