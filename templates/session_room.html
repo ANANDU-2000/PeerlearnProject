@@ -327,6 +327,8 @@ function sessionRoom() {
                 case 'user_joined':
                     this.participantCount++;
                     this.addChatMessage(`${data.user_name} joined the session`, 'system');
+                    // Automatically start video call when someone joins
+                    this.initiateVideoCall(data.user_id);
                     break;
                     
                 case 'user_left':
@@ -391,6 +393,54 @@ function sessionRoom() {
                 await this.peerConnections[peerId].setRemoteDescription(data.answer);
             } else if (data.type === 'ice_candidate') {
                 await this.peerConnections[peerId].addIceCandidate(data.candidate);
+            }
+        },
+        
+        async initiateVideoCall(peerId) {
+            if (peerId === this.userId) return; // Don't call yourself
+            
+            try {
+                // Create peer connection if it doesn't exist
+                if (!this.peerConnections[peerId]) {
+                    this.peerConnections[peerId] = new RTCPeerConnection({
+                        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                    });
+                    
+                    // Add local stream
+                    this.localStream.getTracks().forEach(track => {
+                        this.peerConnections[peerId].addTrack(track, this.localStream);
+                    });
+                    
+                    // Handle remote stream
+                    this.peerConnections[peerId].ontrack = (event) => {
+                        this.addRemoteVideo(peerId, event.streams[0]);
+                    };
+                    
+                    // Handle ICE candidates
+                    this.peerConnections[peerId].onicecandidate = (event) => {
+                        if (event.candidate) {
+                            this.socket.send(JSON.stringify({
+                                type: 'ice_candidate',
+                                candidate: event.candidate,
+                                to_user: peerId
+                            }));
+                        }
+                    };
+                }
+                
+                // Create and send offer
+                const offer = await this.peerConnections[peerId].createOffer();
+                await this.peerConnections[peerId].setLocalDescription(offer);
+                
+                this.socket.send(JSON.stringify({
+                    type: 'webrtc_offer',
+                    offer: offer,
+                    to_user: peerId
+                }));
+                
+                console.log(`Video call initiated with user ${peerId}`);
+            } catch (error) {
+                console.error('Error initiating video call:', error);
             }
         },
         
