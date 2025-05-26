@@ -447,19 +447,105 @@ function startSession() {
         fetch(`/api/sessions/{{ session.id }}/start/`, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Notify all learners that session is starting
-                notifyLearnersSessionStarting();
-                window.location.href = `/sessions/{{ session.id }}/room/`;
+                showNotification('🚀 Session started! Redirecting to live room...', 'success');
+                // Redirect to WebRTC room
+                setTimeout(() => {
+                    window.location.href = `/sessions/{{ session.id }}/room/`;
+                }, 1500);
             } else {
-                alert(data.error || 'Failed to start session');
+                showNotification(data.error || 'Failed to start session', 'error');
             }
+        })
+        .catch(error => {
+            console.error('Error starting session:', error);
+            showNotification('Error starting session', 'error');
         });
+    }
+}
+
+// Show enrolled learners with real-time updates
+function loadEnrolledLearners() {
+    fetch(`/api/sessions/{{ session.id }}/bookings/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayEnrolledLearners(data.bookings);
+                showLearnerNotifications(data.bookings);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading enrolled learners:', error);
+        });
+}
+
+function displayEnrolledLearners(learners) {
+    // Create learner list popup for mentor
+    const learnerCount = learners.length;
+    const learnerNames = learners.map(l => `• ${l.name} (ID: ${l.learner_id})`).join('\n');
+    
+    if (learnerCount > 0) {
+        showNotification(`📚 ${learnerCount} Learners Enrolled:\n${learnerNames}`, 'info', 5000);
+    }
+}
+
+function showLearnerNotifications(learners) {
+    // Show real-time alerts for new enrollments
+    learners.forEach(learner => {
+        if (learner.isReady) {
+            showNotification(`✅ ${learner.name} is ready for the session!`, 'success');
+        }
+    });
+}
+
+function sendRemindersToLearners() {
+    fetch(`/api/sessions/{{ session.id }}/send-reminders/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('📧 Reminders sent to all enrolled learners!', 'success');
+        }
+    });
+}
+
+function showNotification(message, type = 'info', duration = 3000) {
+    // Create notification popup
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 max-w-sm shadow-lg ${
+        type === 'error' ? 'bg-red-500' : 
+        type === 'success' ? 'bg-green-500' : 
+        'bg-blue-500'
+    }`;
+    notification.style.whiteSpace = 'pre-line';
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, duration);
+}
+
+// Load enrolled learners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    {% if user == session.mentor %}
+        loadEnrolledLearners();
+        // Refresh learner status every 30 seconds
+        setInterval(loadEnrolledLearners, 30000);
+    {% endif %}
+});
     }
 }
 
