@@ -105,19 +105,33 @@
                         <label for="thumbnail" class="block text-sm font-medium text-gray-700 mb-2">
                             Session Cover Image
                         </label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-green-400 transition-colors">
-                            <div class="space-y-1 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
+                        <div id="thumbnailDropZone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-green-400 transition-all duration-300 cursor-pointer">
+                            <div id="thumbnailDefault" class="space-y-1 text-center">
+                                <div class="mx-auto h-12 w-12 text-gray-400 flex items-center justify-center">
+                                    <svg stroke="currentColor" fill="none" viewBox="0 0 48 48" class="w-full h-full">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </div>
                                 <div class="flex text-sm text-gray-600">
                                     <label for="thumbnail" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-500">
-                                        <span>Upload an image</span>
-                                        <input id="thumbnail" name="thumbnail" type="file" accept="image/*" class="sr-only">
+                                        <span>📸 Upload an image</span>
+                                        <input id="thumbnail" name="thumbnail" type="file" accept="image/*" class="sr-only" onchange="handleThumbnailUpload(this)">
                                     </label>
                                     <p class="pl-1">or drag and drop</p>
                                 </div>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                            </div>
+                            
+                            <!-- Preview Area (hidden by default) -->
+                            <div id="thumbnailPreview" class="hidden w-full">
+                                <div class="relative">
+                                    <img id="previewImage" class="mx-auto h-32 w-auto rounded-lg object-cover" src="" alt="Preview">
+                                    <div class="mt-2 text-center">
+                                        <p id="fileName" class="text-sm font-medium text-gray-700"></p>
+                                        <p class="text-xs text-gray-500">✅ Image uploaded successfully</p>
+                                        <button type="button" onclick="removeThumbnail()" class="mt-1 text-xs text-red-600 hover:text-red-800">Remove</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -204,27 +218,40 @@
                     <!-- Skills Tags for ML Recommendations -->
                     <div class="form-section bg-white rounded-xl p-6 shadow-lg">
                         <label for="skills" class="block text-sm font-medium text-gray-700 mb-2">
-                            Skills & Technologies
+                            Skills & Technologies 🎯
                         </label>
-                        <input type="text" 
-                               name="skills" 
-                               id="skills"
-                               placeholder="React, JavaScript, Node.js, Python..."
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                        <p class="text-xs text-gray-500 mt-2">Separate skills with commas for better learner matching</p>
+                        <div class="relative">
+                            <input type="text" 
+                                   name="skills" 
+                                   id="skills"
+                                   placeholder="Start typing: React, Python, JavaScript..."
+                                   oninput="showSkillSuggestions(this.value)"
+                                   onkeydown="handleSkillKeydown(event)"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            
+                            <!-- Skills Autocomplete Dropdown -->
+                            <div id="skillSuggestions" class="hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto mt-1">
+                                <!-- Suggestions will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Selected Skills Display -->
+                        <div id="selectedSkills" class="mt-3 flex flex-wrap gap-2"></div>
+                        
+                        <p class="text-xs text-gray-500 mt-2">💡 Type skills and press Enter to add. Case-insensitive matching with smart suggestions.</p>
                         
                         <!-- Popular Skills Quick Select -->
-                        <div class="mt-3">
-                            <p class="text-xs font-medium text-gray-600 mb-2">Quick Add:</p>
+                        <div class="mt-4">
+                            <p class="text-xs font-medium text-gray-600 mb-2">🔥 Popular Skills:</p>
                             <div class="flex flex-wrap gap-2">
-                                <button type="button" onclick="addSkill('React')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">React</button>
-                                <button type="button" onclick="addSkill('Python')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">Python</button>
-                                <button type="button" onclick="addSkill('JavaScript')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">JavaScript</button>
-                                <button type="button" onclick="addSkill('Node.js')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">Node.js</button>
-                                <button type="button" onclick="addSkill('Machine Learning')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">ML</button>
-                                <button type="button" onclick="addSkill('Data Science')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">Data Science</button>
-                                <button type="button" onclick="addSkill('UI/UX')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">UI/UX</button>
-                                <button type="button" onclick="addSkill('Flutter')" class="skill-tag px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors">Flutter</button>
+                                <button type="button" onclick="addSkillTag('React')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-xs hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105">⚛️ React</button>
+                                <button type="button" onclick="addSkillTag('Python')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-xs hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105">🐍 Python</button>
+                                <button type="button" onclick="addSkillTag('JavaScript')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-full text-xs hover:from-yellow-600 hover:to-yellow-700 transition-all transform hover:scale-105">⚡ JavaScript</button>
+                                <button type="button" onclick="addSkillTag('Node.js')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-full text-xs hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105">🟢 Node.js</button>
+                                <button type="button" onclick="addSkillTag('Machine Learning')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full text-xs hover:from-purple-600 hover:to-purple-700 transition-all transform hover:scale-105">🤖 ML</button>
+                                <button type="button" onclick="addSkillTag('Data Science')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-full text-xs hover:from-indigo-600 hover:to-indigo-700 transition-all transform hover:scale-105">📊 Data Science</button>
+                                <button type="button" onclick="addSkillTag('UI/UX Design')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-full text-xs hover:from-pink-600 hover:to-pink-700 transition-all transform hover:scale-105">🎨 UI/UX</button>
+                                <button type="button" onclick="addSkillTag('Flutter')" class="skill-quick-btn px-3 py-1 bg-gradient-to-r from-blue-400 to-blue-500 text-white rounded-full text-xs hover:from-blue-500 hover:to-blue-600 transition-all transform hover:scale-105">📱 Flutter</button>
                             </div>
                         </div>
                     </div>
@@ -272,6 +299,20 @@
 </div>
 
 <script>
+// Skills management
+let selectedSkillsArray = [];
+
+// Comprehensive skills database for autocomplete
+const skillsDatabase = [
+    'React', 'JavaScript', 'Python', 'Node.js', 'Machine Learning', 'Data Science', 'UI/UX Design', 'Flutter',
+    'Angular', 'Vue.js', 'Django', 'Flask', 'Express.js', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis',
+    'Docker', 'Kubernetes', 'AWS', 'Azure', 'Google Cloud', 'DevOps', 'CI/CD', 'Git', 'GitHub',
+    'TypeScript', 'Java', 'C++', 'C#', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin',
+    'TensorFlow', 'PyTorch', 'Pandas', 'NumPy', 'Scikit-learn', 'OpenCV', 'NLP', 'Deep Learning',
+    'HTML5', 'CSS3', 'SASS', 'Bootstrap', 'Tailwind CSS', 'Material-UI', 'GraphQL', 'REST API',
+    'Unity', 'Figma', 'Adobe XD', 'Photoshop', 'WordPress', 'SEO', 'Blockchain', 'Testing'
+];
+
 function togglePricing(radio) {
     const priceSection = document.getElementById('priceSection');
     if (radio.value === 'paid') {
@@ -284,27 +325,184 @@ function togglePricing(radio) {
     }
 }
 
-function addSkill(skill) {
-    const skillsInput = document.getElementById('skills');
-    const currentSkills = skillsInput.value;
+// Enhanced thumbnail upload handler
+function handleThumbnailUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
     
-    if (currentSkills.includes(skill)) {
-        return; // Skill already added
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showNotification('Please select a valid image file', 'error');
+        return;
     }
     
-    if (currentSkills.trim()) {
-        skillsInput.value = currentSkills + ', ' + skill;
-    } else {
-        skillsInput.value = skill;
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('Image size must be less than 10MB', 'error');
+        return;
+    }
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('thumbnailDefault').classList.add('hidden');
+        document.getElementById('thumbnailPreview').classList.remove('hidden');
+        document.getElementById('previewImage').src = e.target.result;
+        document.getElementById('fileName').textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeThumbnail() {
+    document.getElementById('thumbnail').value = '';
+    document.getElementById('thumbnailDefault').classList.remove('hidden');
+    document.getElementById('thumbnailPreview').classList.add('hidden');
+}
+
+// Skills autocomplete functionality
+function showSkillSuggestions(value) {
+    const suggestions = document.getElementById('skillSuggestions');
+    
+    if (value.length < 2) {
+        suggestions.classList.add('hidden');
+        return;
+    }
+    
+    const filteredSkills = skillsDatabase.filter(skill => 
+        skill.toLowerCase().includes(value.toLowerCase()) && 
+        !selectedSkillsArray.includes(skill)
+    ).slice(0, 8);
+    
+    if (filteredSkills.length === 0) {
+        suggestions.classList.add('hidden');
+        return;
+    }
+    
+    suggestions.innerHTML = filteredSkills.map(skill => `
+        <div class="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
+             onclick="addSkillTag('${skill}')">
+            <span class="font-medium">${skill}</span>
+        </div>
+    `).join('');
+    
+    suggestions.classList.remove('hidden');
+}
+
+function handleSkillKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const value = event.target.value.trim();
+        if (value) {
+            addSkillTag(value);
+            event.target.value = '';
+            document.getElementById('skillSuggestions').classList.add('hidden');
+        }
     }
 }
 
-// Set minimum date to today
+function addSkillTag(skill) {
+    if (!selectedSkillsArray.includes(skill)) {
+        selectedSkillsArray.push(skill);
+        updateSkillsDisplay();
+        updateSkillsInput();
+    }
+    document.getElementById('skills').value = '';
+    document.getElementById('skillSuggestions').classList.add('hidden');
+}
+
+function removeSkillTag(skill) {
+    selectedSkillsArray = selectedSkillsArray.filter(s => s !== skill);
+    updateSkillsDisplay();
+    updateSkillsInput();
+}
+
+function updateSkillsDisplay() {
+    const container = document.getElementById('selectedSkills');
+    container.innerHTML = selectedSkillsArray.map(skill => `
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+            ${skill}
+            <button type="button" onclick="removeSkillTag('${skill}')" class="ml-2 text-blue-600 hover:text-blue-800">
+                ×
+            </button>
+        </span>
+    `).join('');
+}
+
+function updateSkillsInput() {
+    const hiddenInput = document.querySelector('input[name="skills"]');
+    if (!hiddenInput) {
+        // Create hidden input if it doesn't exist
+        const form = document.getElementById('sessionForm');
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'skills';
+        form.appendChild(hidden);
+    }
+    document.querySelector('input[name="skills"]').value = selectedSkillsArray.join(', ');
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// Set minimum date to today and setup drag & drop
 document.addEventListener('DOMContentLoaded', function() {
     const scheduleInput = document.getElementById('schedule');
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     scheduleInput.min = now.toISOString().slice(0, 16);
+    
+    // Setup drag and drop for thumbnail
+    const dropZone = document.getElementById('thumbnailDropZone');
+    if (dropZone) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+        
+        dropZone.addEventListener('drop', handleDrop, false);
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight(e) {
+            dropZone.classList.add('border-green-400', 'bg-green-50');
+        }
+        
+        function unhighlight(e) {
+            dropZone.classList.remove('border-green-400', 'bg-green-50');
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                document.getElementById('thumbnail').files = files;
+                handleThumbnailUpload(document.getElementById('thumbnail'));
+            }
+        }
+    }
 });
 </script>
 {% endblock %}
