@@ -581,8 +581,20 @@ def create_session_api(request):
         if schedule <= timezone.now():
             return JsonResponse({'error': 'Session must be scheduled for future'}, status=400)
         
-        # Handle thumbnail upload
+        # Handle new fields for ML recommendations and pricing
         thumbnail = request.FILES.get('thumbnail')
+        category = request.POST.get('category', '')
+        skills = request.POST.get('skills', '')
+        session_type = request.POST.get('session_type', 'free')
+        price = None
+        
+        if session_type == 'paid':
+            price_value = request.POST.get('price')
+            if price_value:
+                try:
+                    price = float(price_value)
+                except ValueError:
+                    return JsonResponse({'error': 'Invalid price format'}, status=400)
         
         # Create session in database
         session = Session.objects.create(
@@ -590,6 +602,9 @@ def create_session_api(request):
             title=title,
             description=description, 
             thumbnail=thumbnail,
+            category=category,
+            skills=skills,
+            price=price,
             schedule=schedule,
             duration=duration,
             max_participants=max_participants,

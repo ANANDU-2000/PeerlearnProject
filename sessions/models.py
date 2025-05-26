@@ -14,11 +14,29 @@ class Session(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
+    # Category choices for ML recommendations
+    CATEGORY_CHOICES = [
+        ('programming', 'Programming & Development'),
+        ('data-science', 'Data Science & Analytics'),
+        ('web-development', 'Web Development'),
+        ('mobile-development', 'Mobile Development'),
+        ('ai-ml', 'AI & Machine Learning'),
+        ('design', 'UI/UX Design'),
+        ('business', 'Business & Marketing'),
+        ('language', 'Language Learning'),
+        ('music', 'Music & Arts'),
+        ('fitness', 'Health & Fitness'),
+        ('other', 'Other'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     mentor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mentor_sessions')
     title = models.CharField(max_length=200)
     description = models.TextField()
     thumbnail = models.ImageField(upload_to='session_thumbnails/', blank=True, null=True, help_text="Session cover image")
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, blank=True, help_text="Session category for recommendations")
+    skills = models.TextField(blank=True, help_text="Comma-separated skills for ML matching")
+    price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, help_text="Price in INR, null for free sessions")
     schedule = models.DateTimeField()
     duration = models.IntegerField(help_text="Duration in minutes")
     max_participants = models.IntegerField(default=10)
