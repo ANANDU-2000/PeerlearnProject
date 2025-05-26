@@ -250,11 +250,15 @@ def create_session(request):
         status = request.POST.get('status', 'draft')
         
         try:
-            # Create session
+            # Create session with all fields including thumbnail
             session = Session.objects.create(
                 mentor=request.user,
                 title=title,
                 description=description,
+                thumbnail=request.FILES.get('thumbnail'),
+                category=request.POST.get('category', 'programming'),
+                skills=request.POST.get('skills', ''),
+                price=request.POST.get('price') if request.POST.get('pricing') == 'paid' else None,
                 schedule=schedule,
                 duration=int(duration),
                 max_participants=int(max_participants),
