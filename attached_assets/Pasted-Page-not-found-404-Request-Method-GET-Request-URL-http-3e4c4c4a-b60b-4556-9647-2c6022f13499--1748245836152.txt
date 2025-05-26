@@ -1,0 +1,47 @@
+Page not found (404)
+Request Method:	GET
+Request URL:	http://3e4c4c4a-b60b-4556-9647-2c6022f13499-00-186qnvr9j3jvh.worf.replit.dev/sessions/8023fd46-7427-4840-8d70-6246678bc039/room/%3Fearly%3Dtrue
+Using the URLconf defined in peerlearn.urls, Django tried these URL patterns, in this order:
+
+admin/
+[name='landing']
+login/ [name='login']
+register/ [name='register']
+logout/ [name='logout']
+profile/ [name='profile']
+dashboard/mentor/ [name='mentor_dashboard']
+dashboard/learner/ [name='learner_dashboard']
+api/check-email/ [name='check_email_exists']
+api/users/profile/update/ [name='api_update_profile']
+sessions/ [name='session_list']
+sessions/ <uuid:session_id>/ [name='session_detail']
+sessions/ <uuid:session_id>/book/ [name='book_session']
+sessions/ <uuid:session_id>/room/ [name='session_room']
+sessions/ room/<uuid:session_id>/ [name='session_room_alt']
+sessions/ <uuid:session_id>/feedback/ [name='submit_feedback']
+sessions/ create/ [name='create_session']
+sessions/ <uuid:session_id>/edit/ [name='edit_session']
+sessions/ api/sessions/ [name='get_sessions_api']
+sessions/ api/sessions/create/ [name='api_create_session']
+sessions/ api/sessions/<uuid:session_id>/book/ [name='api_book_session']
+sessions/ api/sessions/<uuid:session_id>/start/ [name='api_start_session']
+sessions/ api/sessions/<uuid:session_id>/end/ [name='api_end_session']
+sessions/ api/sessions/<uuid:session_id>/publish/ [name='api_publish_session']
+sessions/ api/sessions/<uuid:session_id>/feedback/ [name='api_submit_feedback']
+sessions/ api/requests/create/ [name='api_create_request']
+sessions/ api/requests/<int:request_id>/accept/ [name='api_accept_request']
+sessions/ api/requests/<int:request_id>/decline/ [name='api_decline_request']
+sessions/ api/notifications/ [name='get_notifications_api']
+sessions/ api/notifications/read/ [name='mark_notifications_read']
+sessions/ api/earnings/payout/ [name='api_request_payout']
+sessions/ api/mentor-dashboard/ [name='mentor_dashboard_data']
+sessions/ api/mark-ready/<uuid:session_id>/ [name='api_mark_ready']
+sessions/ room/<uuid:session_id>/ [name='session_room']
+api/sessions/
+api/sessions/mentor-data/ [name='mentor_dashboard_data']
+recommendations/
+^media/(?P<path>.*)$
+^static/(?P<path>.*)$
+The current path, sessions/8023fd46-7427-4840-8d70-6246678bc039/room/?early=true, didn’t match any of these.
+
+You’re seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 page.
