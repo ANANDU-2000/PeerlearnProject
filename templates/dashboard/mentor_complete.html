@@ -166,20 +166,28 @@
             <div x-show="activeTab === 'sessions'" class="tab-content p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-semibold text-gray-900">My Sessions</h3>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 overflow-x-auto">
                         <button @click="sessionView = 'draft'"
                                 :class="sessionView === 'draft' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
-                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                                class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">
                             Draft
                         </button>
                         <button @click="sessionView = 'scheduled'"
                                 :class="sessionView === 'scheduled' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
-                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                                class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">
                             Scheduled
+                        </button>
+                        <button @click="sessionView = 'booked'"
+                                :class="sessionView === 'booked' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">
+                            Booked Sessions
+                            <span x-show="bookedSessionsCount > 0" 
+                                  x-text="bookedSessionsCount"
+                                  class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full"></span>
                         </button>
                         <button @click="sessionView = 'past'"
                                 :class="sessionView === 'past' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
-                                class="px-4 py-2 rounded-lg text-sm font-medium">
+                                class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">
                             Past
                         </button>
                     </div>
@@ -296,15 +304,52 @@
                                             </button>
                                         </div>
                                         
-                                        <div x-show="session.timeToStart > 10" class="grid grid-cols-2 gap-2">
-                                            <button @click="window.location.href = '/sessions/' + session.id + '/edit/'"
-                                                    class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
-                                                Edit
-                                            </button>
-                                            <button @click="window.location.href = '/sessions/' + session.id + '/'"
-                                                    class="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors">
-                                                View
-                                            </button>
+                                        <!-- Session Control Buttons -->
+                                        <div class="space-y-2">
+                                            <!-- Ready Button (15 mins before) -->
+                                            <div x-show="session.timeToStart <= 15 && session.timeToStart > 0 && session.status === 'scheduled'">
+                                                <button @click="markReady(session.id)" 
+                                                        :class="session.mentorReady ? 'bg-green-600' : 'bg-yellow-500'"
+                                                        class="w-full px-3 py-2 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-all ready-button">
+                                                    <span x-text="session.mentorReady ? '✅ Ready to Start' : '⏰ Mark Ready'"></span>
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Start Session Button (when ready) -->
+                                            <div x-show="session.timeToStart <= 5 && session.mentorReady && session.status === 'scheduled'">
+                                                <button @click="startSession(session.id)"
+                                                        class="w-full px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700 transition-colors animate-pulse">
+                                                    🚀 START SESSION NOW
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Join Early Button (30 mins before) -->
+                                            <div x-show="session.timeToStart <= 30 && session.timeToStart > 5 && session.status === 'scheduled'">
+                                                <button @click="joinEarly(session.id)"
+                                                        class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors">
+                                                    📹 Join Room Early
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- View Booked Learners -->
+                                            <div x-show="session.bookedCount > 0">
+                                                <button @click="viewBookedLearners(session.id)"
+                                                        class="w-full px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-colors">
+                                                    👥 View Booked Learners (<span x-text="session.bookedCount"></span>)
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Regular Edit/View for future sessions -->
+                                            <div x-show="session.timeToStart > 30" class="grid grid-cols-2 gap-2">
+                                                <button @click="window.location.href = '/sessions/' + session.id + '/edit/'"
+                                                        class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
+                                                    Edit
+                                                </button>
+                                                <button @click="viewSessionDetails(session.id)"
+                                                        class="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors">
+                                                    View Details
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -364,6 +409,114 @@
                                 </div>
                             </template>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Booked Sessions -->
+                <div x-show="sessionView === 'booked'" class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <h4 class="font-semibold text-blue-900 mb-2">📚 Sessions with Learner Bookings</h4>
+                        <p class="text-sm text-blue-700">Track which learners have booked your sessions and their readiness status</p>
+                    </div>
+                    
+                    <template x-for="session in bookedSessions" :key="session.id">
+                        <div class="border border-gray-200 rounded-xl p-6 bg-white shadow-sm">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-2" x-text="session.title"></h4>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                                        <div class="flex items-center">
+                                            <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                            <span x-text="session.schedule"></span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i data-feather="clock" class="h-4 w-4 mr-1"></i>
+                                            <span x-text="`${session.duration} min`"></span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i data-feather="users" class="h-4 w-4 mr-1"></i>
+                                            <span x-text="`${session.bookedCount}/${session.maxParticipants} booked`"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-green-600" x-text="`₹${session.expectedEarnings}`"></div>
+                                    <div class="text-xs text-gray-500">Expected earnings</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Booked Learners List -->
+                            <div class="border-t pt-4">
+                                <h5 class="font-medium text-gray-900 mb-3">Booked Learners:</h5>
+                                <div class="space-y-2">
+                                    <template x-for="learner in session.bookedLearners" :key="learner.id">
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold"
+                                                     x-text="learner.name.charAt(0).toUpperCase()"></div>
+                                                <div>
+                                                    <div class="font-medium text-gray-900" x-text="learner.name"></div>
+                                                    <div class="text-xs text-gray-500" x-text="`Booked: ${learner.bookedDate}`"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <!-- Learner Ready Status -->
+                                                <div :class="learner.isReady ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                                     class="px-3 py-1 rounded-full text-xs font-medium">
+                                                    <span x-text="learner.isReady ? '✅ Ready' : '⏳ Waiting'"></span>
+                                                </div>
+                                                <!-- Message Learner -->
+                                                <button @click="messageLearner(learner.id, session.id)"
+                                                        class="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors">
+                                                    💬 Message
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            
+                            <!-- Session Action Buttons -->
+                            <div class="border-t pt-4 mt-4">
+                                <div class="flex flex-wrap gap-2">
+                                    <!-- Ready Button for Mentor -->
+                                    <button x-show="session.timeToStart <= 15 && !session.mentorReady"
+                                            @click="markReady(session.id)"
+                                            class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-semibold hover:bg-yellow-600 transition-colors">
+                                        ⏰ Mark Ready
+                                    </button>
+                                    
+                                    <!-- Start Session -->
+                                    <button x-show="session.timeToStart <= 5 && session.mentorReady && session.readyLearners > 0"
+                                            @click="startSession(session.id)"
+                                            class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors animate-pulse">
+                                            🚀 Start Session
+                                    </button>
+                                    
+                                    <!-- Join Early -->
+                                    <button x-show="session.timeToStart <= 30"
+                                            @click="joinEarly(session.id)"
+                                            class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+                                        📹 Join Room Early
+                                    </button>
+                                    
+                                    <!-- Send Reminders -->
+                                    <button @click="sendReminders(session.id)"
+                                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                                        🔔 Send Reminders
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Empty State -->
+                    <div x-show="bookedSessions.length === 0" class="text-center py-12">
+                        <div class="text-gray-400 mb-4">
+                            <i data-feather="calendar-x" class="h-16 w-16 mx-auto mb-4"></i>
+                        </div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">No Booked Sessions</h4>
+                        <p class="text-gray-500">When learners book your sessions, they'll appear here</p>
                     </div>
                 </div>
                 
@@ -734,6 +887,10 @@ function mentorDashboard() {
         isMobile: false,
         showCreateModal: false,
         showNotifications: false,
+        
+        // Booked Sessions Data
+        bookedSessions: [],
+        bookedSessionsCount: 0,
         
         init() {
             console.log('Mentor dashboard initialized');
