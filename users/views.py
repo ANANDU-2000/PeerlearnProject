@@ -10,6 +10,7 @@ from django.views.decorators.http import require_http_methods
 import json
 from .forms import UserRegistrationForm, UserProfileForm
 from .models import User
+from recommendations.recommendation_engine import get_recommendations_for_user, get_mentor_recommendations_for_user
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
@@ -174,26 +175,20 @@ def learner_dashboard(request):
         learner=request.user
     ).order_by('-created_at')
     
-    # Enhanced Recommended sessions with popularity metrics
-    user_interests = request.user.expertise or []
-    recommended_sessions = Session.objects.filter(
-        status='scheduled',
-        schedule__gte=timezone.now()
-    ).exclude(
-        bookings__learner=request.user,
-        bookings__status='confirmed'
-    ).select_related('mentor', 'popularity').order_by('-popularity__rating_average', '-popularity__booking_count')[:10]
-    
-    # If no recommendations from popularity, use interest-based
-    if not recommended_sessions.exists() and user_interests:
+    # Get personalized recommendations using advanced ML engine
+    try:
+        recommended_sessions = get_recommendations_for_user(request.user)
+        recommended_mentors = get_mentor_recommendations_for_user(request.user)
+    except Exception as e:
+        # Fallback to available sessions if recommendation engine fails
         recommended_sessions = Session.objects.filter(
             status='scheduled',
-            schedule__gte=timezone.now(),
-            description__icontains=user_interests[0] if user_interests else ''
+            schedule__gte=timezone.now()
         ).exclude(
             bookings__learner=request.user,
             bookings__status='confirmed'
-        )[:5]
+        ).select_related('mentor')[:6]
+        recommended_mentors = []
     
     # Learning stats
     attended_sessions = Feedback.objects.filter(user=request.user).count()
@@ -208,6 +203,7 @@ def learner_dashboard(request):
         'user_bookings': user_bookings[:5],
         'user_requests': user_requests[:5],
         'recommended_sessions': recommended_sessions[:6],
+        'recommended_mentors': recommended_mentors[:6] if recommended_mentors else [],
         'stats': {
             'attended_sessions': attended_sessions,
             'total_hours': total_hours,
