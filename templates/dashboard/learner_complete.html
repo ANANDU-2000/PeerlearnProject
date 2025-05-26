@@ -494,8 +494,10 @@
                         Based on Your Interests
                     </h4>
                     <div class="space-y-3">
-                        {% for session in available_sessions|slice:":5" %}
-                            <!-- Smaller Horizontal Rectangle Cards -->
+                        <!-- Real Database Sessions for Recommendations -->
+                        {% for session in available_sessions %}
+                            {% if forloop.counter <= 5 %}
+                            <!-- Premium Horizontal Rectangle Cards -->
                             <div class="bg-white border border-gray-100 rounded-lg p-3 hover:shadow-md transition-all duration-200">
                                 <div class="flex items-center space-x-3">
                                     <!-- Smaller Thumbnail -->
@@ -508,13 +510,15 @@
                                         <h5 class="font-medium text-gray-900 text-sm truncate">{{ session.title }}</h5>
                                         <p class="text-xs text-gray-600 mb-1 line-clamp-1">{{ session.description|truncatewords:8 }}</p>
                                         <div class="flex items-center text-xs text-gray-500 space-x-2">
-                                            <span>{{ session.mentor.first_name }}</span>
+                                            <span>{{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
                                             <span>•</span>
                                             <span>{{ session.schedule|date:"M d" }}</span>
+                                            <span>•</span>
+                                            <span>{{ session.duration }} min</span>
                                         </div>
                                     </div>
                                     
-                                    <!-- Price & Action -->
+                                    <!-- Price & Actions -->
                                     <div class="flex items-center space-x-2 flex-shrink-0">
                                         {% if session.price > 0 %}
                                             <span class="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">
@@ -536,6 +540,7 @@
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
                         {% empty %}
                             <div class="text-center py-8">
                                 <svg class="h-12 w-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -799,6 +804,85 @@
         </div>
     </div>
 </div>
+
+<!-- Include Request Modal -->
+{% include 'request_mentor_modal.html' %}
+
+<script>
+// Initialize Dashboard Data
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure Feather icons are rendered
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
+
+// Search Sessions Function
+function filterSessions() {
+    const searchTerm = document.getElementById('sessionSearch').value.toLowerCase();
+    const sessionCards = document.querySelectorAll('.session-card');
+    
+    sessionCards.forEach(card => {
+        const title = card.querySelector('h4, h5').textContent.toLowerCase();
+        const description = card.querySelector('p').textContent.toLowerCase();
+        
+        if (title.includes(searchTerm) || description.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// Mark Ready Function
+function markReady(sessionId) {
+    fetch(`/api/sessions/${sessionId}/mark-ready/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+// Join Early Room Function
+function joinEarlyRoom(sessionId) {
+    window.location.href = `/sessions/${sessionId}/room/?early=true`;
+}
+
+// Countdown Timer Function
+function updateCountdownTimers() {
+    document.querySelectorAll('.countdown-timer').forEach(timer => {
+        const scheduleTime = new Date(timer.dataset.schedule);
+        const now = new Date();
+        const timeUntil = scheduleTime - now;
+        
+        if (timeUntil > 0) {
+            const hours = Math.floor(timeUntil / (1000 * 60 * 60));
+            const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (hours > 0) {
+                timer.textContent = `${hours}h ${minutes}m`;
+            } else {
+                timer.textContent = `${minutes}m`;
+            }
+        } else {
+            timer.textContent = 'Starting soon';
+            timer.classList.add('animate-pulse');
+        }
+    });
+}
+
+// Update timers every minute
+setInterval(updateCountdownTimers, 60000);
+updateCountdownTimers();
+</script>
 
 <script>
 // Working Search Function for Browse Sessions
