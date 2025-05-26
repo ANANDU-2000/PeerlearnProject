@@ -4,8 +4,15 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" 
-     x-data="learnerDashboard()" 
-     x-init="initDashboard()">
+     x-data="{ 
+         activeTab: 'upcoming',
+         searchQuery: '',
+         domainFilter: 'all',
+         priceFilter: 'all',
+         dateFilter: '',
+         showFeedbackModal: false,
+         feedbackSession: null
+     }"
     
     <!-- Header -->
     <div class="mb-8">
@@ -23,7 +30,7 @@
                 <div class="ml-5 w-0 flex-1">
                     <dl>
                         <dt class="text-sm font-medium text-gray-500 truncate">Sessions Booked</dt>
-                        <dd class="text-lg font-medium text-gray-900" x-text="stats.bookedSessions">0</dd>
+                        <dd class="text-lg font-medium text-gray-900">{{ user_bookings.count }}</dd>
                     </dl>
                 </div>
             </div>
@@ -37,7 +44,7 @@
                 <div class="ml-5 w-0 flex-1">
                     <dl>
                         <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
-                        <dd class="text-lg font-medium text-gray-900" x-text="stats.completedSessions">0</dd>
+                        <dd class="text-lg font-medium text-gray-900">{{ stats.attended_sessions }}</dd>
                     </dl>
                 </div>
             </div>
