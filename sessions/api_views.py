@@ -475,16 +475,28 @@ def mentor_dashboard_data(request):
         
         for session in mentor_sessions:
             bookings_count = session.bookings.filter(status='confirmed').count()
+            # Calculate time to start for session readiness
+            time_to_start = 999
+            if session.schedule:
+                from django.utils import timezone
+                time_diff = session.schedule - timezone.now()
+                time_to_start = max(0, int(time_diff.total_seconds() / 60))
+            
             session_data = {
                 'id': str(session.id),
                 'title': session.title,
                 'description': session.description,
                 'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
                 'duration': session.duration,
-                'max_participants': session.max_participants,
+                'maxParticipants': session.max_participants,
+                'participants': bookings_count,
                 'current_bookings': bookings_count,
                 'status': session.status,
-                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}'
+                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}',
+                'timeToStart': time_to_start,
+                'mentorReady': False,
+                'learnersReady': bookings_count > 0,
+                'publishing': False
             }
             
             if session.status == 'draft':
