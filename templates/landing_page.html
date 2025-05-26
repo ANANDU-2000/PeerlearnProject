@@ -56,11 +56,11 @@
                 
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#features" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
-                    <a href="#mentors" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Find Mentors</a>
-                    <a href="#sessions" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Live Sessions</a>
+                    <a href="javascript:void(0)" onclick="scrollToSection('features')" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
+                    <a href="javascript:void(0)" onclick="scrollToSection('mentors')" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Find Mentors</a>
+                    <a href="javascript:void(0)" onclick="scrollToSection('sessions')" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Live Sessions</a>
                     <a href="{% url 'login' %}" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">Sign In</a>
-                    <a href="{% url 'register' %}" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg">Get Started</a>
+                    <a href="{% url 'register' %}" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg">Get Started</a>
                 </div>
                 
                 <!-- Mobile Menu Button -->
@@ -75,9 +75,9 @@
         <!-- Mobile Menu -->
         <div x-show="mobileMenuOpen" class="md:hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="#features" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Features</a>
-                <a href="#mentors" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Find Mentors</a>
-                <a href="#sessions" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Live Sessions</a>
+                <a href="javascript:void(0)" onclick="scrollToSection('features')" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Features</a>
+                <a href="javascript:void(0)" onclick="scrollToSection('mentors')" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Find Mentors</a>
+                <a href="javascript:void(0)" onclick="scrollToSection('sessions')" class="block px-3 py-2 text-gray-700 hover:text-blue-600">Live Sessions</a>
                 <a href="{% url 'login' %}" class="block px-3 py-2 text-blue-600">Sign In</a>
                 <a href="{% url 'register' %}" class="block px-3 py-2 bg-blue-600 text-white rounded-lg">Get Started</a>
             </div>
@@ -647,6 +647,16 @@
                 feather.replace();
             }
         });
+
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
     </script>
 </body>
 </html>
