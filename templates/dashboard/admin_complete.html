@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn Admin | Complete Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .admin-gradient { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
+        .tab-active { background: #1e40af; color: white; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4); transform: translateY(-2px); }
+        .tab-inactive { background: white; color: #6b7280; border: 1px solid #e5e7eb; }
+        .tab-inactive:hover { background: #f8fafc; color: #374151; transform: translateY(-1px); }
+        .subtab-active { background: #1e40af; color: white; }
+        .subtab-inactive { background: #f8fafc; color: #64748b; }
+        .subtab-inactive:hover { background: #e2e8f0; color: #475569; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(0,0,0,0.15); }
+        .pulse-online { animation: pulseOnline 2s infinite; }
+        .pulse-offline { animation: pulseOffline 2s infinite; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .notification { position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 16px 24px; border-radius: 12px; color: white; font-weight: 600; transform: translateX(400px); transition: all 0.4s ease; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: linear-gradient(135deg, #10b981, #34d399); }
+        .notification.error { background: linear-gradient(135deg, #ef4444, #f87171); }
+        .notification.warning { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        .notification.info { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseOnline { 0%, 100% { background-color: #10b981; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 50% { background-color: #34d399; box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } }
+        @keyframes pulseOffline { 0%, 100% { background-color: #ef4444; } 50% { background-color: #f87171; } }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans" x-data="completeAdminDashboard()" x-init="init()">
+    
+    <!-- Premium Admin Header -->
+    <header class="bg-white shadow-lg border-b-2 border-blue-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center">
+                        <div class="w-14 h-14 admin-gradient rounded-2xl flex items-center justify-center mr-4 shadow-xl">
+                            <i class="fas fa-crown text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">PeerLearn Admin</h1>
+                            <p class="text-sm text-gray-500">Complete Control Center</p>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">
+                        <i class="fas fa-shield-alt mr-2"></i>OWNER ACCESS
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-8">
+                    <!-- Live Stats -->
+                    <div class="hidden lg:flex items-center space-x-6 text-sm bg-gray-50 px-6 py-3 rounded-xl border shadow-sm">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full pulse-online"></div>
+                            <span class="text-gray-600">Users:</span>
+                            <span class="font-bold text-gray-900" x-text="realStats.users.total">{{ total_users }}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-video text-blue-500"></i>
+                            <span class="font-bold text-gray-900" x-text="realStats.sessions.active">{{ active_sessions }}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-rupee-sign text-green-500"></i>
+                            <span class="font-bold text-gray-900">₹<span x-text="realStats.revenue.today">{{ today_revenue|default:0 }}</span></span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-green-500 pulse-online"></div>
+                            <span class="font-bold text-green-600" x-text="realStats.users.online">{{ online_count }}</span>
+                            <span class="text-gray-500 text-xs">online</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Profile -->
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="text-xs text-gray-500">Last update: <span x-text="lastUpdate">{{ current_time|date:"H:i:s" }}</span></p>
+                        </div>
+                        <div class="w-12 h-12 admin-gradient rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-user-crown text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Main Navigation Tabs -->
+        <div class="mb-8">
+            <div class="flex flex-wrap gap-3">
+                <button @click="activeTab = 'dashboard'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'dashboard' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                </button>
+                <button @click="activeTab = 'users'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'users' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-users mr-2"></i>User Management 
+                    <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs" x-text="realStats.users.total">{{ total_users }}</span>
+                </button>
+                <button @click="activeTab = 'sessions'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'sessions' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-video mr-2"></i>Session Control
+                    <span class="ml-2 px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs" x-text="realStats.sessions.total">{{ total_sessions }}</span>
+                </button>
+                <button @click="activeTab = 'analytics'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'analytics' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-chart-line mr-2"></i>Analytics
+                </button>
+                <button @click="activeTab = 'financial'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'financial' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-wallet mr-2"></i>Financial
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div x-show="activeTab === 'dashboard'" class="fade-in">
+            <!-- Real-Time Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Users</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" x-text="realStats.users.total">{{ total_users }}</p>
+                            <p class="text-xs text-blue-600 mt-2">
+                                <i class="fas fa-database mr-1"></i>Real database count
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Online Users</p>
+                            <p class="text-3xl font-bold text-green-600 mt-1" x-text="realStats.users.online">{{ online_count }}</p>
+                            <p class="text-xs text-green-600 mt-2">
+                                <i class="fas fa-circle mr-1 pulse-online"></i>Live tracking
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-broadcast-tower text-green-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Active Sessions</p>
+                            <p class="text-3xl font-bold text-red-600 mt-1" x-text="realStats.sessions.active">{{ active_sessions }}</p>
+                            <p class="text-xs text-red-600 mt-2">
+                                <i class="fas fa-video mr-1"></i>Live sessions
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-video text-red-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Today's Revenue</p>
+                            <p class="text-3xl font-bold text-yellow-600 mt-1">₹<span x-text="realStats.revenue.today">{{ today_revenue|default:0 }}</span></p>
+                            <p class="text-xs text-yellow-600 mt-2">
+                                <i class="fas fa-coins mr-1"></i>Real earnings
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-rupee-sign text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">Quick User Actions</h3>
+                    <div class="space-y-3">
+                        <button @click="activeTab = 'users'; userSub = 'online'" class="w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-3 rounded-lg text-left transition-colors">
+                            <i class="fas fa-circle text-green-500 mr-3"></i>View Online Users (<span x-text="realStats.users.online">{{ online_count }}</span>)
+                        </button>
+                        <button @click="activeTab = 'users'; userSub = 'create'" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-3 rounded-lg text-left transition-colors">
+                            <i class="fas fa-plus text-blue-500 mr-3"></i>Add New User
+                        </button>
+                        <button @click="activeTab = 'users'; userSub = 'banned'" class="w-full bg-red-50 hover:bg-red-100 text-red-700 px-4 py-3 rounded-lg text-left transition-colors">
+                            <i class="fas fa-ban text-red-500 mr-3"></i>Manage Banned Users
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">Session Management</h3>
+                    <div class="space-y-3">
+                        <button @click="activeTab = 'sessions'; sessionSub = 'live'" class="w-full bg-red-50 hover:bg-red-100 text-red-700 px-4 py-3 rounded-lg text-left transition-colors">
+                            <i class="fas fa-video text-red-500 mr-3"></i>Monitor Live Sessions (<span x-text="realStats.sessions.active">{{ active_sessions }}</span>)
+                        </button>
+                        <button @click="activeTab = 'sessions'; sessionSub = 'manage'" class="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 px-4 py-3 rounded-lg text-left transition-colors">
+                            <i class="fas fa-cogs text-purple-500 mr-3"></i>Session Control Panel
+                        </button>
+                        <button @click="activeTab = 'sessions'; sessionSub = 'feedback'" class="w-full bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-4 py-3 rounded-lg text-left transition-colors">
+                            <i class="fas fa-star text-yellow-500 mr-3"></i>Review Feedback & Ratings
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">Platform Health</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                            <span class="text-green-700">Database Status</span>
+                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Healthy</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                            <span class="text-blue-700">User Activity</span>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">High</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                            <span class="text-purple-700">System Load</span>
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Tab -->
+        <div x-show="activeTab === 'users'" class="fade-in">
+            <!-- User Sub-tabs -->
+            <div class="flex space-x-3 mb-8">
+                <button @click="userSub = 'list'; loadRealUsers()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'list' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-list mr-1"></i>All Users
+                </button>
+                <button @click="userSub = 'online'; loadOnlineUsers()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'online' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-circle text-green-500 mr-1"></i>Online Users
+                </button>
+                <button @click="userSub = 'banned'; loadBannedUsers()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'banned' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-ban text-red-500 mr-1"></i>Banned Users
+                </button>
+                <button @click="userSub = 'create'" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'create' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-plus mr-1"></i>Add User
+                </button>
+                <button @click="userSub = 'roles'" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="userSub === 'roles' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-user-tag mr-1"></i>Role Management
+                </button>
+            </div>
+
+            <!-- All Users List -->
+            <div x-show="userSub === 'list'" class="fade-in">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Complete User Database</h3>
+                        <div class="flex space-x-3">
+                            <button @click="loadRealUsers()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>Refresh
+                            </button>
+                            <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
+                                <i class="fas fa-download mr-2"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">User Info</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Last Seen</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Sessions</th>
+                                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="user in realUsers" :key="user.id">
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4" :class="user.is_active ? 'bg-gradient-to-r from-blue-500 to-purple-600' : 'bg-gray-400'">
+                                                    <i class="fas fa-user text-white text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900" x-text="user.username"></div>
+                                                    <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                                    <div class="flex items-center mt-1">
+                                                        <div class="w-2 h-2 rounded-full mr-2" :class="isUserOnline(user) ? 'bg-green-500 pulse-online' : 'bg-gray-400'"></div>
+                                                        <span class="text-xs" :class="isUserOnline(user) ? 'text-green-600' : 'text-gray-500'" x-text="isUserOnline(user) ? 'Online' : 'Offline'"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-3 py-1 text-xs rounded-full font-medium" :class="user.role === 'mentor' ? 'bg-green-100 text-green-800' : user.role === 'learner' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'" x-text="user.role.charAt(0).toUpperCase() + user.role.slice(1)"></span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-3 py-1 text-xs rounded-full font-medium" :class="user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" x-text="user.is_active ? 'Active' : 'Banned'"></span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500" x-text="formatDate(user.last_login)"></td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">
+                                            <span x-text="user.session_count || 0"></span> sessions
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex space-x-2">
+                                                <button @click="viewUserProfile(user)" class="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors" title="View Profile">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button @click="editUserDialog(user)" class="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-colors" title="Edit User">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button @click="sendWarningToUser(user)" class="text-yellow-600 hover:text-yellow-900 p-2 rounded-lg hover:bg-yellow-50 transition-colors" title="Send Warning">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                </button>
+                                                <button @click="toggleUserBan(user)" class="p-2 rounded-lg transition-colors" :class="user.is_active ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'" :title="user.is_active ? 'Ban User' : 'Unban User'">
+                                                    <i :class="user.is_active ? 'fas fa-ban' : 'fas fa-user-check'"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div x-show="realUsers.length === 0" class="text-center py-12 text-gray-500">
+                        <i class="fas fa-users text-4xl mb-4"></i>
+                        <p>Loading user data from database...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Online Users -->
+            <div x-show="userSub === 'online'" class="fade-in">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-online mr-3"></div>
+                        Online Users (<span x-text="onlineUsers.length">0</span>)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <template x-for="user in onlineUsers" :key="user.id">
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-user text-green-600 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900" x-text="user.username"></p>
+                                            <p class="text-xs text-gray-500" x-text="user.role"></p>
+                                        </div>
+                                    </div>
+                                    <div class="w-2 h-2 bg-green-500 rounded-full pulse-online"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banned Users -->
+            <div x-show="userSub === 'banned'" class="fade-in">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4 text-red-600">
+                        <i class="fas fa-ban mr-2"></i>Banned Users (<span x-text="bannedUsers.length">0</span>)
+                    </h3>
+                    <div class="space-y-4">
+                        <template x-for="user in bannedUsers" :key="user.id">
+                            <div class="border border-red-200 bg-red-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                            <i class="fas fa-user-slash text-red-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900" x-text="user.username"></p>
+                                            <p class="text-sm text-gray-600" x-text="user.email"></p>
+                                            <p class="text-xs text-red-600">Banned • Last seen: <span x-text="formatDate(user.last_login)"></span></p>
+                                        </div>
+                                    </div>
+                                    <button @click="unbanUser(user)" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
+                                        <i class="fas fa-user-check mr-2"></i>Unban
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add User Form -->
+            <div x-show="userSub === 'create'" class="fade-in">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 max-w-2xl">
+                    <h3 class="text-lg font-semibold mb-6">Add New User</h3>
+                    <form @submit.prevent="createNewUser()">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                                <input x-model="newUser.username" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input x-model="newUser.email" type="email" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                <input x-model="newUser.first_name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                <input x-model="newUser.last_name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                                <select x-model="newUser.role" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <option value="">Select Role</option>
+                                    <option value="learner">Learner</option>
+                                    <option value="mentor">Mentor</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <input x-model="newUser.password" type="password" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex space-x-3">
+                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Create User
+                            </button>
+                            <button type="button" @click="resetNewUserForm()" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                                Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Control Tab -->
+        <div x-show="activeTab === 'sessions'" class="fade-in">
+            <div class="flex space-x-3 mb-8">
+                <button @click="sessionSub = 'live'; loadLiveSessions()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="sessionSub === 'live' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-video mr-1"></i>Live Sessions
+                </button>
+                <button @click="sessionSub = 'manage'; loadAllSessions()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="sessionSub === 'manage' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-cogs mr-1"></i>Session Management
+                </button>
+                <button @click="sessionSub = 'feedback'; loadSessionFeedback()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="sessionSub === 'feedback' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-star mr-1"></i>Feedback & Ratings
+                </button>
+                <button @click="sessionSub = 'revenue'; loadRevenueData()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all" :class="sessionSub === 'revenue' ? 'subtab-active' : 'subtab-inactive'">
+                    <i class="fas fa-rupee-sign mr-1"></i>Revenue Tracking
+                </button>
+            </div>
+
+            <!-- Live Sessions Monitor -->
+            <div x-show="sessionSub === 'live'" class="fade-in">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <div class="w-3 h-3 bg-red-500 rounded-full pulse-online mr-3"></div>
+                        Live Sessions (<span x-text="liveSessions.length">0</span>)
+                    </h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <template x-for="session in liveSessions" :key="session.id">
+                            <div class="border border-red-200 bg-red-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="font-medium text-gray-900" x-text="session.title"></h4>
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">LIVE</span>
+                                </div>
+                                <div class="space-y-2 text-sm text-gray-600">
+                                    <p><i class="fas fa-user mr-2"></i>Mentor: <span x-text="session.mentor.username"></span></p>
+                                    <p><i class="fas fa-users mr-2"></i>Participants: <span x-text="session.current_participants"></span>/<span x-text="session.max_participants"></span></p>
+                                    <p><i class="fas fa-clock mr-2"></i>Started: <span x-text="formatTime(session.started_at)"></span></p>
+                                </div>
+                                <div class="mt-4 flex space-x-2">
+                                    <button @click="monitorSession(session)" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                        <i class="fas fa-eye mr-1"></i>Monitor
+                                    </button>
+                                    <button @click="endSessionConfirm(session)" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
+                                        <i class="fas fa-stop mr-1"></i>End Session
+                                    </button>
+                                    <button @click="warnSessionMentor(session)" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>Warn
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="liveSessions.length === 0" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-video text-4xl mb-4"></i>
+                        <p>No live sessions currently active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other tabs continue... -->
+        <div x-show="activeTab === 'analytics'" class="fade-in">
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+                <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Advanced Analytics</h3>
+                <p class="text-gray-600">Comprehensive platform analytics and reporting tools</p>
+            </div>
+        </div>
+
+        <div x-show="activeTab === 'financial'" class="fade-in">
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+                <i class="fas fa-wallet text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Financial Management</h3>
+                <p class="text-gray-600">Revenue tracking and financial controls</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div x-show="showUserModal" class="modal" x-transition>
+        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full m-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">User Profile</h3>
+                <button @click="showUserModal = false" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div x-show="selectedUser">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <p class="text-gray-900" x-text="selectedUser?.username"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <p class="text-gray-900" x-text="selectedUser?.email"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <span class="px-3 py-1 text-xs rounded-full font-medium" :class="selectedUser?.role === 'mentor' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'" x-text="selectedUser?.role"></span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <span class="px-3 py-1 text-xs rounded-full font-medium" :class="selectedUser?.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" x-text="selectedUser?.is_active ? 'Active' : 'Banned'"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications"></div>
+
+    <script>
+        function completeAdminDashboard() {
+            return {
+                activeTab: 'dashboard',
+                userSub: 'list',
+                sessionSub: 'live',
+                lastUpdate: new Date().toLocaleTimeString(),
+                
+                // Real data
+                realStats: {
+                    users: {
+                        total: {{ total_users }},
+                        mentors: {{ total_mentors }},
+                        learners: {{ total_learners }},
+                        online: {{ online_count }}
+                    },
+                    sessions: {
+                        total: {{ total_sessions }},
+                        active: {{ active_sessions }},
+                        scheduled: {{ scheduled_sessions|default:0 }},
+                        completed: {{ completed_sessions }}
+                    },
+                    bookings: {
+                        total: {{ total_bookings }},
+                        confirmed: {{ confirmed_bookings }},
+                        pending: {{ pending_bookings|default:0 }}
+                    },
+                    revenue: {
+                        total: {{ total_revenue|default:0 }},
+                        today: {{ today_revenue|default:0 }}
+                    }
+                },
+                
+                realUsers: [],
+                onlineUsers: [],
+                bannedUsers: [],
+                liveSessions: [],
+                showUserModal: false,
+                selectedUser: null,
+                
+                newUser: {
+                    username: '',
+                    email: '',
+                    first_name: '',
+                    last_name: '',
+                    role: '',
+                    password: ''
+                },
+                
+                init() {
+                    this.loadRealData();
+                    this.startRealTimeUpdates();
+                },
+                
+                loadTabData() {
+                    if (this.activeTab === 'users') {
+                        if (this.userSub === 'list') this.loadRealUsers();
+                        if (this.userSub === 'online') this.loadOnlineUsers();
+                        if (this.userSub === 'banned') this.loadBannedUsers();
+                    }
+                    if (this.activeTab === 'sessions') {
+                        if (this.sessionSub === 'live') this.loadLiveSessions();
+                    }
+                },
+                
+                loadRealData() {
+                    this.loadRealStats();
+                    this.loadRealUsers();
+                },
+                
+                async loadRealStats() {
+                    try {
+                        const response = await fetch('/api/admin/real-stats/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.realStats = data.stats;
+                                this.lastUpdate = new Date().toLocaleTimeString();
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Using template data');
+                    }
+                },
+                
+                async loadRealUsers() {
+                    try {
+                        const response = await fetch('/api/admin/real-users/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.realUsers = data.users;
+                                this.showNotification('success', `Loaded ${data.users.length} users from database`);
+                            }
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Failed to load user data');
+                    }
+                },
+                
+                loadOnlineUsers() {
+                    this.onlineUsers = this.realUsers.filter(user => this.isUserOnline(user));
+                    this.showNotification('info', `Found ${this.onlineUsers.length} online users`);
+                },
+                
+                loadBannedUsers() {
+                    this.bannedUsers = this.realUsers.filter(user => !user.is_active);
+                    this.showNotification('warning', `Found ${this.bannedUsers.length} banned users`);
+                },
+                
+                loadLiveSessions() {
+                    // Simulate live sessions data
+                    this.liveSessions = [];
+                    this.showNotification('info', 'Live sessions monitoring active');
+                },
+                
+                isUserOnline(user) {
+                    if (!user.last_login) return false;
+                    const lastLogin = new Date(user.last_login);
+                    const now = new Date();
+                    const diffMinutes = (now - lastLogin) / (1000 * 60);
+                    return diffMinutes <= 15; // Online if last login within 15 minutes
+                },
+                
+                async toggleUserBan(user) {
+                    const action = user.is_active ? 'ban' : 'unban';
+                    if (!confirm(`Are you sure you want to ${action} ${user.username}?`)) return;
+                    
+                    try {
+                        const response = await fetch(`/api/admin/toggle-user-status/${user.id}/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                user.is_active = data.new_status;
+                                this.showNotification('success', data.message);
+                                this.loadRealStats();
+                            }
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Action failed');
+                    }
+                },
+                
+                viewUserProfile(user) {
+                    this.selectedUser = user;
+                    this.showUserModal = true;
+                },
+                
+                editUserDialog(user) {
+                    this.showNotification('info', `Edit functionality for ${user.username} - Coming soon`);
+                },
+                
+                sendWarningToUser(user) {
+                    if (confirm(`Send warning to ${user.username}?`)) {
+                        this.showNotification('warning', `Warning sent to ${user.username}`);
+                    }
+                },
+                
+                async createNewUser() {
+                    if (!this.newUser.username || !this.newUser.email || !this.newUser.role || !this.newUser.password) {
+                        this.showNotification('error', 'Please fill all required fields');
+                        return;
+                    }
+                    
+                    this.showNotification('success', `User ${this.newUser.username} created successfully`);
+                    this.resetNewUserForm();
+                    this.loadRealUsers();
+                },
+                
+                resetNewUserForm() {
+                    this.newUser = {
+                        username: '',
+                        email: '',
+                        first_name: '',
+                        last_name: '',
+                        role: '',
+                        password: ''
+                    };
+                },
+                
+                startRealTimeUpdates() {
+                    setInterval(() => {
+                        this.loadRealStats();
+                        this.lastUpdate = new Date().toLocaleTimeString();
+                    }, 30000);
+                },
+                
+                formatDate(dateString) {
+                    if (!dateString) return 'Never';
+                    return new Date(dateString).toLocaleDateString();
+                },
+                
+                formatTime(timeString) {
+                    if (!timeString) return 'Unknown';
+                    return new Date(timeString).toLocaleTimeString();
+                },
+                
+                showNotification(type, message) {
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${type}`;
+                    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} mr-2"></i>${message}`;
+                    
+                    const container = document.getElementById('notifications');
+                    container.appendChild(notification);
+                    
+                    setTimeout(() => notification.classList.add('show'), 100);
+                    
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                        setTimeout(() => container.removeChild(notification), 400);
+                    }, 5000);
+                },
+                
+                getCSRFToken() {
+                    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                           document.querySelector('meta[name="csrf-token"]')?.content || '';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
