@@ -205,6 +205,46 @@ def submit_feedback(request, session_id):
     
     return render(request, 'sessions/feedback.html', {'form': form, 'session': session})
 
+@login_required
+def create_session(request):
+    """Advanced session creation with full functionality"""
+    if not request.user.is_mentor:
+        messages.error(request, 'Only mentors can create sessions.')
+        return redirect('learner_dashboard')
+    
+    if request.method == 'POST':
+        # Get form data
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        schedule = request.POST.get('schedule')
+        duration = request.POST.get('duration', 60)
+        max_participants = request.POST.get('max_participants', 10)
+        status = request.POST.get('status', 'draft')
+        
+        try:
+            # Create session
+            session = Session.objects.create(
+                mentor=request.user,
+                title=title,
+                description=description,
+                schedule=schedule,
+                duration=int(duration),
+                max_participants=int(max_participants),
+                status=status
+            )
+            
+            if status == 'scheduled':
+                messages.success(request, f'Session "{title}" created and published successfully! Learners can now book it.')
+            else:
+                messages.success(request, f'Session "{title}" saved as draft successfully! You can publish it later.')
+            
+            return redirect('mentor_dashboard')
+            
+        except Exception as e:
+            messages.error(request, f'Error creating session: {str(e)}')
+    
+    return render(request, 'sessions/create_advanced.html')
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def session_api_list(request):
