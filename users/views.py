@@ -7,10 +7,25 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 import json
 from .forms import UserRegistrationForm, UserProfileForm
 from .models import User
+from sessions.models import Session, Booking, Request
 from recommendations.recommendation_engine import get_recommendations_for_user, get_mentor_recommendations_for_user
+
+def landing_page(request):
+    """Coursera-style landing page with featured sessions and mentors"""
+    now = timezone.now()
+    featured_sessions = Session.objects.filter(
+        schedule__gte=now,
+        status='scheduled'
+    ).order_by('schedule')[:6]
+    
+    context = {
+        'featured_sessions': featured_sessions,
+    }
+    return render(request, 'landing_page.html', context)
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
@@ -211,7 +226,7 @@ def learner_dashboard(request):
         }
     }
     
-    return render(request, 'dashboard/learner_premium.html', context)
+    return render(request, 'dashboard/learner_complete.html', context)
 
 
 @login_required

@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
-        .hero-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .hero-gradient { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); }
         .card-hover { transition: all 0.3s ease; }
         .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
         .floating-animation { animation: floating 6s ease-in-out infinite; }
@@ -22,6 +22,22 @@
         }
         .feature-icon:hover { transform: scale(1.1); }
         .stats-counter { font-family: 'Inter', sans-serif; }
+        .mobile-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .mobile-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .touch-card {
+            transform: scale(1);
+            transition: transform 0.2s ease;
+        }
+        .touch-card:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -158,12 +174,13 @@
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">Join interactive sessions with industry experts and accelerate your learning</p>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Desktop Grid -->
+            <div class="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-8">
                 {% for session in featured_sessions %}
                 <div class="bg-white rounded-2xl shadow-lg card-hover overflow-hidden">
                     <div class="p-6">
                         <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
                                 {{ session.title|first|upper }}
                             </div>
                             <div>
@@ -186,19 +203,17 @@
                         </div>
                         
                         <a href="{% url 'register' %}" 
-                           class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all text-center block">
+                           class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all text-center block">
                             Join Session
                         </a>
                     </div>
                 </div>
                 {% empty %}
-                <!-- Showcase Sessions when database is empty -->
+                <!-- Desktop showcase sessions -->
                 <div class="bg-white rounded-2xl shadow-lg card-hover overflow-hidden">
                     <div class="p-6">
                         <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-                                A
-                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold">A</div>
                             <div>
                                 <h3 class="font-bold text-gray-900">AI/ML Fundamentals</h3>
                                 <p class="text-sm text-gray-600">Dr. Sarah Johnson</p>
@@ -209,18 +224,14 @@
                             <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Today, 3:00 PM</span>
                             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Free</span>
                         </div>
-                        <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all text-center block">
-                            Join Session
-                        </a>
+                        <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all text-center block">Join Session</a>
                     </div>
                 </div>
                 
                 <div class="bg-white rounded-2xl shadow-lg card-hover overflow-hidden">
                     <div class="p-6">
                         <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
-                                W
-                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold">W</div>
                             <div>
                                 <h3 class="font-bold text-gray-900">Web Development Bootcamp</h3>
                                 <p class="text-sm text-gray-600">Mike Chen</p>
@@ -231,18 +242,14 @@
                             <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Tomorrow, 6:00 PM</span>
                             <span class="font-bold text-gray-900">₹499</span>
                         </div>
-                        <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all text-center block">
-                            Join Session
-                        </a>
+                        <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all text-center block">Join Session</a>
                     </div>
                 </div>
                 
                 <div class="bg-white rounded-2xl shadow-lg card-hover overflow-hidden">
                     <div class="p-6">
                         <div class="flex items-center space-x-3 mb-4">
-                            <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold">
-                                D
-                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white font-bold">D</div>
                             <div>
                                 <h3 class="font-bold text-gray-900">Data Science Career Path</h3>
                                 <p class="text-sm text-gray-600">Prof. Amanda Kumar</p>
@@ -253,12 +260,104 @@
                             <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Wed, 4:30 PM</span>
                             <span class="font-bold text-gray-900">₹799</span>
                         </div>
-                        <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all text-center block">
-                            Join Session
-                        </a>
+                        <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all text-center block">Join Session</a>
                     </div>
                 </div>
                 {% endfor %}
+            </div>
+
+            <!-- Mobile Horizontal Scroll -->
+            <div class="md:hidden mobile-scroll">
+                <div class="flex space-x-4 pb-4" style="width: max-content;">
+                    {% for session in featured_sessions %}
+                    <div class="bg-white rounded-2xl shadow-lg touch-card overflow-hidden" style="width: 280px; flex-shrink: 0;">
+                        <div class="p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                                    {{ session.title|first|upper }}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-sm">{{ session.title }}</h3>
+                                    <p class="text-xs text-gray-600">{{ session.mentor.first_name }} {{ session.mentor.last_name }}</p>
+                                </div>
+                            </div>
+                            
+                            <p class="text-gray-600 mb-3 text-xs leading-relaxed">{{ session.description|truncatewords:12 }}</p>
+                            
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    {{ session.schedule|date:"M d, H:i" }}
+                                </span>
+                                {% if session.price > 0 %}
+                                    <span class="font-bold text-gray-900 text-sm">₹{{ session.price }}</span>
+                                {% else %}
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Free</span>
+                                {% endif %}
+                            </div>
+                            
+                            <a href="{% url 'register' %}" 
+                               class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-3 rounded-lg font-medium text-sm text-center block">
+                                Join Session
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Mobile showcase sessions -->
+                    <div class="bg-white rounded-2xl shadow-lg touch-card overflow-hidden" style="width: 280px; flex-shrink: 0;">
+                        <div class="p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">A</div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-sm">AI/ML Fundamentals</h3>
+                                    <p class="text-xs text-gray-600">Dr. Sarah Johnson</p>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mb-3 text-xs leading-relaxed">Master machine learning algorithms and build your first AI models.</p>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">Today, 3:00 PM</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Free</span>
+                            </div>
+                            <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-3 rounded-lg font-medium text-sm text-center block">Join Session</a>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-lg touch-card overflow-hidden" style="width: 280px; flex-shrink: 0;">
+                        <div class="p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">W</div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-sm">Web Development Bootcamp</h3>
+                                    <p class="text-xs text-gray-600">Mike Chen</p>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mb-3 text-xs leading-relaxed">Build modern web applications using React and Node.js.</p>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">Tomorrow, 6:00 PM</span>
+                                <span class="font-bold text-gray-900 text-sm">₹499</span>
+                            </div>
+                            <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-3 rounded-lg font-medium text-sm text-center block">Join Session</a>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-lg touch-card overflow-hidden" style="width: 280px; flex-shrink: 0;">
+                        <div class="p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">D</div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-sm">Data Science Career Path</h3>
+                                    <p class="text-xs text-gray-600">Prof. Amanda Kumar</p>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mb-3 text-xs leading-relaxed">Complete roadmap to become a data scientist with real projects.</p>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">Wed, 4:30 PM</span>
+                                <span class="font-bold text-gray-900 text-sm">₹799</span>
+                            </div>
+                            <a href="{% url 'register' %}" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-3 rounded-lg font-medium text-sm text-center block">Join Session</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
             </div>
         </div>
     </section>

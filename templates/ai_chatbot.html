@@ -1,0 +1,196 @@
+<!-- AI Career Guidance Chatbot -->
+<div id="aiChatbot" class="fixed bottom-4 right-4 z-50" x-data="{ 
+    chatOpen: false, 
+    messages: [],
+    userInput: '',
+    isTyping: false,
+    initChat() {
+        this.messages = [
+            { type: 'ai', text: 'Hi! I\'m PeerLearn AI. I can help you with career guidance, course recommendations, and finding the right mentors. What are your career goals?' }
+        ];
+    }
+}">
+    <!-- Chat Button -->
+    <button @click="chatOpen = !chatOpen; if(chatOpen && messages.length === 0) initChat()" 
+            class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110">
+        <div x-show="!chatOpen">
+            <i data-feather="message-circle" class="h-6 w-6"></i>
+        </div>
+        <div x-show="chatOpen">
+            <i data-feather="x" class="h-6 w-6"></i>
+        </div>
+    </button>
+
+    <!-- Chat Window -->
+    <div x-show="chatOpen" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform scale-95"
+         x-transition:enter-end="opacity-100 transform scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 transform scale-100"
+         x-transition:leave-end="opacity-0 transform scale-95"
+         class="absolute bottom-16 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200">
+        
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i data-feather="cpu" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold">PeerLearn AI</h3>
+                    <p class="text-sm text-blue-100">Career Guidance Assistant</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="h-80 overflow-y-auto p-4 space-y-4" id="chatMessages">
+            <template x-for="message in messages" :key="message.id">
+                <div :class="message.type === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                    <div :class="message.type === 'user' ? 
+                        'bg-blue-600 text-white max-w-xs px-4 py-2 rounded-2xl rounded-br-md' : 
+                        'bg-gray-100 text-gray-800 max-w-xs px-4 py-2 rounded-2xl rounded-bl-md'">
+                        <p class="text-sm" x-text="message.text"></p>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Typing Indicator -->
+            <div x-show="isTyping" class="flex justify-start">
+                <div class="bg-gray-100 text-gray-800 max-w-xs px-4 py-2 rounded-2xl rounded-bl-md">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-4 border-t border-gray-200">
+            <form @submit.prevent="sendMessage()" class="flex space-x-2">
+                <input type="text" x-model="userInput" 
+                       placeholder="Ask about your career goals..."
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                <button type="submit" :disabled="!userInput.trim()" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-feather="send" class="h-4 w-4"></i>
+                </button>
+            </form>
+            
+            <!-- Quick Actions -->
+            <div class="flex flex-wrap gap-2 mt-3">
+                <button @click="quickAsk('Recommend courses for web development')" 
+                        class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs hover:bg-blue-200">
+                    Web Development
+                </button>
+                <button @click="quickAsk('Career path for data science')" 
+                        class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs hover:bg-green-200">
+                    Data Science
+                </button>
+                <button @click="quickAsk('Find AI/ML mentors')" 
+                        class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs hover:bg-purple-200">
+                    AI/ML Mentors
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendMessage() {
+    const chatData = Alpine.$data(document.getElementById('aiChatbot'));
+    
+    if (!chatData.userInput.trim()) return;
+    
+    // Add user message
+    chatData.messages.push({
+        id: Date.now(),
+        type: 'user',
+        text: chatData.userInput
+    });
+    
+    const userMessage = chatData.userInput;
+    chatData.userInput = '';
+    chatData.isTyping = true;
+    
+    // Scroll to bottom
+    setTimeout(() => {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 100);
+    
+    // AI Response Logic
+    setTimeout(() => {
+        let aiResponse = getAIResponse(userMessage);
+        
+        chatData.messages.push({
+            id: Date.now() + 1,
+            type: 'ai',
+            text: aiResponse
+        });
+        
+        chatData.isTyping = false;
+        
+        // Scroll to bottom
+        setTimeout(() => {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+    }, 1500);
+}
+
+function quickAsk(message) {
+    const chatData = Alpine.$data(document.getElementById('aiChatbot'));
+    chatData.userInput = message;
+    sendMessage();
+}
+
+function getAIResponse(userMessage) {
+    const message = userMessage.toLowerCase();
+    
+    // Career guidance responses
+    if (message.includes('web development') || message.includes('frontend') || message.includes('backend')) {
+        return "🚀 Great choice! For web development, I recommend:\n\n1. Start with HTML/CSS fundamentals\n2. Learn JavaScript and React\n3. Explore Node.js for backend\n4. Join our 'Web Development Bootcamp' with Mike Chen\n\nWould you like me to find mentors specializing in web development?";
+    }
+    
+    if (message.includes('data science') || message.includes('machine learning') || message.includes('ai')) {
+        return "📊 Excellent! Data Science is booming. Here's your roadmap:\n\n1. Master Python and SQL\n2. Learn statistics and ML algorithms\n3. Practice with real datasets\n4. Check out Prof. Amanda Kumar's 'Data Science Career Path'\n\nI can connect you with top data science mentors. Interested?";
+    }
+    
+    if (message.includes('career') || message.includes('job') || message.includes('salary')) {
+        return "💼 Let me help with your career! Based on current trends:\n\n• Tech roles: 40-60% salary growth\n• Remote opportunities increasing\n• Skills-based hiring is key\n\nWhat's your current background? I'll suggest the best learning path and mentors for you.";
+    }
+    
+    if (message.includes('mentor') || message.includes('find') || message.includes('expert')) {
+        return "👨‍🏫 Perfect! We have 2000+ expert mentors. I can match you based on:\n\n• Your career goals\n• Learning preferences\n• Experience level\n• Industry focus\n\nTell me your specific interests, and I'll recommend the perfect mentors!";
+    }
+    
+    if (message.includes('course') || message.includes('learn') || message.includes('study')) {
+        return "📚 Here are trending courses on PeerLearn:\n\n• AI/ML Fundamentals (⭐ 4.9)\n• Full Stack Development (⭐ 4.8)\n• Data Analytics (⭐ 4.7)\n• DevOps & Cloud (⭐ 4.6)\n\nWhich area interests you most? I'll find the perfect course and mentor combination!";
+    }
+    
+    if (message.includes('price') || message.includes('cost') || message.includes('fee')) {
+        return "💰 Our courses are very affordable:\n\n• Free sessions available\n• Paid courses: ₹299-₹999\n• 1-on-1 mentoring: ₹499-₹1999/hour\n• Group sessions: ₹199-₹599\n\nMany mentors offer free consultation calls. Want me to find budget-friendly options?";
+    }
+    
+    // Default responses
+    const defaultResponses = [
+        "🤔 That's interesting! Can you tell me more about your specific career goals? I'd love to help you find the right learning path.",
+        "💡 Great question! Based on your interests, I can recommend personalized courses and mentors. What field are you most passionate about?",
+        "🎯 I'm here to help guide your career journey! Whether it's finding mentors, courses, or career advice - just let me know what you're looking for.",
+        "📈 Success starts with the right guidance! Tell me about your background and goals, and I'll create a customized learning plan for you."
+    ];
+    
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+}
+
+// Initialize feather icons for chat
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
+</script>
