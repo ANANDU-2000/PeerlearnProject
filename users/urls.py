@@ -5,6 +5,7 @@ from django.shortcuts import redirect
 from . import views, api_views
 
 urlpatterns = [
+    path('', views.landing_page, name='landing'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('register/', views.UserRegistrationView.as_view(), name='register'),
     path('logout/', views.logout_view, name='logout'),
