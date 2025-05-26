@@ -344,7 +344,7 @@ function sessionRoom() {
         socket: null,
         
         // State
-        participantCount: {{ session.current_participants }},
+        participantCount: 1, // Start with 1 (current user)
         sessionStatus: 'Live',
         sessionTime: '00:00',
         mentorReady: true,
@@ -429,12 +429,13 @@ function sessionRoom() {
         handleWebSocketMessage(data) {
             switch(data.type) {
                 case 'user_joined':
-                    console.log('User joined:', data.user_name);
+                    const userName = data.username || data.user_name || `User ${data.user_id.slice(0, 8)}`;
+                    console.log('User joined:', userName);
                     this.participantCount++;
-                    this.addChatMessage(`${data.user_name} joined the session`, 'system');
+                    this.addChatMessage(`${userName} joined the session`, 'system');
                     // Automatically start video call when someone joins
                     if (data.user_id !== this.userId) {
-                        this.initiateVideoCall(data.user_id);
+                        this.initiateVideoCall(data.user_id, userName, data.is_mentor);
                     }
                     break;
                     
@@ -457,10 +458,10 @@ function sessionRoom() {
             }
         },
         
-        async initiateVideoCall(peerId) {
+        async initiateVideoCall(peerId, userName, isMentor) {
             if (peerId === this.userId || !this.localStream) return;
             
-            console.log('Initiating video call with:', peerId);
+            console.log('Initiating video call with:', userName, isMentor ? '(Mentor)' : '(Learner)');
             
             try {
                 // Create peer connection if it doesn't exist
@@ -479,8 +480,8 @@ function sessionRoom() {
                     
                     // Handle remote stream
                     this.peerConnections[peerId].ontrack = (event) => {
-                        console.log('Received remote stream from:', peerId);
-                        this.addRemoteVideo(peerId, event.streams[0]);
+                        console.log('Received remote stream from:', userName);
+                        this.addRemoteVideo(peerId, event.streams[0], userName, isMentor);
                     };
                     
                     // Handle ICE candidates
@@ -572,8 +573,8 @@ function sessionRoom() {
             }
         },
         
-        addRemoteVideo(peerId, stream) {
-            console.log('Adding remote video for:', peerId);
+        addRemoteVideo(peerId, stream, userName, isMentor) {
+            console.log('Adding remote video for:', userName);
             const remoteVideos = document.getElementById('remoteVideos');
             
             // Remove existing video if any
@@ -594,13 +595,13 @@ function sessionRoom() {
             
             const nameLabel = document.createElement('div');
             nameLabel.className = 'participant-info';
-            nameLabel.textContent = `User ${peerId.slice(0, 8)} (${this.isMentor ? 'Learner' : 'Mentor'})`;
+            nameLabel.textContent = `${userName || 'Participant'} (${isMentor ? 'Mentor' : 'Learner'})`;
             
             videoContainer.appendChild(video);
             videoContainer.appendChild(nameLabel);
             remoteVideos.appendChild(videoContainer);
             
-            console.log('Remote video added successfully for:', peerId);
+            console.log('Remote video added successfully for:', userName);
         },
         
         removeRemoteVideo(peerId) {
