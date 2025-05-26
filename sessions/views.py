@@ -102,23 +102,14 @@ def book_session(request, session_id):
 
 @login_required
 def create_session(request):
-    """Create a new session (mentors only)"""
-    if not request.user.is_mentor:
+    """Redirect to mentor dashboard with create modal"""
+    if request.user.role != 'mentor':
         messages.error(request, 'Only mentors can create sessions.')
         return redirect('learner_dashboard')
     
-    if request.method == 'POST':
-        form = SessionForm(request.POST)
-        if form.is_valid():
-            session = form.save(commit=False)
-            session.mentor = request.user
-            session.save()
-            messages.success(request, 'Session created successfully!')
-            return redirect('mentor_dashboard')
-    else:
-        form = SessionForm()
-    
-    return render(request, 'sessions/create_advanced.html', {'form': form})
+    # Redirect to mentor dashboard where the create modal exists
+    messages.info(request, 'Click the "Create Session" button to create a new session.')
+    return redirect('mentor_dashboard')
 
 @login_required
 def session_room(request, session_id):
