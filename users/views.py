@@ -93,7 +93,7 @@ def profile_view(request):
 
 @login_required
 def mentor_dashboard(request):
-    if not request.user.is_mentor:
+    if request.user.role != 'mentor':
         messages.error(request, 'Access denied. Mentor role required.')
         return redirect('learner_dashboard')
     
@@ -144,7 +144,7 @@ def mentor_dashboard(request):
 
 @login_required
 def learner_dashboard(request):
-    if not request.user.is_learner:
+    if request.user.role != 'learner':
         messages.error(request, 'Access denied. Learner role required.')
         return redirect('mentor_dashboard')
     
