@@ -5,6 +5,9 @@ from django.contrib.auth.views import LoginView
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+import json
 from .forms import UserRegistrationForm, UserProfileForm
 from .models import User
 
@@ -207,3 +210,30 @@ def learner_dashboard(request):
     }
     
     return render(request, 'dashboard/learner_complete.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_profile_api(request):
+    """Update user profile via API"""
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        # Update user fields
+        if 'bio' in data:
+            user.bio = data['bio']
+        if 'skills' in data:
+            user.skills = data['skills']
+        if 'hourly_rate' in data and user.is_mentor:
+            user.hourly_rate = data['hourly_rate']
+            
+        user.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Profile updated successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

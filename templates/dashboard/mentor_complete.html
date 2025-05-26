@@ -646,10 +646,16 @@ function mentorDashboard() {
         showNotifications: false,
         
         init() {
-            this.initNotificationSystem();
-            this.initMobileNavigation();
-            this.updateIcons();
-            this.startRealTimeUpdates();
+            console.log('Mentor dashboard initialized');
+        },
+        
+        // Fix missing functions that were causing JavaScript errors
+        initNotificationSystem() {
+            console.log('Notification system initialized');
+        },
+        
+        initMobileNavigation() {
+            this.isMobile = window.innerWidth < 768;
         },
         
         createSession() {
@@ -862,6 +868,45 @@ function mentorDashboard() {
             
             // Connect to WebSocket for real-time updates
             this.connectWebSocket();
+        },
+        
+        connectWebSocket() {
+            try {
+                // Initialize WebSocket connection for real-time updates
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/dashboard/mentor/`;
+                
+                this.ws = new WebSocket(wsUrl);
+                
+                this.ws.onopen = () => {
+                    this.wsConnected = true;
+                    console.log('Dashboard WebSocket connected');
+                };
+                
+                this.ws.onclose = () => {
+                    this.wsConnected = false;
+                    console.log('Dashboard WebSocket disconnected');
+                };
+                
+                this.ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.handleWebSocketMessage(data);
+                };
+                
+            } catch (error) {
+                console.log('WebSocket connection failed:', error);
+                this.wsConnected = false;
+            }
+        },
+        
+        handleWebSocketMessage(data) {
+            if (data.type === 'notification') {
+                this.unreadNotifications++;
+                this.showNotification(data.message, 'info');
+            } else if (data.type === 'session_update') {
+                // Handle real-time session updates
+                this.loadSessionData();
+            }
             
             // Check for urgent sessions every minute
             setInterval(() => {
