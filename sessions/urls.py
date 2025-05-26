@@ -3,6 +3,7 @@ from . import views, api_views
 # from .mentor_api_clean import mentor_dashboard_clean
 from .create_session_api import create_session_api
 from .mentor_dashboard_api import mentor_dashboard_real_data
+from .fix_mentor_dashboard import mentor_dashboard_fixed
 
 urlpatterns = [
     # Web views

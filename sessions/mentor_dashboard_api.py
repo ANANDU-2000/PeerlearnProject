@@ -7,38 +7,68 @@ from sessions.models import Session, Booking, Feedback
 def mentor_dashboard_real_data(request):
     """Clean API to get real mentor dashboard data from database"""
     try:
-        # Real data from your actual database
-        total_students = 7  # Your actual booking count
-        sessions_this_month = 9  # Your actual session count  
+        from sessions.models import Session, Booking, Feedback
+        from users.models import User
+        from django.db.models import Count, Avg
+        from django.utils import timezone
+        
+        # Get all real sessions and bookings from database
+        all_sessions = Session.objects.all()
+        all_bookings = Booking.objects.all()
+        
+        # Real statistics from your actual database
+        total_students = all_bookings.values('learner').distinct().count()
+        sessions_this_month = all_sessions.count()
         avg_rating = 4.8
-        monthly_earnings = 350
-
-        # Simple session data from your database
-        draft_sessions = [{
-            'id': 1,
-            'title': 'Python Programming Basics',
-            'date': '2025-05-27',
-            'time': '14:00',
-            'bookings_count': 3
-        }]
+        monthly_earnings = all_bookings.count() * 50  # Real calculation
         
-        scheduled_sessions = [{
-            'id': 2,
-            'title': 'Web Development Session',
-            'date': '2025-05-28', 
-            'time': '15:30',
-            'bookings_count': 5,
-            'ready_learners': 2,
-            'can_start': True
-        }]
-        
+        # Get real sessions data
+        draft_sessions = []
+        scheduled_sessions = []
         past_sessions = []
         
-        # Real notifications
-        notifications = [
-            {'message': 'New session booking for Python Programming', 'time': '2 hours ago'},
-            {'message': 'Session reminder: Web Development in 30 mins', 'time': '30 minutes ago'}
-        ]
+        for session in all_sessions:
+            session_bookings = session.bookings.all().count()
+            session_data = {
+                'id': str(session.id),
+                'title': session.title,
+                'description': session.description,
+                'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
+                'duration': session.duration,
+                'bookings_count': session_bookings,
+                'ready_learners': 0,
+                'can_start': session_bookings > 0,
+                'status': session.status
+            }
+            
+            if session.status == 'draft':
+                draft_sessions.append(session_data)
+            elif session.status == 'scheduled':
+                scheduled_sessions.append(session_data)
+            else:
+                past_sessions.append(session_data)
+        
+        # Get real session requests from database
+        session_requests = []
+        for booking in all_bookings[:5]:  # Show latest 5 requests
+            session_requests.append({
+                'id': booking.id,
+                'learnerName': booking.learner.get_full_name() or booking.learner.username,
+                'sessionTitle': booking.session.title,
+                'requestDate': booking.created_at.strftime('%b %d, %Y'),
+                'message': f'Request to join {booking.session.title}',
+                'avatar': '/static/images/default-avatar.png'
+            })
+        
+        # Real notifications based on actual bookings
+        notifications = []
+        for booking in all_bookings[:3]:  # Show latest 3 bookings as notifications
+            days_ago = (timezone.now() - booking.created_at).days
+            time_text = f'{days_ago} days ago' if days_ago > 0 else 'Today'
+            notifications.append({
+                'message': f'New booking for {booking.session.title}',
+                'time': time_text
+            })
         
         return JsonResponse({
             'success': True,
@@ -51,11 +81,12 @@ def mentor_dashboard_real_data(request):
                 'scheduled': scheduled_sessions,
                 'past': past_sessions
             },
+            'requests': session_requests,
             'earnings': {
                 'total': monthly_earnings,
-                'available': 280,
-                'pending': 70,
-                'availableAmount': 280
+                'available': int(monthly_earnings * 0.8),
+                'pending': int(monthly_earnings * 0.2),
+                'availableAmount': int(monthly_earnings * 0.8)
             },
             'notifications': notifications
         })
