@@ -40,11 +40,20 @@ def session_detail(request, session_id):
     # Get session feedback/reviews
     feedback_list = session.feedback.select_related('user').order_by('-created_at')
     
-    # Calculate mentor stats
+    # Calculate real mentor stats from database
+    from django.db.models import Avg, Count
+    mentor_sessions = Session.objects.filter(mentor=session.mentor, status='completed')
+    total_students = Booking.objects.filter(
+        session__mentor=session.mentor,
+        status='confirmed'
+    ).values('learner').distinct().count()
+    
+    avg_rating = session.feedback.aggregate(avg=Avg('rating'))['avg'] or 0.0
+    
     mentor_stats = {
-        'sessions_count': Session.objects.filter(mentor=session.mentor, status='completed').count(),
-        'avg_rating': 4.8,  # Calculate from actual feedback
-        'total_students': 156  # Calculate from bookings
+        'sessions_count': mentor_sessions.count(),
+        'avg_rating': round(avg_rating, 1),
+        'total_students': total_students
     }
     
     context = {

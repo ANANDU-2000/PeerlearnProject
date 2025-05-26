@@ -493,6 +493,7 @@ def mentor_dashboard_data(request):
                 'id': str(session.id),
                 'title': session.title,
                 'description': session.description,
+                'thumbnail': session.thumbnail.url if session.thumbnail else None,
                 'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
                 'duration': session.duration,
                 'maxParticipants': session.max_participants,
