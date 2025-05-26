@@ -3,6 +3,7 @@
 {% block title %}Mentor Dashboard - PeerLearn{% endblock %}
 
 {% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
 <style>
     .mentor-bg {
         background: linear-gradient(135deg, #059669 0%, #047857 100%);
@@ -930,7 +931,7 @@ function mentorDashboard() {
                 const response = await fetch('/api/sessions/mentor-data/', {
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        'X-CSRFToken': this.getCSRFToken()
                     }
                 });
                 
@@ -1352,6 +1353,7 @@ function mentorDashboard() {
         
         getCSRFToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
                    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
                    this.getCookieValue('csrftoken') || '';
         },
