@@ -62,7 +62,8 @@
                     <div x-show="urgentSessions > 0" class="bg-red-500 text-white px-4 py-2 rounded-lg animate-pulse">
                         <span x-text="urgentSessions"></span> sessions starting soon!
                     </div>
-                    <button @click="createSession()" 
+                    <button @click.prevent="createSession()" 
+                            type="button"
                             class="bg-white text-green-600 px-6 py-3 rounded-xl font-semibold hover:bg-green-50 transition-all duration-300 transform hover:scale-105">
                         <i data-feather="plus" class="h-4 w-4 inline mr-2"></i>
                         Create Session
@@ -667,7 +668,13 @@ function mentorDashboard() {
         // Fix Create Session button functionality
         createSession() {
             console.log('Create Session button clicked');
+            console.log('Current showCreateModal value:', this.showCreateModal);
             this.showCreateModal = true;
+            console.log('New showCreateModal value:', this.showCreateModal);
+            // Force update
+            this.$nextTick(() => {
+                console.log('Modal should be visible now');
+            });
         },
         
         async submitCreateSession(event) {
