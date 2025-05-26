@@ -50,7 +50,11 @@ class CustomLoginView(LoginView):
     
     def get_success_url(self):
         user = self.request.user
-        if user.is_mentor:
+        
+        # Smart login detection: Admin/Owner -> Mentor -> Learner
+        if user.is_superuser or user.is_staff:
+            return reverse_lazy('admin_dashboard')
+        elif user.role == 'mentor':
             return reverse_lazy('mentor_dashboard')
         else:
             return reverse_lazy('learner_dashboard')
@@ -75,7 +79,7 @@ class UserRegistrationView(CreateView):
         login(self.request, user)
         messages.success(self.request, 'Registration successful!')
         
-        if user.is_mentor:
+        if user.role == 'mentor':
             return redirect('mentor_dashboard')
         else:
             return redirect('learner_dashboard')

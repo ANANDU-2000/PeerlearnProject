@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,9 +113,7 @@
                 <div class="lg:w-1/2 flex justify-center">
                     <div class="relative bounce-in" style="animation-delay: 0.5s;">
                         <div class="w-80 h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden shadow-2xl floating">
-                            <div class="w-full h-full blue-gradient flex items-center justify-center text-white text-6xl font-bold">
-                                AK
-                            </div>
+                            <img src="{% load static %}{% static 'images/profile/anandu_krishna.jpg' %}" alt="Anandu Krishna P A" class="w-full h-full object-cover">
                         </div>
                         <div class="absolute -bottom-4 -right-4 bg-yellow-300 text-blue-800 rounded-full p-4 shadow-lg">
                             <i class="fas fa-code text-2xl"></i>
