@@ -21,7 +21,7 @@
             </button>
         </div>
         
-        <form method="post" action="{% url 'api_create_session' %}" enctype="multipart/form-data">
+        <form @submit="submitCreateSession($event)" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Left Column -->
