@@ -189,7 +189,7 @@ def session_room(request, session_id):
         'is_mentor': request.user == session.mentor,
     }
     
-    return render(request, 'session_room_premium.html', context)
+    return render(request, 'sessions/webrtc_room.html', context)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

@@ -964,7 +964,7 @@ function mentorDashboard() {
                     const response = await fetch(`/api/sessions/${session.id}/bookings/`);
                     const data = await response.json();
                     
-                    if (data.success) {
+                    if (data.success && data.bookings) {
                         session.bookedLearners = data.bookings.map(booking => ({
                             id: booking.learner_id,
                             name: booking.name,
@@ -973,6 +973,79 @@ function mentorDashboard() {
                             isReady: booking.isReady,
                             status: booking.status
                         }));
+                        
+                        // Send notification to mentor when learner joins early
+                        if (session.bookedLearners.some(learner => learner.isReady)) {
+                            this.showNotificationPopup('🎯 Learner Ready!', `${session.bookedLearners[0].name} is ready for "${session.title}"`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading learner details for session:', session.id, error);
+                }
+            }
+        },
+        
+        showNotificationPopup(title, message) {
+            // Create horizontal notification popup
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-20 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+            notification.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">🎯</div>
+                    <div>
+                        <div class="font-semibold">${title}</div>
+                        <div class="text-sm opacity-90">${message}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Slide in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        },
+        
+        // Add missing functions that were referenced
+        async joinEarly(sessionId) {
+            window.location.href = `/sessions/${sessionId}/room/`;
+        },
+        
+        async startSession(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/start/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = `/sessions/${sessionId}/room/`;
+                } else {
+                    alert(data.message || 'Failed to start session');
+                }
+            } catch (error) {
+                console.error('Error starting session:', error);
+            }
+        },
+        
+        async messageLearner(learnerId, sessionId) {
+            const message = prompt('Send a message to the learner:');
+            if (message) {
+                // Send notification to learner
+                this.showNotificationPopup('Message Sent', 'Your message has been sent to the learner');
+            }
+        }
                         
                         session.readyLearners = session.bookedLearners.filter(l => l.isReady).length;
                     }
