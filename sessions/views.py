@@ -118,7 +118,7 @@ def create_session(request):
     else:
         form = SessionForm()
     
-    return render(request, 'sessions/create.html', {'form': form})
+    return render(request, 'sessions/create_advanced.html', {'form': form})
 
 @login_required
 def session_room(request, session_id):

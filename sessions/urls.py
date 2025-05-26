@@ -29,4 +29,10 @@ urlpatterns = [
     # Notification endpoints
     path('api/notifications/', api_views.get_notifications_api, name='get_notifications_api'),
     path('api/notifications/read/', api_views.mark_notifications_read, name='mark_notifications_read'),
+    
+    # Earnings endpoints
+    path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
+    
+    # Room access endpoints
+    path('room/<uuid:session_id>/', views.session_room, name='session_room'),
 ]

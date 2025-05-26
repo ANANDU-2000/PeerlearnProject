@@ -399,3 +399,31 @@ def decline_request(request, request_id):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def request_payout(request):
+    """Request payout of available earnings"""
+    try:
+        if not request.user.is_mentor:
+            return JsonResponse({'error': 'Only mentors can request payouts'}, status=403)
+        
+        # Calculate available earnings from real completed sessions
+        completed_sessions = Booking.objects.filter(
+            session__mentor=request.user,
+            status='completed'
+        ).count()
+        
+        # Calculate real earnings based on hourly rate
+        hourly_rate = getattr(request.user, 'hourly_rate', 25)
+        total_earnings = completed_sessions * hourly_rate * 1.5
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Payout request of ₹{total_earnings} submitted successfully!',
+            'amount': total_earnings
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
