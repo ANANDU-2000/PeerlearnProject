@@ -1,11 +1,6 @@
 from django.urls import path
 from . import views, api_views
-# from .mentor_api_clean import mentor_dashboard_clean
 from .create_session_api import create_session_api
-from .mentor_dashboard_api import mentor_dashboard_real_data
-from .fix_mentor_dashboard import mentor_dashboard_fixed
-from .working_mentor_api import working_mentor_dashboard
-from .real_sessions_api import get_real_mentor_sessions
 
 urlpatterns = [
     # Web views
@@ -40,18 +35,10 @@ urlpatterns = [
     path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
     
     # Dashboard data endpoints
-    path('api/sessions/mentor-dashboard/', mentor_dashboard_fixed, name='mentor_dashboard_data'),
-    
-    # Use existing working API endpoint
-    # path('api/mentor-data/', mentor_dashboard_clean, name='mentor_data_clean'),
+    path('api/mentor-dashboard/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
     
     # Session status endpoints
     path('api/mark-ready/<uuid:session_id>/', api_views.mark_ready, name='api_mark_ready'),
-    
-    # Critical Session Management Endpoints for Mentor Dashboard
-    path('api/sessions/<uuid:session_id>/mark-ready/', api_views.mark_mentor_ready, name='api_mark_mentor_ready'),
-    path('api/sessions/<uuid:session_id>/start/', api_views.start_session_mentor_api, name='api_start_session_mentor'),
-    path('api/sessions/<uuid:session_id>/send-reminders/', api_views.send_session_reminders, name='api_send_reminders'),
     
     # Room access endpoints
     path('room/<uuid:session_id>/', views.session_room, name='session_room'),

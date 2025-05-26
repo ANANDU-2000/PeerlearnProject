@@ -807,7 +807,16 @@ function mentorDashboard() {
         mySessions: {
             draft: [],
             scheduled: [],
-            past: []
+            past: [
+                {
+                    id: 3,
+                    title: 'React Fundamentals',
+                    completedDate: 'Jan 20, 2024',
+                    participants: 10,
+                    averageRating: 5,
+                    earnings: 120
+                }
+            ]
         },
         
         sessionRequests: [
@@ -883,14 +892,6 @@ function mentorDashboard() {
         bookedSessions: [],
         bookedSessionsCount: 0,
         
-        // Initialize earnings data structure
-        earnings: {
-            total: 0,
-            available: 0,
-            pending: 0,
-            availableAmount: 0
-        },
-        
         init() {
             console.log('Mentor dashboard initialized');
             this.loadRealData();
@@ -925,7 +926,7 @@ function mentorDashboard() {
         async loadRealData() {
             try {
                 // Load real session data from database
-                const response = await fetch('/api/sessions/mentor-dashboard/', {
+                const response = await fetch('/api/sessions/mentor-data/', {
                     headers: {
                         'X-CSRFToken': this.getCSRFToken()
                     }
@@ -934,9 +935,9 @@ function mentorDashboard() {
                 if (response.ok) {
                     const data = await response.json();
                     this.updateStatsWithRealData(data);
-                    this.mySessions = data.sessions || { draft: [], scheduled: [], past: [] };
-                    this.sessionRequests = data.requests || [];
-                    this.earnings = data.earnings || { total: 0, available: 0, pending: 0, availableAmount: 0 };
+                    this.mySessions = data.sessions;
+                    this.sessionRequests = data.requests;
+                    this.earnings = data.earnings;
                 }
             } catch (error) {
                 console.log('Loading real data...');
@@ -1068,117 +1069,8 @@ function mentorDashboard() {
             }
         },
         
-        // Critical Session Management Functions
-        async markReady(sessionId) {
-            try {
-                const response = await fetch(`/api/sessions/${sessionId}/mark-ready/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': this.getCSRFToken(),
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    // Update session ready status
-                    const session = this.mySessions.scheduled.find(s => s.id === sessionId);
-                    if (session) {
-                        session.mentorReady = true;
-                    }
-                    // Also update booked sessions
-                    const bookedSession = this.bookedSessions.find(s => s.id === sessionId);
-                    if (bookedSession) {
-                        bookedSession.mentorReady = true;
-                    }
-                    
-                    this.showNotification('✅ You are ready to start the session!', 'success');
-                    this.loadRealData(); // Refresh to get latest status
-                } else {
-                    throw new Error('Failed to mark ready');
-                }
-            } catch (error) {
-                this.showNotification('❌ Failed to mark ready. Please try again.', 'error');
-            }
-        },
-
-        async startSession(sessionId) {
-            try {
-                const response = await fetch(`/api/sessions/${sessionId}/start/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': this.getCSRFToken(),
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    this.showNotification('🚀 Starting session...', 'success');
-                    // Redirect to WebRTC room
-                    window.location.href = `/sessions/${sessionId}/room/`;
-                } else {
-                    throw new Error('Failed to start session');
-                }
-            } catch (error) {
-                this.showNotification('❌ Failed to start session. Please try again.', 'error');
-            }
-        },
-
-        async joinEarly(sessionId) {
-            try {
-                this.showNotification('📹 Joining WebRTC room early...', 'info');
-                // Direct redirect to WebRTC room with early join
-                window.location.href = `/sessions/${sessionId}/room/?early=true`;
-            } catch (error) {
-                this.showNotification('❌ Failed to join room early. Please try again.', 'error');
-            }
-        },
-
-        async viewBookedLearners(sessionId) {
-            // Switch to booked sessions tab and highlight this session
-            this.sessionView = 'booked';
-            this.showNotification('📚 Viewing booked learners for this session', 'info');
-            
-            // Scroll to the session if needed
-            setTimeout(() => {
-                const element = document.querySelector(`[data-session-id="${sessionId}"]`);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 100);
-        },
-
-        async viewSessionDetails(sessionId) {
-            window.location.href = `/sessions/${sessionId}/`;
-        },
-
-        async messageLearner(learnerId, sessionId) {
-            try {
-                this.showNotification('💬 Opening message interface...', 'info');
-                // You can implement a modal or redirect to messaging
-                window.location.href = `/messages/new/?learner=${learnerId}&session=${sessionId}`;
-            } catch (error) {
-                this.showNotification('❌ Failed to open messaging. Please try again.', 'error');
-            }
-        },
-
-        async sendReminders(sessionId) {
-            try {
-                const response = await fetch(`/api/sessions/${sessionId}/send-reminders/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': this.getCSRFToken(),
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    this.showNotification('🔔 Reminders sent to all booked learners!', 'success');
-                } else {
-                    throw new Error('Failed to send reminders');
-                }
-            } catch (error) {
-                this.showNotification('❌ Failed to send reminders. Please try again.', 'error');
-            }
+        startSession(sessionId) {
+            window.location.href = `/room/${sessionId}/`;
         },
 
         editSession(sessionId) {

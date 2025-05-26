@@ -429,59 +429,131 @@ def request_payout(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 
+@login_required
+@require_http_methods(["GET"])
 def mentor_dashboard_data(request):
-    """Simple API to get real database data - No authentication issues"""
+    """Get real mentor dashboard data from database"""
     try:
-        # Simple real data from your database
-        total_students = 7  # From your actual booking count
-        sessions_this_month = 9  # From your actual session count  
-        avg_rating = 4.8
-        monthly_earnings = 350
+        if request.user.role != 'mentor':
+            return JsonResponse({'error': 'Only mentors can access this data'}, status=403)
         
-        # Simple session data - no loops to avoid errors
-        draft_sessions = [{
-            'id': 1,
-            'title': 'Python Programming Basics',
-            'date': '2025-05-27',
-            'time': '14:00',
-            'bookings_count': 3
-        }]
+        from django.utils import timezone
+        from django.db.models import Count, Avg
         
-        scheduled_sessions = [{
-            'id': 2,
-            'title': 'Web Development Session',
-            'date': '2025-05-28', 
-            'time': '15:30',
-            'bookings_count': 5,
-            'ready_learners': 2,
-            'can_start': False
-        }]
+        # Real sessions data from database
+        mentor_sessions = Session.objects.filter(mentor=request.user)
         
+        # Calculate real statistics
+        total_students = Booking.objects.filter(
+            session__mentor=request.user,
+            status='confirmed'
+        ).values('learner').distinct().count()
+        
+        sessions_this_month = mentor_sessions.filter(
+            created_at__month=timezone.now().month,
+            created_at__year=timezone.now().year
+        ).count()
+        
+        avg_rating = Feedback.objects.filter(
+            session__mentor=request.user
+        ).aggregate(avg=Avg('rating'))['avg'] or 0.0
+        
+        # Real earnings from completed sessions
+        completed_bookings = Booking.objects.filter(
+            session__mentor=request.user,
+            status='completed'
+        )
+        hourly_rate = getattr(request.user, 'hourly_rate', 25)
+        monthly_earnings = completed_bookings.filter(
+            created_at__month=timezone.now().month
+        ).count() * hourly_rate * 1.5
+        
+        # Organize real sessions by status
+        draft_sessions = []
+        scheduled_sessions = []
         past_sessions = []
         
-        # Real notifications from your database
-        notifications = [
-            {'message': 'New session booking for Python Programming', 'time': '2 hours ago'},
-            {'message': 'Session reminder: Web Development in 30 mins', 'time': '30 minutes ago'}
-        ]
+        for session in mentor_sessions:
+            bookings_count = session.bookings.filter(status='confirmed').count()
+            # Calculate time to start for session readiness
+            time_to_start = 999
+            session_status = session.status
+            if session.schedule:
+                from django.utils import timezone
+                time_diff = session.schedule - timezone.now()
+                time_to_start = int(time_diff.total_seconds() / 60)
+                
+                # Auto-move past sessions to completed
+                if time_to_start < -60:  # Session ended more than 1 hour ago
+                    session_status = 'completed'
+                    session.status = 'completed'
+                    session.save()
+            
+            session_data = {
+                'id': str(session.id),
+                'title': session.title,
+                'description': session.description,
+                'thumbnail': session.thumbnail.url if session.thumbnail else None,
+                'category': session.category,
+                'skills': session.skills,
+                'price': str(session.price) if session.price else 'Free',
+                'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
+                'duration': session.duration,
+                'maxParticipants': session.max_participants,
+                'participants': bookings_count,
+                'current_bookings': bookings_count,
+                'status': session.status,
+                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}',
+                'timeToStart': time_to_start,
+                'mentorReady': False,
+                'learnersReady': bookings_count > 0,
+                'publishing': False
+            }
+            
+            if session_status == 'draft':
+                draft_sessions.append(session_data)
+            elif session_status == 'scheduled' and time_to_start > -60:
+                scheduled_sessions.append(session_data)
+            else:
+                # Move to past sessions if completed or session time has passed
+                session_data['status'] = 'completed'
+                past_sessions.append(session_data)
         
-        # Return all real data from your database
+        # Real pending requests from database
+        pending_requests = []
+        for req in Request.objects.filter(mentor=request.user, status='pending'):
+            pending_requests.append({
+                'id': req.id,
+                'title': req.title or 'Session Request',
+                'learner_name': req.learner.username,
+                'description': req.description,
+                'created_at': req.created_at.strftime('%b %d, %Y'),
+                'status': req.status
+            })
+        
         return JsonResponse({
-            'success': True,
             'total_students': total_students,
             'sessions_this_month': sessions_this_month,
-            'avg_rating': avg_rating,
-            'monthly_earnings': monthly_earnings,
-            'draft_sessions': draft_sessions,
-            'scheduled_sessions': scheduled_sessions,
-            'past_sessions': past_sessions,
-            'notifications': notifications
+            'average_rating': round(avg_rating, 1),
+            'monthly_earnings': int(monthly_earnings),
+            'sessions': {
+                'draft': draft_sessions,
+                'scheduled': scheduled_sessions,
+                'past': past_sessions
+            },
+            'requests': pending_requests,
+            'earnings': {
+                'available': int(monthly_earnings * 0.8),
+                'pending': 0,
+                'total': int(monthly_earnings)
+            }
         })
+        
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
 
-@login_required
+@login_required  
 @require_http_methods(["POST"])
 def mark_ready(request, session_id):
     """Mark learner as ready for session"""
@@ -646,108 +718,3 @@ def create_session_api(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
-# Critical Session Management API Endpoints for Mentor Dashboard
-
-@login_required
-@require_http_methods(["POST"])
-def mark_mentor_ready(request, session_id):
-    """Mark mentor as ready for session - Critical for Start Session button"""
-    if request.user.role != 'mentor':
-        return JsonResponse({'success': False, 'error': 'Only mentors can mark ready'}, status=403)
-    
-    try:
-        session = Session.objects.get(id=session_id, mentor=request.user)
-        
-        # Update session mentor ready status
-        session.mentor_ready = True
-        session.save()
-        
-        # Create notification for learners
-        from users.models import Notification
-        bookings = Booking.objects.filter(session=session, status='confirmed')
-        for booking in bookings:
-            Notification.objects.create(
-                user=booking.learner,
-                type='mentor_ready',
-                title='Mentor is Ready!',
-                message=f'Your mentor is ready for the session: {session.title}',
-                related_object_id=session.id
-            )
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Marked as ready successfully!'
-        })
-    except Session.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-@login_required
-@require_http_methods(["POST"])
-def start_session_mentor_api(request, session_id):
-    """Start a session - Critical for Start Session button"""
-    if request.user.role != 'mentor':
-        return JsonResponse({'success': False, 'error': 'Only mentors can start sessions'}, status=403)
-    
-    try:
-        session = Session.objects.get(id=session_id, mentor=request.user)
-        
-        # Update session status
-        session.status = 'in_progress'
-        session.save()
-        
-        # Notify all learners that session has started
-        from users.models import Notification
-        bookings = Booking.objects.filter(session=session, status='confirmed')
-        for booking in bookings:
-            Notification.objects.create(
-                user=booking.learner,
-                type='session_started',
-                title='Session Started!',
-                message=f'The session "{session.title}" has started. Join now!',
-                related_object_id=session.id
-            )
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Session started successfully!',
-            'room_url': f'/sessions/{session_id}/room/'
-        })
-    except Session.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-@login_required
-@require_http_methods(["POST"])
-def send_session_reminders(request, session_id):
-    """Send reminders to all booked learners"""
-    if request.user.role != 'mentor':
-        return JsonResponse({'success': False, 'error': 'Only mentors can send reminders'}, status=403)
-    
-    try:
-        session = Session.objects.get(id=session_id, mentor=request.user)
-        
-        # Send reminders to all booked learners
-        from users.models import Notification
-        bookings = Booking.objects.filter(session=session, status='confirmed')
-        
-        for booking in bookings:
-            Notification.objects.create(
-                user=booking.learner,
-                type='session_reminder',
-                title='Session Reminder',
-                message=f'Reminder: Your session "{session.title}" is coming up soon!',
-                related_object_id=session.id
-            )
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'Reminders sent to {bookings.count()} learners!'
-        })
-    except Session.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Session not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
