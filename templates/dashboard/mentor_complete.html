@@ -1069,16 +1069,103 @@ function mentorDashboard() {
             }
         },
         
-        startSession(sessionId) {
-            window.location.href = `/room/${sessionId}/`;
+        // Critical Session Management Functions
+        async markReady(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/mark-ready/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Update session status
+                    const session = this.mySessions.scheduled.find(s => s.id === sessionId) || 
+                                   this.bookedSessions.find(s => s.id === sessionId);
+                    if (session) {
+                        session.mentorReady = true;
+                    }
+                    this.showNotification('✅ Ready for session!', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Failed to mark ready', 'error');
+            }
+        },
+
+        async startSession(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/start/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Redirect to WebRTC room
+                    window.location.href = `/sessions/${sessionId}/room/`;
+                } else {
+                    this.showNotification('Failed to start session', 'error');
+                }
+            } catch (error) {
+                this.showNotification('Error starting session', 'error');
+            }
+        },
+
+        async joinEarly(sessionId) {
+            try {
+                // Join WebRTC room early (30 mins before)
+                window.location.href = `/sessions/${sessionId}/room/?early=true`;
+            } catch (error) {
+                this.showNotification('Failed to join room', 'error');
+            }
+        },
+
+        viewSessionDetails(sessionId) {
+            window.location.href = `/sessions/${sessionId}/`;
         },
 
         editSession(sessionId) {
             window.location.href = `/sessions/${sessionId}/edit/`;
         },
 
-        viewSession(sessionId) {
-            window.location.href = `/sessions/${sessionId}/`;
+        async viewBookedLearners(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/bookings/`);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Show booked learners modal or navigate to details
+                    this.showBookedLearnersModal(sessionId, data.bookings);
+                }
+            } catch (error) {
+                this.showNotification('Failed to load booked learners', 'error');
+            }
+        },
+
+        async messageLearner(learnerId, sessionId) {
+            // Send message to specific learner
+            this.showNotification('Message feature coming soon!', 'info');
+        },
+
+        async sendReminders(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/send-reminders/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    this.showNotification('📧 Reminders sent to all booked learners!', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Failed to send reminders', 'error');
+            }
         },
         
         async acceptRequest(requestId) {

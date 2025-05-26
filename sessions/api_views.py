@@ -718,3 +718,127 @@ def create_session_api(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+# Critical Session Management API Endpoints
+
+@login_required
+@require_http_methods(["POST"])
+def mark_ready(request, session_id):
+    """Mark mentor as ready for session"""
+    try:
+        session = get_object_or_404(Session, id=session_id, mentor=request.user)
+        
+        # Update session mentor ready status
+        session.mentor_ready = True
+        session.save()
+        
+        # Notify all booked learners
+        bookings = Booking.objects.filter(session=session, status='confirmed')
+        for booking in bookings:
+            Notification.objects.create(
+                user=booking.learner,
+                type='mentor_ready',
+                title='Mentor is Ready!',
+                message=f'Your mentor is ready for "{session.title}". Get ready to join!',
+                related_session=session
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Marked as ready successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def start_session_api(request, session_id):
+    """Start session (redirect to WebRTC room)"""
+    try:
+        session = get_object_or_404(Session, id=session_id, mentor=request.user)
+        
+        # Update session status to active
+        session.status = 'active'
+        session.started_at = timezone.now()
+        session.save()
+        
+        # Notify all booked learners
+        bookings = Booking.objects.filter(session=session, status='confirmed')
+        for booking in bookings:
+            Notification.objects.create(
+                user=booking.learner,
+                type='session_started',
+                title='Session Started!',
+                message=f'"{session.title}" has started. Join now!',
+                related_session=session
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'room_url': f'/sessions/{session_id}/room/',
+            'message': 'Session started successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["GET"])
+def session_bookings(request, session_id):
+    """Get all bookings for a session"""
+    try:
+        session = get_object_or_404(Session, id=session_id, mentor=request.user)
+        bookings = Booking.objects.filter(session=session, status='confirmed').select_related('learner')
+        
+        booking_data = []
+        for booking in bookings:
+            booking_data.append({
+                'id': booking.id,
+                'learner_id': booking.learner.id,
+                'name': booking.learner.get_full_name() or booking.learner.username,
+                'email': booking.learner.email,
+                'bookedDate': booking.created_at.strftime('%Y-%m-%d %H:%M'),
+                'isReady': getattr(booking, 'learner_ready', False),
+                'status': booking.status
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'bookings': booking_data,
+            'total_bookings': len(booking_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def send_session_reminders(request, session_id):
+    """Send reminders to all booked learners"""
+    try:
+        session = get_object_or_404(Session, id=session_id, mentor=request.user)
+        bookings = Booking.objects.filter(session=session, status='confirmed')
+        
+        reminder_count = 0
+        for booking in bookings:
+            Notification.objects.create(
+                user=booking.learner,
+                type='session_reminder',
+                title='Session Reminder',
+                message=f'Don\'t forget! "{session.title}" is coming up soon. Make sure you\'re ready to join.',
+                related_session=session
+            )
+            reminder_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Reminders sent to {reminder_count} learners!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
