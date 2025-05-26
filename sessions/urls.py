@@ -43,10 +43,12 @@ urlpatterns = [
     path('api/sessions/<uuid:session_id>/bookings/', api_views.session_bookings, name='api_session_bookings'),
     path('api/sessions/<uuid:session_id>/send-reminders/', api_views.send_session_reminders, name='api_send_reminders'),
     
-    # Advanced WebRTC Features
-    path('api/sessions/<uuid:session_id>/end/', api_views.end_session_api, name='end_session_api'),
-    path('api/sessions/<uuid:session_id>/leave/', api_views.leave_session_api, name='leave_session_api'),
-    path('api/create-gift-payment/', api_views.create_gift_payment, name='create_gift_payment'),
+    # Advanced WebRTC Features (using existing functions)
+    path('api/sessions/<uuid:session_id>/end-advanced/', api_views.end_session, name='end_session_advanced'),
+    
+    # Gift Payment System with Razorpay
+    path('api/gift/create/', views.create_gift_payment, name='create_gift_payment'),
+    path('api/gift/verify/', views.verify_gift_payment, name='verify_gift_payment'),
     
     # WebRTC Room access endpoints
     path('<uuid:session_id>/room/', views.session_room, name='session_room'),
