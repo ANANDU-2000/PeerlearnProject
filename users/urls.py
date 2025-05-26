@@ -18,6 +18,8 @@ urlpatterns = [
     
     # API endpoints for live validation
     path('api/check-email/', api_views.check_email_exists, name='check_email_exists'),
+    path('api/check-username/', views.check_username_api, name='check_username_api'),
+    path('api/check-email-new/', views.check_email_api, name='check_email_api'),
     path('api/users/profile/update/', views.update_profile_api, name='api_update_profile'),
     
     # REAL Working Admin API endpoints

@@ -60,12 +60,34 @@ class CustomLoginView(LoginView):
             return reverse_lazy('learner_dashboard')
 
 class UserRegistrationView(CreateView):
-    """Redirect to step-by-step registration"""
-    def get(self, request, *args, **kwargs):
-        return redirect('register_steps')
+    model = User
+    form_class = UserRegistrationForm
+    template_name = 'registration/register_working.html'
     
-    def post(self, request, *args, **kwargs):
-        return redirect('register_steps')
+    def get_initial(self):
+        initial = super().get_initial()
+        role = self.request.GET.get('role', 'learner')
+        if role in ['mentor', 'learner']:
+            initial['role'] = role
+        return initial
+    
+    def form_valid(self, form):
+        user = form.save()
+        username = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password1')
+        user = authenticate(username=username, password=password)
+        login(self.request, user)
+        messages.success(self.request, 'Registration successful!')
+        
+        if user.role == 'mentor':
+            return redirect('mentor_dashboard')
+        else:
+            return redirect('learner_dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['role'] = self.request.GET.get('role', 'learner')
+        return context
 
 def register_steps_view(request):
     """Enhanced step-by-step registration with profile image upload"""
@@ -331,6 +353,48 @@ def update_profile_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
+def check_username_api(request):
+    """Real-time username availability check"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET method required'}, status=405)
+    
+    username = request.GET.get('username', '').strip()
+    if not username:
+        return JsonResponse({'available': False, 'message': 'Username is required'})
+    
+    if len(username) < 3:
+        return JsonResponse({'available': False, 'message': 'Username must be at least 3 characters'})
+    
+    if len(username) > 30:
+        return JsonResponse({'available': False, 'message': 'Username must be less than 30 characters'})
+    
+    # Check if username already exists
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({'available': False, 'message': 'Username already taken'})
+    
+    return JsonResponse({'available': True, 'message': 'Username is available'})
+
+def check_email_api(request):
+    """Real-time email availability check with smart detection"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET method required'}, status=405)
+    
+    email = request.GET.get('email', '').strip().lower()
+    if not email:
+        return JsonResponse({'valid': False, 'message': 'Email is required'})
+    
+    # Basic email validation
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return JsonResponse({'valid': False, 'message': 'Please enter a valid email address'})
+    
+    # Check if email already exists
+    if User.objects.filter(email=email).exists():
+        return JsonResponse({'valid': False, 'message': 'Email already registered'})
+    
+    return JsonResponse({'valid': True, 'message': 'Email is available'})
 
 @login_required
 def admin_dashboard(request):
