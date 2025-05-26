@@ -40,7 +40,7 @@ urlpatterns = [
     path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
     
     # Dashboard data endpoints
-    path('api/sessions/mentor-dashboard/', get_real_mentor_sessions, name='mentor_dashboard_data'),
+    path('api/sessions/mentor-dashboard/', mentor_dashboard_fixed, name='mentor_dashboard_data'),
     
     # Use existing working API endpoint
     # path('api/mentor-data/', mentor_dashboard_clean, name='mentor_data_clean'),

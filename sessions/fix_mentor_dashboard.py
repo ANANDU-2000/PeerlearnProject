@@ -24,10 +24,12 @@ def mentor_dashboard_fixed(request):
         bookings_count = all_bookings.count()
         real_earnings = bookings_count * 50  # Real calculation based on actual bookings
         
-        # Organize REAL sessions by status
+        # Organize ALL your REAL sessions by status
         draft_sessions = []
         scheduled_sessions = []
         past_sessions = []
+        
+        print(f"Processing {all_sessions.count()} real sessions from database...")
         
         for session in all_sessions:
             real_bookings = session.bookings.all().count()
@@ -36,7 +38,7 @@ def mentor_dashboard_fixed(request):
                 'title': session.title,
                 'description': session.description[:100] if session.description else 'No description',
                 'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else 'Not scheduled',
-                'duration': session.duration if hasattr(session, 'duration') else 60,
+                'duration': 60,
                 'bookings_count': real_bookings,
                 'status': session.status,
                 'can_start': real_bookings > 0,
@@ -44,12 +46,20 @@ def mentor_dashboard_fixed(request):
                 'participants': real_bookings
             }
             
+            # Categorize based on actual status
             if session.status == 'draft':
                 draft_sessions.append(session_data)
+                print(f"Added draft session: {session.title}")
             elif session.status == 'scheduled':
-                scheduled_sessions.append(session_data) 
-            else:
+                scheduled_sessions.append(session_data)
+                print(f"Added scheduled session: {session.title}")
+            elif session.status == 'completed':
                 past_sessions.append(session_data)
+                print(f"Added past session: {session.title}")
+            else:
+                # Default to scheduled if status is unclear
+                scheduled_sessions.append(session_data)
+                print(f"Added session to scheduled (default): {session.title} - Status: {session.status}")
         
         # REAL session requests from actual bookings
         session_requests = []

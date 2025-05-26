@@ -481,7 +481,7 @@ def mentor_dashboard_data(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 
-@login_required  
+@login_required
 @require_http_methods(["POST"])
 def mark_ready(request, session_id):
     """Mark learner as ready for session"""
