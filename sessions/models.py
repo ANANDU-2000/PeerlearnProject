@@ -18,6 +18,7 @@ class Session(models.Model):
     mentor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mentor_sessions')
     title = models.CharField(max_length=200)
     description = models.TextField()
+    thumbnail = models.ImageField(upload_to='session_thumbnails/', blank=True, null=True, help_text="Session cover image")
     schedule = models.DateTimeField()
     duration = models.IntegerField(help_text="Duration in minutes")
     max_participants = models.IntegerField(default=10)

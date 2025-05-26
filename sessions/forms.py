@@ -10,7 +10,7 @@ class SessionForm(forms.ModelForm):
     
     class Meta:
         model = Session
-        fields = ['title', 'description', 'schedule', 'duration', 'max_participants']
+        fields = ['title', 'description', 'thumbnail', 'schedule', 'duration', 'max_participants']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
         }
