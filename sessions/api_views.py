@@ -474,7 +474,13 @@ def mentor_dashboard_data(request):
         past_sessions = []
         
         for session in mentor_sessions:
-            bookings_count = session.bookings.filter(status='confirmed').count()
+            # Get real booking data
+            session_bookings = session.bookings.filter(status='confirmed')
+            bookings_count = session_bookings.count()
+            
+            # Count ready learners (who clicked ready button)
+            ready_learners = session_bookings.filter(learner_ready=True).count()
+            
             # Calculate time to start for session readiness
             time_to_start = 999
             session_status = session.status
@@ -489,6 +495,18 @@ def mentor_dashboard_data(request):
                     session.status = 'completed'
                     session.save()
             
+            # Get booked learners list for this session
+            booked_learners = []
+            for booking in session_bookings:
+                booked_learners.append({
+                    'id': booking.learner.id,
+                    'name': f"{booking.learner.first_name} {booking.learner.last_name}",
+                    'username': booking.learner.username,
+                    'ready': getattr(booking, 'learner_ready', False),
+                    'booking_time': booking.created_at.strftime('%b %d, %Y %I:%M %p'),
+                    'status': booking.status
+                })
+
             session_data = {
                 'id': str(session.id),
                 'title': session.title,
@@ -502,11 +520,15 @@ def mentor_dashboard_data(request):
                 'maxParticipants': session.max_participants,
                 'participants': bookings_count,
                 'current_bookings': bookings_count,
+                'ready_learners': ready_learners,
+                'booked_learners': booked_learners,
                 'status': session.status,
                 'bookings_text': f'Booked: {bookings_count}/{session.max_participants}',
+                'ready_text': f'Ready: {ready_learners}/{bookings_count}' if bookings_count > 0 else 'Ready: 0/0',
                 'timeToStart': time_to_start,
-                'mentorReady': False,
-                'learnersReady': bookings_count > 0,
+                'canStart': time_to_start <= 15 and time_to_start >= -5 and bookings_count > 0,
+                'mentorReady': getattr(session, 'mentor_ready', False),
+                'learnersReady': ready_learners == bookings_count and bookings_count > 0,
                 'publishing': False
             }
             
@@ -531,6 +553,35 @@ def mentor_dashboard_data(request):
                 'status': req.status
             })
         
+        # Get all sessions with bookings for the "Booked Sessions" tab
+        booked_sessions_data = []
+        sessions_with_bookings = mentor_sessions.filter(bookings__status='confirmed').distinct()
+        
+        for session in sessions_with_bookings:
+            session_bookings = session.bookings.filter(status='confirmed')
+            learners = []
+            for booking in session_bookings:
+                learners.append({
+                    'id': booking.learner.id,
+                    'name': f"{booking.learner.first_name} {booking.learner.last_name}",
+                    'username': booking.learner.username,
+                    'ready': getattr(booking, 'learner_ready', False),
+                    'booking_time': booking.created_at.strftime('%b %d, %Y %I:%M %p'),
+                    'status': booking.status
+                })
+            
+            booked_sessions_data.append({
+                'id': str(session.id),
+                'title': session.title,
+                'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
+                'duration': session.duration,
+                'price': str(session.price) if session.price else 'Free',
+                'learners': learners,
+                'total_bookings': len(learners),
+                'ready_count': sum(1 for learner in learners if learner['ready']),
+                'status': session.status
+            })
+
         return JsonResponse({
             'total_students': total_students,
             'sessions_this_month': sessions_this_month,
@@ -539,7 +590,8 @@ def mentor_dashboard_data(request):
             'sessions': {
                 'draft': draft_sessions,
                 'scheduled': scheduled_sessions,
-                'past': past_sessions
+                'past': past_sessions,
+                'booked': booked_sessions_data
             },
             'requests': pending_requests,
             'earnings': {
