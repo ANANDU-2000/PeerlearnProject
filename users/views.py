@@ -60,34 +60,12 @@ class CustomLoginView(LoginView):
             return reverse_lazy('learner_dashboard')
 
 class UserRegistrationView(CreateView):
-    model = User
-    form_class = UserRegistrationForm
-    template_name = 'registration/register_working.html'
+    """Redirect to step-by-step registration"""
+    def get(self, request, *args, **kwargs):
+        return redirect('register_steps')
     
-    def get_initial(self):
-        initial = super().get_initial()
-        role = self.request.GET.get('role', 'learner')
-        if role in ['mentor', 'learner']:
-            initial['role'] = role
-        return initial
-    
-    def form_valid(self, form):
-        user = form.save()
-        username = form.cleaned_data.get('username')
-        password = form.cleaned_data.get('password1')
-        user = authenticate(username=username, password=password)
-        login(self.request, user)
-        messages.success(self.request, 'Registration successful!')
-        
-        if user.role == 'mentor':
-            return redirect('mentor_dashboard')
-        else:
-            return redirect('learner_dashboard')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['role'] = self.request.GET.get('role', 'learner')
-        return context
+    def post(self, request, *args, **kwargs):
+        return redirect('register_steps')
 
 def register_steps_view(request):
     """Enhanced step-by-step registration with profile image upload"""
