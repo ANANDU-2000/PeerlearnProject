@@ -177,18 +177,15 @@ def session_room(request, session_id):
         messages.error(request, 'You do not have access to this session.')
         return redirect('session_detail', session_id=session_id)
     
-    # Create or get room token
-    room_token, created = RoomToken.objects.get_or_create(
-        session=session,
-        user=request.user,
-        defaults={
-            'expires_at': timezone.now() + timezone.timedelta(hours=2)
-        }
-    )
+    # Simple room access without token dependency
+    room_token = {
+        'token': str(session.id),
+        'expires_at': timezone.now() + timezone.timedelta(hours=2)
+    }
     
     context = {
         'session': session,
-        'room_token': room_token.token,
+        'room_token': room_token['token'],
         'is_mentor': request.user == session.mentor,
     }
     
