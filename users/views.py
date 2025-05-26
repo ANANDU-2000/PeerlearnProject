@@ -15,15 +15,29 @@ from sessions.models import Session, Booking, Request
 from recommendations.recommendation_engine import get_recommendations_for_user, get_mentor_recommendations_for_user
 
 def landing_page(request):
-    """Coursera-style landing page with featured sessions and mentors"""
+    """Coursera-style landing page with ONLY future sessions and real mentors"""
     now = timezone.now()
+    
+    # Get ONLY future sessions with real mentors
     featured_sessions = Session.objects.filter(
         schedule__gte=now,
-        status='scheduled'
-    ).order_by('schedule')[:6]
+        status='scheduled',
+        mentor__isnull=False
+    ).select_related('mentor').distinct().order_by('schedule')[:6]
+    
+    # Get ONLY real mentors (no duplicates, with actual profiles)
+    featured_mentors = User.objects.filter(
+        role='mentor',
+        first_name__isnull=False,
+        last_name__isnull=False
+    ).exclude(
+        first_name='',
+        last_name=''
+    ).distinct()[:8]
     
     context = {
         'featured_sessions': featured_sessions,
+        'featured_mentors': featured_mentors,
     }
     return render(request, 'landing_page.html', context)
 
