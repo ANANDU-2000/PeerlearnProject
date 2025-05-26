@@ -492,25 +492,62 @@
                         <i data-feather="user" class="h-5 w-5 mr-2 text-blue-600"></i>
                         Based on Your Interests
                     </h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
                         {% for session in recommended_sessions %}
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                <div class="flex justify-between items-start mb-3">
-                                    <h5 class="font-medium text-gray-900">{{ session.title }}</h5>
-                                    <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Free</span>
-                                </div>
-                                <p class="text-sm text-gray-600 mb-3">{{ session.description|truncatewords:10 }}</p>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-500">{{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
-                                    <a href="{% url 'session_detail' session.id %}" 
-                                       class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
-                                        View Details
-                                    </a>
+                                    <!-- Left: Session Info -->
+                                    <div class="flex items-center space-x-4 flex-1">
+                                        <!-- Thumbnail -->
+                                        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                                            {{ session.title|first|upper }}
+                                        </div>
+                                        
+                                        <!-- Session Details -->
+                                        <div class="flex-1">
+                                            <h5 class="font-semibold text-gray-900 mb-1">{{ session.title }}</h5>
+                                            <p class="text-sm text-gray-600 mb-2">{{ session.description|truncatewords:10 }}</p>
+                                            <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                                <span>By {{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
+                                                <span>•</span>
+                                                <span>{{ session.schedule|date:"M d, g:i A" }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Right: Price & Actions -->
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Price Tag -->
+                                        {% if session.price > 0 %}
+                                            <span class="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-semibold rounded-full">
+                                                ₹{{ session.price }}
+                                            </span>
+                                        {% else %}
+                                            <span class="bg-green-100 text-green-800 px-3 py-1 text-sm font-semibold rounded-full">
+                                                Free
+                                            </span>
+                                        {% endif %}
+                                        
+                                        <!-- Action Buttons -->
+                                        <a href="{% url 'session_detail' session.id %}"
+                                           class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                                            Details
+                                        </a>
+                                        <form method="post" action="{% url 'book_session' session.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                                Book Now
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         {% empty %}
-                            <div class="col-span-2 text-center py-8">
-                                <i data-feather="lightbulb" class="h-12 w-12 mx-auto text-gray-300 mb-3"></i>
+                            <div class="text-center py-8">
+                                <svg class="h-12 w-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
                                 <p class="text-gray-500">Complete your profile to get personalized recommendations</p>
                             </div>
                         {% endfor %}

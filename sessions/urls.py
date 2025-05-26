@@ -35,6 +35,10 @@ urlpatterns = [
     path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
     
     # Dashboard data endpoints
+    path('api/mentor-dashboard/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
+    
+    # Session status endpoints
+    path('api/mark-ready/<uuid:session_id>/', api_views.mark_ready, name='api_mark_ready'),
     
     # Room access endpoints
     path('room/<uuid:session_id>/', views.session_room, name='session_room'),

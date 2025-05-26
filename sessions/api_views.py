@@ -555,6 +555,37 @@ def mentor_dashboard_data(request):
 
 @login_required  
 @require_http_methods(["POST"])
+def mark_ready(request, session_id):
+    """Mark learner as ready for session"""
+    if request.method == 'POST':
+        try:
+            booking = Booking.objects.get(
+                session_id=session_id,
+                learner=request.user,
+                status='confirmed'
+            )
+            
+            # Update booking status to ready
+            booking.ready_status = True
+            booking.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Marked as ready successfully!'
+            })
+        except Booking.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Booking not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
 def create_session_api(request):
     """Create session from modal - Complete workflow with recommendations"""
     try:
