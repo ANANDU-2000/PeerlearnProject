@@ -274,10 +274,45 @@ class RecommendationEngine:
 
 def get_recommendations_for_user(user):
     """Main function to get recommendations for a user"""
-    engine = RecommendationEngine(user)
-    return engine.get_personalized_recommendations()
+    try:
+        engine = RecommendationEngine(user)
+        recommendations = engine.get_personalized_recommendations()
+        
+        # Convert to simple list format for template
+        session_list = []
+        for rec in recommendations[:6]:  # Limit to 6 recommendations
+            if isinstance(rec, tuple) and len(rec) >= 2:
+                session, score = rec[0], rec[1]
+                session_list.append(session)
+            elif hasattr(rec, 'title'):  # Direct session object
+                session_list.append(rec)
+        
+        return session_list
+    except Exception as e:
+        # Return fallback sessions if ML engine fails
+        from sessions.models import Session
+        from django.utils import timezone
+        return Session.objects.filter(
+            status='scheduled',
+            schedule__gte=timezone.now()
+        ).select_related('mentor')[:6]
 
 def get_mentor_recommendations_for_user(user):
     """Get mentor recommendations for a user"""
-    engine = RecommendationEngine(user)
-    return engine.get_mentor_recommendations()
+    try:
+        engine = RecommendationEngine(user)
+        mentor_recs = engine.get_mentor_recommendations()
+        
+        # Convert to simple list format for template
+        mentor_list = []
+        for rec in mentor_recs[:6]:
+            if isinstance(rec, dict) and 'mentor' in rec:
+                mentor_list.append(rec['mentor'])
+            elif hasattr(rec, 'username'):  # Direct mentor object
+                mentor_list.append(rec)
+        
+        return mentor_list
+    except Exception as e:
+        # Return fallback mentors if ML engine fails
+        from users.models import User
+        return User.objects.filter(role='mentor')[:6]
