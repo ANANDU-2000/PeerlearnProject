@@ -623,7 +623,7 @@
                 
                 async performUserAction(userId, action) {
                     try {
-                        const response = await fetch('/admin-dashboard/user-action/', {
+                        const response = await fetch('/admin-dashboard/api/user-action/', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -659,7 +659,7 @@
 
                 async performSessionAction(sessionId, action, newTitle = '') {
                     try {
-                        const response = await fetch('/admin-dashboard/session-action/', {
+                        const response = await fetch('/admin-dashboard/api/session-action/', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
