@@ -7,21 +7,54 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
     .learner-bg {
-        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .learner-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="rgba(255,255,255,.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+        opacity: 0.3;
     }
     .session-card {
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        backdrop-filter: blur(10px);
     }
     .session-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
     }
     .tab-content {
         min-height: 400px;
+        background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
     }
     .recommendation-card {
-        background: linear-gradient(45deg, #f0f9ff, #e0f2fe);
-        border-left: 4px solid #3b82f6;
+        background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fefce8 100%);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .gradient-border {
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
+        border-radius: 12px;
+        padding: 2px;
+    }
+    .gradient-border-inner {
+        background: white;
+        border-radius: 10px;
+        height: 100%;
     }
     .waiting-animation {
         animation: pulse 2s infinite;
