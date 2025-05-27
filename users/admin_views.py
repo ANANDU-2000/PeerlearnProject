@@ -118,6 +118,51 @@ def admin_dashboard(request):
 
 
 @staff_member_required
+@require_http_methods(["POST"])
+def admin_user_action(request):
+    """Handle advanced user management actions"""
+    user_id = request.POST.get('user_id')
+    action = request.POST.get('action')
+    
+    try:
+        user = get_object_or_404(User, id=user_id)
+        
+        if action == 'ban':
+            user.is_active = False
+            user.save()
+            message = f"User {user.username} banned successfully"
+        elif action == 'unban':
+            user.is_active = True
+            user.save()
+            message = f"User {user.username} unbanned successfully"
+        elif action == 'delete':
+            username = user.username
+            user.delete()
+            message = f"User {username} deleted permanently"
+        elif action == 'view_activity':
+            # Return user activity data
+            user_sessions = Session.objects.filter(mentor=user).count()
+            user_bookings = Booking.objects.filter(learner=user).count()
+            return JsonResponse({
+                'success': True, 
+                'activity': {
+                    'sessions_created': user_sessions,
+                    'sessions_booked': user_bookings,
+                    'last_login': user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never',
+                    'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M'),
+                    'is_online': True,  # Implement real online detection
+                    'total_revenue': user_sessions * 500
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid action'})
+            
+        return JsonResponse({'success': True, 'message': message})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@staff_member_required
 @require_http_methods(["GET"])
 def admin_users_api(request):
     """API endpoint for user management data"""
