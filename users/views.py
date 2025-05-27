@@ -96,18 +96,19 @@ def register_steps_view(request):
     
     elif request.method == 'POST':
         try:
-            # Get form data from wizard
+            # Get form data from wizard - handle both formats
             role = request.POST.get('role')
-            first_name = request.POST.get('firstName')
-            last_name = request.POST.get('lastName')
-            username = request.POST.get('username')
-            email = request.POST.get('email')
-            password1 = request.POST.get('password')
-            password2 = request.POST.get('confirmPassword')
+            first_name = request.POST.get('firstName') or request.POST.get('first_name')
+            last_name = request.POST.get('lastName') or request.POST.get('last_name')
+            username = request.POST.get('username', '').lower().strip()
+            email = request.POST.get('email', '').lower().strip()
+            password1 = request.POST.get('password') or request.POST.get('password1')
+            password2 = request.POST.get('confirmPassword') or request.POST.get('password2')
             
             # Optional fields from wizard
             skills = request.POST.get('skills', '')
-            domains = request.POST.getlist('domains[]')  # Handle multiple domains
+            domains_str = request.POST.get('domains', '')
+            domains = domains_str.split(',') if domains_str else []
             expertise = ','.join(domains) if domains else ''
             bio = request.POST.get('bio', '')
             experience = request.POST.get('experience', '')
