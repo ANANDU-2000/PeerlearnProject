@@ -606,3 +606,16 @@ def upload_profile_image(request):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+def advanced_register_view(request):
+    """Render the advanced registration page"""
+    if request.user.is_authenticated:
+        if hasattr(request.user, "role"):
+            if request.user.role == "mentor":
+                return redirect("mentor_dashboard")
+            else:
+                return redirect("learner_dashboard")
+        return redirect("learner_dashboard")
+    
+    return render(request, "registration/register_advanced.html")
