@@ -18,9 +18,9 @@ from recommendations.models import PopularityMetric
 def ai_recommendations_api(request):
     """Get AI-powered session recommendations for the learner"""
     try:
-        # Get user's interests and past sessions
-        user_interests = request.user.interests or []
-        user_skills = request.user.skills or []
+        # Get user's interests and past sessions (handle if these fields don't exist)
+        user_interests = getattr(request.user, 'interests', []) or []
+        user_skills = getattr(request.user, 'skills', []) or []
         
         # Get sessions user hasn't booked
         booked_session_ids = Booking.objects.filter(
@@ -218,6 +218,42 @@ def request_refund_api(request):
             'success': False,
             'error': 'Invalid JSON data'
         }, status=400)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_notifications_api(request):
+    """Get user notifications"""
+    try:
+        # Return sample notifications for now - you can integrate with your notification system later
+        notifications = [
+            {
+                'id': 1,
+                'title': 'Session Reminder',
+                'message': 'Your Python session starts in 30 minutes',
+                'time': '2 minutes ago',
+                'read': False,
+                'icon': 'bell'
+            },
+            {
+                'id': 2,
+                'title': 'New Mentor Available',
+                'message': 'A new mentor matching your interests has joined',
+                'time': '1 hour ago',
+                'read': True,
+                'icon': 'user-plus'
+            }
+        ]
+        
+        return Response({
+            'success': True,
+            'notifications': notifications
+        })
+        
     except Exception as e:
         return Response({
             'success': False,
