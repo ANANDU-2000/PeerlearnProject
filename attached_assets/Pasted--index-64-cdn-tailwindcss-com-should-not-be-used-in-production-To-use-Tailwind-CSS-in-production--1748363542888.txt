@@ -1,0 +1,35 @@
+(index):64 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+(anonymous) @ (index):64Understand this warning
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of undefined (reading 'click')
+
+Expression: "$refs.imageInput.click()"
+
+ <button type=​"button" @click=​"$refs.imageInput.click()​" class=​"inline-flex items-center px-4 py-2 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:​bg-blue-100 transition-colors">​…​</button>​flex
+re @ cdn.min.js:1Understand this warning
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of undefined (reading 'click')
+    at [Alpine] $refs.imageInput.click(register/) (eval at <anonymous> (https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js:5:665), <anonymous>:3:49)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:39121
+    at o (cdn.min.js:5:28011)
+    at cdn.min.js:5:29010
+    at HTMLButtonElement.<anonymous> (cdn.min.js:5:28033)Understand this error
+cdn.min.js:1 Alpine Expression Error: Cannot read properties of undefined (reading 'click')
+
+Expression: "$refs.imageInput.click()"
+
+ <button type=​"button" @click=​"$refs.imageInput.click()​" class=​"inline-flex items-center px-4 py-2 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:​bg-blue-100 transition-colors">​…​</button>​flex
+re @ cdn.min.js:1Understand this warning
+cdn.min.js:5 Uncaught TypeError: Cannot read properties of undefined (reading 'click')
+    at [Alpine] $refs.imageInput.click(register/) (eval at <anonymous> (https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js:5:665), <anonymous>:3:49)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:39121
+    at o (cdn.min.js:5:28011)
+    at cdn.min.js:5:29010
+    at HTMLButtonElement.<anonymous> (cdn.min.js:5:28033)Understand this error
+register/:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 (Forbidden)Understand this error
+register/:741 Registration error: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON

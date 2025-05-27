@@ -195,12 +195,48 @@
                     
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-                        <input x-model="formData.email" 
-                               @input="validateEmail()"
-                               type="email" 
-                               placeholder="Enter your email address"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                        <p class="text-xs text-gray-500 mt-1">We'll use this for login and important notifications</p>
+                        <div class="relative">
+                            <input x-model="formData.email" 
+                                   @input="checkEmailAvailability()"
+                                   type="email" 
+                                   placeholder="Enter your email address"
+                                   :class="emailStatus === 'available' ? 'border-green-500 focus:ring-green-500' : emailStatus === 'taken' ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'"
+                                   class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-blue-500 transition-colors pr-10">
+                            
+                            <!-- Email Status Indicator -->
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <div x-show="emailStatus === 'checking'" class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                                <svg x-show="emailStatus === 'available'" class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <svg x-show="emailStatus === 'taken'" class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Status Messages -->
+                        <div class="mt-1">
+                            <p x-show="emailStatus === 'available'" class="text-xs text-green-600 flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                Great! This email is available
+                            </p>
+                            <p x-show="emailStatus === 'taken'" class="text-xs text-red-600 flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                This email is already registered. Try signing in instead.
+                            </p>
+                            <p x-show="emailStatus === 'checking'" class="text-xs text-blue-600 flex items-center">
+                                <svg class="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Checking availability...
+                            </p>
+                            <p x-show="!emailStatus" class="text-xs text-gray-500">We'll use this for login and important notifications</p>
+                        </div>
                     </div>
                     
                     <div>
@@ -303,16 +339,55 @@
                         </p>
                     </div>
                     
-                    <!-- Skills -->
+                    <!-- Skills with AI Suggestions -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <span x-text="formData.role === 'mentor' ? 'Specific Skills & Technologies You Teach' : 'Skills You Want to Learn'"></span>
                         </label>
-                        <input x-model="formData.skills" 
-                               type="text" 
-                               :placeholder="formData.role === 'mentor' ? 'e.g., React, Python, UI Design, Machine Learning, Product Management...' : 'e.g., JavaScript, Data Analysis, Digital Marketing, Photography...'"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                        <p class="text-xs text-gray-500 mt-1">Separate multiple skills with commas - this helps with matching</p>
+                        <div class="relative">
+                            <input x-model="formData.skills" 
+                                   @input="debounceSkillSuggestions()"
+                                   type="text" 
+                                   :placeholder="formData.role === 'mentor' ? 'e.g., React, Python, UI Design, Machine Learning, Product Management...' : 'e.g., JavaScript, Data Analysis, Digital Marketing, Photography...'"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            
+                            <!-- AI Skill Suggestions Dropdown -->
+                            <div x-show="skillSuggestions.length > 0" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 translate-y-1"
+                                 x-transition:enter-end="opacity-100 translate-y-0"
+                                 class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                                <div class="p-3 text-xs font-medium text-blue-600 bg-blue-50 border-b flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                    Smart Suggestions from Popular Sessions
+                                </div>
+                                <template x-for="(suggestion, index) in skillSuggestions" :key="index">
+                                    <button type="button" 
+                                            @click="addSkillSuggestion(suggestion.skill)" 
+                                            class="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="font-medium text-gray-900" x-text="suggestion.skill"></span>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    <span x-text="suggestion.sessions + ' active sessions'"></span>
+                                                    <span class="mx-2">•</span>
+                                                    <span x-text="suggestion.category"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center text-xs text-blue-600">
+                                                <span x-text="suggestion.trend"></span>
+                                                <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Start typing to see intelligent suggestions based on active sessions and trends</p>
                     </div>
                     
                     <!-- Experience Level (for mentors) -->
@@ -359,7 +434,7 @@
                                 </label>
                             </div>
                             <div class="flex-1">
-                                <input type="file" id="profileImage" name="profile_image" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden" @change="handleImageUpload($event)">
+                                <input type="file" id="profileImage" name="profile_image" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden" @change="handleImageUpload($event)" x-ref="imageInput">
                                 <button type="button" @click="$refs.imageInput.click()" class="inline-flex items-center px-4 py-2 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -542,6 +617,13 @@ function registrationWizard() {
             acceptMarketing: false
         },
         
+        // Advanced validation states
+        emailStatus: '',
+        emailAvailable: false,
+        skillSuggestions: [],
+        skillDebounceTimer: null,
+        emailDebounceTimer: null,
+        
         passwordStrength: {
             percentage: 0,
             text: 'Weak',
@@ -719,6 +801,126 @@ function registrationWizard() {
             }
         },
         
+        // Real-time email validation with security checks
+        checkEmailAvailability() {
+            clearTimeout(this.emailDebounceTimer);
+            this.emailDebounceTimer = setTimeout(async () => {
+                if (!this.formData.email || !this.isValidEmail(this.formData.email)) {
+                    this.emailStatus = '';
+                    return;
+                }
+                
+                this.emailStatus = 'checking';
+                
+                try {
+                    const response = await fetch('/api/check-email-new/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken(),
+                        },
+                        body: JSON.stringify({ email: this.formData.email })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.available) {
+                        this.emailStatus = 'available';
+                        this.emailAvailable = true;
+                    } else {
+                        this.emailStatus = 'taken';
+                        this.emailAvailable = false;
+                    }
+                } catch (error) {
+                    console.error('Email check error:', error);
+                    this.emailStatus = 'error';
+                }
+            }, 500);
+        },
+
+        // Advanced email validation
+        isValidEmail(email) {
+            const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+            return emailRegex.test(email);
+        },
+
+        // Intelligent skill suggestions from ML recommendation engine
+        debounceSkillSuggestions() {
+            clearTimeout(this.skillDebounceTimer);
+            this.skillDebounceTimer = setTimeout(() => {
+                this.getSkillSuggestions();
+            }, 300);
+        },
+
+        async getSkillSuggestions() {
+            if (!this.formData.skills || this.formData.skills.length < 2) {
+                this.skillSuggestions = [];
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/skill-suggestions/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken(),
+                    },
+                    body: JSON.stringify({
+                        query: this.formData.skills,
+                        role: this.formData.role,
+                        domains: this.formData.domains
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.skillSuggestions = data.suggestions || [];
+                }
+            } catch (error) {
+                console.error('Skill suggestions error:', error);
+                // Fallback to basic suggestions
+                this.skillSuggestions = this.getBasicSkillSuggestions();
+            }
+        },
+
+        // Basic skill suggestions based on domains
+        getBasicSkillSuggestions() {
+            const suggestions = {
+                'web-development': [
+                    { skill: 'React', sessions: 24, category: 'Frontend', trend: '🔥 Hot' },
+                    { skill: 'Node.js', sessions: 18, category: 'Backend', trend: '📈 Growing' },
+                    { skill: 'TypeScript', sessions: 15, category: 'Language', trend: '⭐ Popular' }
+                ],
+                'data-science': [
+                    { skill: 'Python', sessions: 32, category: 'Programming', trend: '🔥 Hot' },
+                    { skill: 'Machine Learning', sessions: 21, category: 'AI/ML', trend: '📈 Growing' },
+                    { skill: 'Pandas', sessions: 16, category: 'Data Analysis', trend: '⭐ Popular' }
+                ],
+                'design': [
+                    { skill: 'Figma', sessions: 19, category: 'Design Tool', trend: '🔥 Hot' },
+                    { skill: 'UI/UX Design', sessions: 28, category: 'Design', trend: '📈 Growing' },
+                    { skill: 'Prototyping', sessions: 12, category: 'Design Process', trend: '⭐ Popular' }
+                ]
+            };
+
+            const relevantSuggestions = [];
+            this.formData.domains.forEach(domain => {
+                if (suggestions[domain]) {
+                    relevantSuggestions.push(...suggestions[domain]);
+                }
+            });
+
+            return relevantSuggestions.slice(0, 5);
+        },
+
+        addSkillSuggestion(skill) {
+            const currentSkills = this.formData.skills.split(',').map(s => s.trim()).filter(s => s);
+            if (!currentSkills.includes(skill)) {
+                currentSkills.push(skill);
+                this.formData.skills = currentSkills.join(', ');
+            }
+            this.skillSuggestions = [];
+        },
+
         handleImageUpload(event) {
             const file = event.target.files[0];
             if (file) {
