@@ -95,7 +95,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Total Students</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ total_students|default:0 }}</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.totalStudents"></p>
                     </div>
                 </div>
             </div>
@@ -107,7 +107,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Sessions This Month</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ upcoming_sessions|default:0 }}</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.sessionsThisMonth"></p>
                     </div>
                 </div>
             </div>
@@ -119,7 +119,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Average Rating</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ avg_rating|default:0|floatformat:1 }}</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.averageRating"></p>
                     </div>
                 </div>
             </div>
@@ -131,7 +131,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Monthly Earnings</p>
-                        <p class="text-2xl font-bold text-gray-900">₹{{ total_earnings|default:0 }}</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.monthlyEarnings"></p>
                     </div>
                 </div>
             </div>
@@ -1408,33 +1408,13 @@ function mentorDashboard() {
     return {
         activeTab: 'sessions',
         sessionView: 'scheduled',
-        userId: {{ user.id }},  // Fix for Alpine.js userId error
         
-        // Complete analytics object with ALL required properties
-        analytics: {
-            profileViews: {{ user.profile_views|default:0 }},
-            totalEnrollments: {{ total_students|default:0 }},
-            averageRating: {{ avg_rating|default:0 }},
-            completionRate: 85,
-            followers: {{ user.followers.count|default:0 }}
-        },
-        
-        // Complete profile object with ALL required properties
-        profile: {
-            expertise: {{ user.expertise|default:"[]"|safe }},
-            hourlyRate: {{ user.hourly_rate|default:50 }},
-            bio: "{{ user.bio|default:'Professional mentor'|escapejs }}",
-            skills: {{ user.skills|default:"[]"|safe }}
-        },
-        
-        notifications: [],
-        
-        // Data - REAL from database
+        // Data
         stats: {
-            totalStudents: {{ total_students|default:0 }},
-            sessionsThisMonth: {{ upcoming_sessions|default:0 }},
-            averageRating: {{ avg_rating|default:0 }},
-            monthlyEarnings: '₹{{ total_earnings|default:0 }}'
+            totalStudents: 156,
+            sessionsThisMonth: 23,
+            averageRating: 4.8,
+            monthlyEarnings: '$2,340'
         },
         
         tabs: [
@@ -1452,7 +1432,16 @@ function mentorDashboard() {
         mySessions: {
             draft: [],
             scheduled: [],
-            past: []
+            past: [
+                {
+                    id: 3,
+                    title: 'React Fundamentals',
+                    completedDate: 'Jan 20, 2024',
+                    participants: 10,
+                    averageRating: 5,
+                    earnings: 120
+                }
+            ]
         },
         
         sessionRequests: [
@@ -1516,34 +1505,13 @@ function mentorDashboard() {
             }
         ],
         
-        // Initialize ALL required variables with real data
-        activeTab: 'sessions',
-        userId: {{ user.id }},
+        // Initialize state variables that were causing errors
         wsConnected: true,
         unreadNotifications: 3,
         urgentSessions: 1,
         isMobile: false,
         showCreateModal: false,
         showNotifications: false,
-        activeTabs: {},
-        notifications: [],
-        
-        // Real profile data from database
-        profile: {
-            expertise: {{ user.expertise|default:"[]"|safe }},
-            hourlyRate: {{ user.hourly_rate|default:50 }},
-            bio: "{{ user.bio|default:'Professional mentor'|escapejs }}",
-            skills: {{ user.skills|default:"[]"|safe }}
-        },
-        
-        // Real analytics data from database  
-        analytics: {
-            followers: {{ user.followers.count|default:0 }},
-            profileViews: {{ user.profile_views|default:0 }},
-            totalEnrollments: {{ total_students|default:0 }},
-            completionRate: 85,
-            averageRating: {{ avg_rating|default:0|floatformat:1 }}
-        },
         
         // Booked Sessions Data
         bookedSessions: [],
@@ -1554,43 +1522,6 @@ function mentorDashboard() {
             this.loadRealData();
             this.loadBookedSessions();
             this.startRealTimeUpdates();
-        },
-        
-        async loadRealData() {
-            try {
-                const response = await fetch('/api/sessions/mentor-data/', {
-                    headers: {
-                        'X-CSRFToken': this.getCSRFToken()
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // Update stats with real database data
-                    this.stats.totalStudents = data.total_students || 0;
-                    this.stats.sessionsThisMonth = data.sessions_this_month || 0;
-                    this.stats.averageRating = data.average_rating || 0;
-                    this.stats.monthlyEarnings = `₹${data.monthly_earnings || 0}`;
-                    
-                    // Update analytics with real data
-                    this.analytics.profileViews = data.profile_views || 0;
-                    this.analytics.totalEnrollments = data.total_enrollments || 0;
-                    this.analytics.averageRating = data.average_rating || 0;
-                    this.analytics.completionRate = data.completion_rate || 0;
-                    
-                    // Load real sessions
-                    this.mySessions.scheduled = data.scheduled_sessions || [];
-                    this.mySessions.past = data.past_sessions || [];
-                    this.mySessions.draft = data.draft_sessions || [];
-                    
-                    console.log('Real data loaded:', data);
-                } else {
-                    console.error('Failed to load mentor data:', response.status);
-                }
-            } catch (error) {
-                console.error('Error loading real data:', error);
-            }
         },
         
         startRealTimeUpdates() {
@@ -1822,6 +1753,10 @@ function mentorDashboard() {
         
         initMobileNavigation() {
             this.isMobile = window.innerWidth < 768;
+        },
+        
+        createSession() {
+            window.location.href = '/sessions/create/';
         },
         
         editSession(sessionId) {
