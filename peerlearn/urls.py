@@ -18,6 +18,10 @@ urlpatterns = [
     path('api/sessions/mentor-data/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
     path('api/follow-mentor/', api_views.follow_mentor_api, name='follow_mentor_api'),
     path('api/request-mentor-session/', api_views.request_mentor_session_api, name='request_mentor_session_api'),
+    
+    # Communication Insights API  
+    path('api/communication/insights/', api_views.get_communication_insights, name='communication_insights_api'),
+    path('api/communication/export-report/', api_views.export_insights_report, name='export_communication_report'),
     path('recommendations/', include('recommendations.urls')),
 ]
 
