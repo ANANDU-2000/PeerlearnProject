@@ -59,7 +59,7 @@ document.getElementById('razorpay-btn').onclick = function(e) {
     
     var options = {
         "key": "{{ razorpay_key_id }}", 
-        "amount": {{ session.price|mul:100 }}, 
+        "amount": {{ session.price|floatformat:0 }}00, 
         "currency": "INR",
         "name": "PeerLearn",
         "description": "Payment for {{ session.title }}",
