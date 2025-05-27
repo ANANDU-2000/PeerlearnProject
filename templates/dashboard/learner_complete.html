@@ -482,39 +482,31 @@
                 </div>
             </div>
 
-            <!-- 4. Advanced AI Recommendations with Subtabs -->
-            <div x-show="activeTab === 'recommendations'" class="space-y-6">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                    <!-- Recommendation Subtabs -->
-                    <div class="p-4 border-b border-gray-200">
-                        <div class="flex space-x-1 bg-gray-100 rounded-lg p-1">
-                            <button @click="recTab = 'ai'" 
-                                    :class="recTab === 'ai' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
-                                <i data-feather="zap" class="h-4 w-4 mr-1 inline"></i>AI Sessions
-                            </button>
-                            <button @click="recTab = 'trending'" 
-                                    :class="recTab === 'trending' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
-                                <i data-feather="trending-up" class="h-4 w-4 mr-1 inline"></i>Trending
-                            </button>
-                            <button @click="recTab = 'toprated'" 
-                                    :class="recTab === 'toprated' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
-                                <i data-feather="star" class="h-4 w-4 mr-1 inline"></i>Top Rated
-                            </button>
-                        </div>
-                    </div>
+            <!-- 4. AI Recommendations & Trending -->
+            <div x-show="activeTab === 'recommendations'" class="p-6">
+                <!-- Recommendation Subtabs -->
+                <div class="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-6">
+                    <button @click="recTab = 'ai'" 
+                            :class="recTab === 'ai' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                            class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
+                        <i data-feather="zap" class="h-4 w-4 mr-1 inline"></i>AI Recommendations
+                    </button>
+                    <button @click="recTab = 'trending'" 
+                            :class="recTab === 'trending' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                            class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
+                        <i data-feather="trending-up" class="h-4 w-4 mr-1 inline"></i>Trending
+                    </button>
+                </div>
                     
-                    <!-- AI Sessions Subtab -->
-                    <div x-show="recTab === 'ai'" class="p-6">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                                <i data-feather="cpu" class="h-5 w-5 mr-2 text-purple-600"></i>
-                                AI-Powered Recommendations
-                            </h3>
-                            <p class="text-gray-600 text-sm">Personalized sessions based on your learning profile</p>
-                        </div>
+                <!-- AI Sessions Subtab -->
+                <div x-show="recTab === 'ai'">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i data-feather="cpu" class="h-5 w-5 mr-2 text-purple-600"></i>
+                            AI-Powered Recommendations
+                        </h3>
+                        <p class="text-gray-600 text-sm">Personalized sessions based on your learning profile</p>
+                    </div>
                         
                         <div class="space-y-3">
                             {% for session in recommended_sessions %}
@@ -581,15 +573,15 @@
                         </div>
                     </div>
                     
-                    <!-- Trending Subtab -->
-                    <div x-show="recTab === 'trending'" class="p-6">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                                <i data-feather="trending-up" class="h-5 w-5 mr-2 text-orange-600"></i>
-                                Trending This Week
-                            </h3>
-                            <p class="text-gray-600 text-sm">Most popular sessions recently</p>
-                        </div>
+                <!-- Trending Subtab -->
+                <div x-show="recTab === 'trending'">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i data-feather="trending-up" class="h-5 w-5 mr-2 text-orange-600"></i>
+                            Trending This Week
+                        </h3>
+                        <p class="text-gray-600 text-sm">Most popular sessions recently</p>
+                    </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {% for session in available_sessions|slice:":6" %}
@@ -613,37 +605,6 @@
                         </div>
                     </div>
                     
-                    <!-- Top Rated Subtab -->
-                    <div x-show="recTab === 'toprated'" class="p-6">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                                <i data-feather="star" class="h-5 w-5 mr-2 text-yellow-600"></i>
-                                Highest Rated Sessions
-                            </h3>
-                            <p class="text-gray-600 text-sm">Best sessions according to learner feedback</p>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {% for session in available_sessions|slice:":6" %}
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                                <div class="flex justify-between items-start mb-3">
-                                    <h4 class="font-medium text-gray-900 text-sm">{{ session.title }}</h4>
-                                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">
-                                        ⭐ 4.8
-                                    </span>
-                                </div>
-                                <p class="text-xs text-gray-600 mb-3">{{ session.description|truncatewords:10 }}</p>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs text-gray-500">{{ session.mentor.first_name }}</span>
-                                    <button onclick="bookSession('{{ session.id }}', '{{ session.title }}', {{ session.price }})" 
-                                            class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs font-medium">
-                                        Book
-                                    </button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
                 </div>
             </div>
 
