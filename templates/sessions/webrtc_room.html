@@ -724,16 +724,16 @@
 
         // Fix for rating submission
         function submitRating() {
-            const rating = document.querySelector('input[name="rating"]:checked');
+            const selectedRating = document.querySelector('.star-container.selected');
             const comment = document.getElementById('ratingComment');
             
-            if (!rating) {
-                alert('Please select a rating');
+            if (!selectedRating) {
+                alert('Please select a rating by clicking the stars');
                 return;
             }
 
             const ratingData = {
-                rating: parseInt(rating.value),
+                rating: parseInt(selectedRating.getAttribute('data-rating')),
                 comment: comment ? comment.value : '',
                 session_id: '{{ session.id }}'
             };
