@@ -22,6 +22,8 @@ urlpatterns = [
     path('api/sessions/<uuid:session_id>/publish/', api_views.publish_session, name='api_publish_session'),
     path('api/sessions/<uuid:session_id>/feedback/', api_views.submit_feedback, name='api_submit_feedback'),
     path('api/sessions/<uuid:session_id>/submit-rating/', api_views.submit_rating_simple, name='submit_rating_simple'),
+    path('api/sessions/<uuid:session_id>/complete/', api_views.complete_session, name='api_complete_session'),
+    path('api/sessions/<uuid:session_id>/leave/', api_views.leave_session, name='api_leave_session'),
     
     # Request endpoints
     path('api/requests/create/', api_views.create_session_request, name='api_create_request'),

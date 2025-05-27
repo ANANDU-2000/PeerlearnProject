@@ -1204,3 +1204,62 @@ def submit_rating_simple(request, session_id):
             'success': False, 
             'message': f'Error: {str(e)}'
         }, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def complete_session(request, session_id):
+    """Mark session as completed and update real data"""
+    try:
+        session = Session.objects.get(id=session_id)
+        data = json.loads(request.body)
+        
+        # Update session status to completed
+        session.status = 'completed'
+        session.save()
+        
+        # Update booking status if exists
+        try:
+            booking = Booking.objects.get(session=session)
+            booking.status = 'completed'
+            booking.save()
+        except Booking.DoesNotExist:
+            pass
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Session completed successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def leave_session(request, session_id):
+    """Handle learner leaving session"""
+    try:
+        session = Session.objects.get(id=session_id)
+        
+        # Update user activity for participation tracking
+        from users.models import UserActivity
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type='session_participation',
+            details=f'Participated in session: {session.title}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Left session successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }, status=400)
