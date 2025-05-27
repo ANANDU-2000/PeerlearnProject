@@ -556,17 +556,45 @@ def mentor_dashboard_data(request):
                 'status': req.status
             })
         
+        # Import real-time session manager
+        from .real_time_session_manager import get_real_time_session_data
+        
+        # Get real-time data with authentic session timing
+        real_time_data = get_real_time_session_data(request.user)
+        
+        # Update session status based on real timing
+        for session_update in real_time_data.get('session_updates', []):
+            for session in draft_sessions + scheduled_sessions + past_sessions:
+                if session['id'] == session_update['session_id']:
+                    session['real_status'] = session_update['status']
+                    session['alert_level'] = session_update['alert_level']
+                    session['time_until_start'] = session_update['time_until_start']
+                    session['can_join_early'] = session_update['can_join_early']
+                    session['needs_action'] = session_update['needs_action']
+                    session['ready_learners'] = session_update['ready_learners']
+        
+        # Use real earnings data instead of calculations
+        real_earnings = real_time_data.get('earnings', {})
+        if real_earnings:
+            total_earnings = real_earnings.get('total_earnings', total_earnings)
+            monthly_earnings = real_earnings.get('monthly_earnings', monthly_earnings)
+            available_balance = real_earnings.get('available_balance', int(total_earnings * 0.8))
+            pending_earnings = real_earnings.get('pending_earnings', 0)
+        else:
+            available_balance = int(total_earnings * 0.8)
+            pending_earnings = 0
+
         return JsonResponse({
             'success': True,
             'total_students': total_students,
             'sessions_this_month': sessions_this_month,
             'average_rating': round(avg_rating, 1),
             'monthly_earnings': int(monthly_earnings),
-            'available_balance': int(total_earnings * 0.8),
+            'available_balance': available_balance,
             'total_earnings': int(total_earnings),
-            'pending_earnings': 0,
+            'pending_earnings': pending_earnings,
             'enrolled_students': real_enrolled_students,
-            'withdrawal_history': [],
+            'withdrawal_history': real_earnings.get('withdrawal_history', []) if real_earnings else [],
             'messages': [],
             'sessions': {
                 'draft': draft_sessions,
@@ -575,9 +603,10 @@ def mentor_dashboard_data(request):
             },
             'scheduled_sessions': scheduled_sessions,
             'requests': pending_requests,
+            'real_time_updates': real_time_data.get('session_updates', []),
             'earnings': {
-                'available': int(total_earnings * 0.8),
-                'pending': 0,
+                'available': available_balance,
+                'pending': pending_earnings,
                 'total': int(total_earnings)
             }
         })
