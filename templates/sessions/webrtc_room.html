@@ -722,15 +722,21 @@
             document.getElementById('feedbackInbox').classList.remove('hidden');
         }
 
-        // Fix for rating submission
+        // Rating submission function - Updated v2.0
         function submitRating() {
+            console.log('submitRating called - v2.0');
+            
             // Try multiple ways to get the rating
             let selectedRating = document.querySelector('.star-container.selected');
             let comment = document.getElementById('feedbackComment');
             
+            console.log('Selected rating element:', selectedRating);
+            console.log('Comment element:', comment);
+            
             // Fallback: look for any clicked star
             if (!selectedRating) {
                 selectedRating = document.querySelector('.star-container[data-rating]');
+                console.log('Fallback rating element:', selectedRating);
             }
             
             // Get rating value safely
@@ -745,13 +751,29 @@
                 session_id: '{{ session.id }}'
             };
             
-            console.log('Submitting rating:', ratingData);
+            console.log('Final rating data:', ratingData);
+
+            // Get CSRF token from cookie
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
 
             fetch(`/sessions/api/sessions/{{ session.id }}/live-feedback/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': getCookie('csrftoken') || '{{ csrf_token }}'
                 },
                 body: JSON.stringify(ratingData)
             })
