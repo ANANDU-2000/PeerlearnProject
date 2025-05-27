@@ -474,3 +474,49 @@ def communication_insights_view(request):
     }
     
     return render(request, 'dashboard/communication_insights_compact.html', context)
+
+@login_required
+def advanced_profile_view(request, user_id):
+    """Advanced Instagram/Facebook-like profile view"""
+    from .follow_models import Follow, UserActivity, UserBadge, UserSocialStats
+    from sessions.models import Session, Feedback
+    
+    profile_user = get_object_or_404(User, id=user_id)
+    
+    # Get or create social stats
+    social_stats, _ = UserSocialStats.objects.get_or_create(user=profile_user)
+    social_stats.update_stats()
+    
+    # Check if current user follows this profile
+    is_following = Follow.objects.filter(
+        follower=request.user,
+        following=profile_user
+    ).exists() if request.user.is_authenticated and request.user != profile_user else False
+    
+    # Get recent activities
+    recent_activities = UserActivity.objects.filter(user=profile_user)[:10]
+    
+    # Get user badges
+    badges = UserBadge.objects.filter(user=profile_user)
+    
+    # Get recent sessions if mentor
+    recent_sessions = []
+    if profile_user.role == 'mentor':
+        recent_sessions = Session.objects.filter(mentor=profile_user).order_by('-created_at')[:5]
+    
+    # Get recent reviews
+    recent_reviews = []
+    if profile_user.role == 'mentor':
+        recent_reviews = Feedback.objects.filter(session__mentor=profile_user).order_by('-created_at')[:5]
+    
+    context = {
+        'profile_user': profile_user,
+        'social_stats': social_stats,
+        'is_following': is_following,
+        'recent_activities': recent_activities,
+        'badges': badges,
+        'recent_sessions': recent_sessions,
+        'recent_reviews': recent_reviews,
+    }
+    
+    return render(request, 'profile/advanced_profile.html', context)

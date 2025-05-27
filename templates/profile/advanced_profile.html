@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile_user.username }} - PeerLearn Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        .profile-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.1); }
+        .chat-container { height: 400px; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div x-data="profileManager()" class="min-h-screen">
+        
+        <!-- Top Navigation -->
+        <nav class="bg-white shadow-lg border-b-4 border-blue-500">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="/" class="text-2xl font-bold text-blue-600">PeerLearn</a>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button @click="showChatModal = true" 
+                                class="text-gray-600 hover:text-blue-600">
+                            <i data-feather="message-circle" class="h-6 w-6"></i>
+                        </button>
+                        <a href="/dashboard/" class="text-gray-600 hover:text-blue-600">Dashboard</a>
+                        <div class="w-8 h-8 bg-blue-500 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Profile Header -->
+        <div class="profile-gradient relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="flex flex-col md:flex-row items-center md:items-end space-y-4 md:space-y-0 md:space-x-8">
+                    
+                    <!-- Profile Image -->
+                    <div class="relative">
+                        <img src="{{ profile_user.profile_image.url|default:'/static/default-avatar.png' }}" 
+                             alt="{{ profile_user.username }}"
+                             class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover">
+                        {% if profile_user.is_verified %}
+                        <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <i data-feather="check" class="h-4 w-4 text-white"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Profile Info -->
+                    <div class="flex-1 text-center md:text-left">
+                        <h1 class="text-3xl font-bold text-white">
+                            {{ profile_user.first_name }} {{ profile_user.last_name }}
+                            <span class="text-xl text-blue-200">@{{ profile_user.username }}</span>
+                        </h1>
+                        <p class="text-blue-100 mt-2">{{ profile_user.bio|default:"No bio available" }}</p>
+                        <div class="flex flex-wrap items-center justify-center md:justify-start mt-4 space-x-4 text-white">
+                            <span class="flex items-center">
+                                <i data-feather="map-pin" class="h-4 w-4 mr-1"></i>
+                                {{ profile_user.location|default:"Location not set" }}
+                            </span>
+                            <span class="flex items-center">
+                                <i data-feather="calendar" class="h-4 w-4 mr-1"></i>
+                                Joined {{ profile_user.created_at|date:"M Y" }}
+                            </span>
+                            {% if profile_user.role == 'mentor' %}
+                            <span class="bg-yellow-500 text-yellow-900 px-3 py-1 rounded-full text-sm font-medium">
+                                ⭐ {{ social_stats.average_rating|floatformat:1 }} Rating
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-3">
+                        {% if request.user != profile_user %}
+                        <button @click="toggleFollow()" 
+                                :class="isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'"
+                                class="px-6 py-2 text-white font-medium rounded-lg transition-colors">
+                            <span x-text="isFollowing ? 'Following' : 'Follow'"></span>
+                        </button>
+                        <button @click="openChat()" 
+                                class="px-6 py-2 bg-white text-blue-600 font-medium rounded-lg hover:bg-gray-100 transition-colors">
+                            <i data-feather="message-circle" class="h-4 w-4 mr-2"></i>
+                            Message
+                        </button>
+                        {% endif %}
+                        <button class="px-4 py-2 bg-white bg-opacity-20 text-white rounded-lg hover:bg-opacity-30 transition-colors">
+                            <i data-feather="share-2" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats Row -->
+                <div class="grid grid-cols-4 gap-4 mt-8">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">{{ social_stats.followers_count }}</div>
+                        <div class="text-blue-200 text-sm">Followers</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">{{ social_stats.following_count }}</div>
+                        <div class="text-blue-200 text-sm">Following</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">{{ social_stats.total_sessions }}</div>
+                        <div class="text-blue-200 text-sm">Sessions</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">{{ social_stats.profile_views_count }}</div>
+                        <div class="text-blue-200 text-sm">Profile Views</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Left Sidebar - Profile Details -->
+                <div class="space-y-6">
+                    
+                    <!-- About Section -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">About</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <i data-feather="briefcase" class="h-5 w-5 text-gray-400 mr-3"></i>
+                                <span class="text-gray-700">{{ profile_user.role|title }}</span>
+                            </div>
+                            {% if profile_user.expertise %}
+                            <div class="flex items-center">
+                                <i data-feather="award" class="h-5 w-5 text-gray-400 mr-3"></i>
+                                <span class="text-gray-700">{{ profile_user.expertise }}</span>
+                            </div>
+                            {% endif %}
+                            {% if profile_user.website %}
+                            <div class="flex items-center">
+                                <i data-feather="link" class="h-5 w-5 text-gray-400 mr-3"></i>
+                                <a href="{{ profile_user.website }}" target="_blank" 
+                                   class="text-blue-600 hover:underline">{{ profile_user.website }}</a>
+                            </div>
+                            {% endif %}
+                            <div class="flex items-center">
+                                <i data-feather="clock" class="h-5 w-5 text-gray-400 mr-3"></i>
+                                <span class="text-gray-700">Avg Response: {{ social_stats.response_time_hours|floatformat:1 }}h</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skills & Interests -->
+                    {% if profile_user.skills or profile_user.interests %}
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Skills & Interests</h3>
+                        {% if profile_user.skills %}
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Skills</h4>
+                            <div class="flex flex-wrap gap-2">
+                                {% for skill in profile_user.skills|split:"," %}
+                                <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">{{ skill|strip }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if profile_user.interests %}
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Interests</h4>
+                            <div class="flex flex-wrap gap-2">
+                                {% for interest in profile_user.interests|split:"," %}
+                                <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">{{ interest|strip }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Badges -->
+                    {% if badges %}
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Achievements</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            {% for badge in badges %}
+                            <div class="text-center p-3 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg">
+                                <div class="text-2xl mb-2">🏆</div>
+                                <div class="text-xs font-medium text-yellow-800">{{ badge.get_badge_type_display }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Main Content Area -->
+                <div class="lg:col-span-2 space-y-6">
+                    
+                    <!-- Navigation Tabs -->
+                    <div class="bg-white rounded-xl shadow-lg">
+                        <div class="border-b border-gray-200">
+                            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                                <button @click="activeTab = 'activity'"
+                                        :class="activeTab === 'activity' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                                    Recent Activity
+                                </button>
+                                {% if profile_user.role == 'mentor' %}
+                                <button @click="activeTab = 'sessions'"
+                                        :class="activeTab === 'sessions' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                                    Sessions
+                                </button>
+                                {% endif %}
+                                <button @click="activeTab = 'reviews'"
+                                        :class="activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap">
+                                    Reviews
+                                </button>
+                            </nav>
+                        </div>
+                        
+                        <!-- Tab Content -->
+                        <div class="p-6">
+                            <!-- Activity Tab -->
+                            <div x-show="activeTab === 'activity'" class="space-y-4">
+                                {% for activity in recent_activities %}
+                                <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <i data-feather="activity" class="h-5 w-5 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-gray-900">{{ activity.description }}</p>
+                                        <p class="text-sm text-gray-500">{{ activity.created_at|timesince }} ago</p>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center py-8 text-gray-500">
+                                    <i data-feather="activity" class="h-12 w-12 mx-auto mb-4 text-gray-300"></i>
+                                    <p>No recent activity</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Sessions Tab -->
+                            {% if profile_user.role == 'mentor' %}
+                            <div x-show="activeTab === 'sessions'" class="space-y-4">
+                                {% for session in recent_sessions %}
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-medium text-gray-900">{{ session.title }}</h4>
+                                    <p class="text-sm text-gray-600 mt-1">{{ session.description|truncatewords:15 }}</p>
+                                    <div class="flex items-center justify-between mt-3">
+                                        <span class="text-sm text-gray-500">{{ session.created_at|date:"M d, Y" }}</span>
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                                            {{ session.status|title }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center py-8 text-gray-500">
+                                    <i data-feather="video" class="h-12 w-12 mx-auto mb-4 text-gray-300"></i>
+                                    <p>No sessions yet</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Reviews Tab -->
+                            <div x-show="activeTab === 'reviews'" class="space-y-4">
+                                {% for review in recent_reviews %}
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center">
+                                            <img src="{{ review.user.profile_image.url|default:'/static/default-avatar.png' }}" 
+                                                 alt="{{ review.user.username }}"
+                                                 class="w-8 h-8 rounded-full mr-3">
+                                            <span class="font-medium">{{ review.user.username }}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <span class="text-yellow-400">⭐</span>
+                                                {% else %}
+                                                    <span class="text-gray-300">⭐</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-700">{{ review.comment }}</p>
+                                    <p class="text-sm text-gray-500 mt-2">{{ review.created_at|timesince }} ago</p>
+                                </div>
+                                {% empty %}
+                                <div class="text-center py-8 text-gray-500">
+                                    <i data-feather="star" class="h-12 w-12 mx-auto mb-4 text-gray-300"></i>
+                                    <p>No reviews yet</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Modal -->
+        <div x-show="showChatModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+             style="display: none;">
+            
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-semibold">Message {{ profile_user.username }}</h3>
+                    <button @click="showChatModal = false" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+                
+                <div class="chat-container overflow-y-auto p-4 space-y-3">
+                    <template x-for="message in messages" :key="message.id">
+                        <div :class="message.sender_id === '{{ request.user.id }}' ? 'flex justify-end' : 'flex justify-start'">
+                            <div :class="message.sender_id === '{{ request.user.id }}' ? 
+                                'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'"
+                                 class="max-w-xs px-4 py-2 rounded-lg">
+                                <p x-text="message.message"></p>
+                                <p class="text-xs opacity-75 mt-1" x-text="formatTime(message.created_at)"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <div class="border-t p-4">
+                    <div class="flex space-x-2">
+                        <input x-model="newMessage" 
+                               @keydown.enter="sendMessage()"
+                               placeholder="Type a message..."
+                               class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button @click="sendMessage()" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function profileManager() {
+            return {
+                activeTab: 'activity',
+                showChatModal: false,
+                isFollowing: {{ is_following|yesno:"true,false" }},
+                messages: [],
+                newMessage: '',
+                
+                async toggleFollow() {
+                    try {
+                        const response = await fetch('/api/social/follow/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: JSON.stringify({
+                                user_id: '{{ profile_user.id }}',
+                                action: this.isFollowing ? 'unfollow' : 'follow'
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            this.isFollowing = !this.isFollowing;
+                        }
+                    } catch (error) {
+                        console.error('Follow error:', error);
+                    }
+                },
+                
+                async openChat() {
+                    this.showChatModal = true;
+                    await this.loadMessages();
+                },
+                
+                async loadMessages() {
+                    try {
+                        const response = await fetch(`/api/social/messages/{{ profile_user.id }}/`);
+                        const data = await response.json();
+                        if (data.success) {
+                            this.messages = data.messages;
+                        }
+                    } catch (error) {
+                        console.error('Load messages error:', error);
+                    }
+                },
+                
+                async sendMessage() {
+                    if (!this.newMessage.trim()) return;
+                    
+                    try {
+                        const response = await fetch('/api/social/send-message/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: JSON.stringify({
+                                recipient_id: '{{ profile_user.id }}',
+                                message: this.newMessage
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            this.newMessage = '';
+                            await this.loadMessages();
+                        }
+                    } catch (error) {
+                        console.error('Send message error:', error);
+                    }
+                },
+                
+                formatTime(timestamp) {
+                    return new Date(timestamp).toLocaleTimeString();
+                }
+            }
+        }
+        
+        // Initialize Feather icons
+        feather.replace();
+    </script>
+</body>
+</html>

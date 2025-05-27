@@ -18,6 +18,13 @@ class User(AbstractUser):
     career_goals = models.TextField(blank=True, help_text="Career aspirations for AI guidance")
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Social Features
+    location = models.CharField(max_length=100, blank=True)
+    website = models.URLField(blank=True)
+    social_links = models.JSONField(default=dict, blank=True)  # Store LinkedIn, Twitter, etc.
+    is_verified = models.BooleanField(default=False)
+    privacy_settings = models.JSONField(default=dict, blank=True)  # Profile visibility settings
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
