@@ -7,6 +7,7 @@ from sessions import api_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin-dashboard/', include('users.admin_urls')),  # Modern admin dashboard
     path('', include('users.urls')),
     path('sessions/', include('sessions.urls')),
     path('api/sessions/<uuid:session_id>/bookings/', api_views.session_bookings, name='api_session_bookings'),

@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PeerLearn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50" x-data="adminDashboard()">
+    <!-- Mobile Menu Overlay -->
+    <div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-50 lg:hidden">
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-75" @click="mobileMenuOpen = false"></div>
+        <div class="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
+            <div class="h-full flex flex-col">
+                <!-- Mobile Header -->
+                <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                    <div class="flex items-center">
+                        <div class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-graduation-cap text-white"></i>
+                        </div>
+                        <span class="ml-2 text-xl font-bold text-gray-900">PeerLearn Admin</span>
+                    </div>
+                    <button @click="mobileMenuOpen = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Navigation -->
+                <nav class="flex-1 px-4 py-4 space-y-2">
+                    <template x-for="item in navigationItems" :key="item.id">
+                        <a href="#" 
+                           @click="activeTab = item.id; mobileMenuOpen = false"
+                           :class="activeTab === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                           class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i :class="item.icon" class="mr-3 text-lg"></i>
+                            <span x-text="item.name"></span>
+                            <span x-show="item.badge" 
+                                  x-text="item.badgeCount" 
+                                  class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1"></span>
+                        </a>
+                    </template>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Sidebar -->
+    <div class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:border-gray-200 lg:bg-white lg:shadow-sm">
+        <!-- Sidebar Header -->
+        <div class="flex items-center justify-center h-16 px-6 border-b border-gray-200">
+            <div class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-graduation-cap text-white"></i>
+            </div>
+            <span class="ml-2 text-xl font-bold text-gray-900">PeerLearn Admin</span>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <template x-for="item in navigationItems" :key="item.id">
+                <a href="#" 
+                   @click="activeTab = item.id"
+                   :class="activeTab === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                   class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i :class="item.icon" class="mr-3 text-lg"></i>
+                    <span x-text="item.name"></span>
+                    <span x-show="item.badge" 
+                          x-text="item.badgeCount" 
+                          class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1"></span>
+                </a>
+            </template>
+        </nav>
+        
+        <!-- Admin Profile -->
+        <div class="border-t border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-shield text-white"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900">Admin User</p>
+                    <p class="text-xs text-gray-500">Super Admin</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="lg:pl-64">
+        <!-- Top Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200 px-4 py-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <!-- Mobile Menu Button -->
+                <button @click="mobileMenuOpen = true" class="lg:hidden text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                
+                <!-- Page Title -->
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900" x-text="pageTitle"></h1>
+                    <div class="ml-4 flex items-center">
+                        <div class="flex items-center text-sm text-gray-500">
+                            <div class="flex items-center mr-4">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                                <span>System Status: Online</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span x-text="currentTime"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Header Actions -->
+                <div class="flex items-center space-x-4">
+                    <!-- Real-time Stats -->
+                    <div class="hidden md:flex items-center space-x-4 text-sm">
+                        <div class="flex items-center text-green-600">
+                            <i class="fas fa-users mr-1"></i>
+                            <span x-text="liveStats.onlineUsers"></span> online
+                        </div>
+                        <div class="flex items-center text-blue-600">
+                            <i class="fas fa-video mr-1"></i>
+                            <span x-text="liveStats.activeSessions"></span> sessions
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="p-2 text-gray-400 hover:text-gray-600 relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span x-show="unreadNotifications > 0" 
+                                  x-text="unreadNotifications"
+                                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce"></span>
+                        </button>
+                        
+                        <!-- Notifications Dropdown -->
+                        <div x-show="open" @click.away="open = false" x-cloak
+                             class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="font-semibold text-gray-900">System Notifications</h3>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                <template x-for="notification in notifications" :key="notification.id">
+                                    <div class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                                        <div class="flex items-start">
+                                            <div :class="notification.type === 'alert' ? 'bg-red-100 text-red-600' : notification.type === 'warning' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'" 
+                                                 class="p-2 rounded-full mr-3">
+                                                <i :class="notification.icon" class="text-sm"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm text-gray-900" x-text="notification.message"></p>
+                                                <p class="text-xs text-gray-500" x-text="notification.time"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="p-3 text-center border-t border-gray-200">
+                                <a href="#" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="p-2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-plus-circle text-xl"></i>
+                        </button>
+                        
+                        <!-- Quick Actions Dropdown -->
+                        <div x-show="open" @click.away="open = false" x-cloak
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                            <div class="py-1">
+                                <a href="#" @click="quickAction('add_user')" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-user-plus mr-3 text-blue-500"></i>
+                                    Add User
+                                </a>
+                                <a href="#" @click="quickAction('send_announcement')" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-bullhorn mr-3 text-green-500"></i>
+                                    Send Announcement
+                                </a>
+                                <a href="#" @click="quickAction('export_data')" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-download mr-3 text-purple-500"></i>
+                                    Export Data
+                                </a>
+                                <a href="#" @click="quickAction('system_backup')" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-database mr-3 text-orange-500"></i>
+                                    System Backup
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="p-4 sm:p-6 lg:p-8">
+            <!-- Overview Tab -->
+            <div x-show="activeTab === 'overview'" x-cloak>
+                <!-- Key Metrics Cards with Real-time Updates -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total Users -->
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-sm">Total Users</p>
+                                <p class="text-3xl font-bold" x-text="realTimeMetrics.totalUsers"></p>
+                                <p class="text-blue-100 text-sm mt-2">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span x-text="realTimeMetrics.userGrowth"></span>% this month
+                                </p>
+                            </div>
+                            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                                <i class="fas fa-users text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Sessions -->
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100 text-sm">Live Sessions</p>
+                                <p class="text-3xl font-bold" x-text="realTimeMetrics.activeSessions"></p>
+                                <p class="text-green-100 text-sm mt-2">
+                                    <i class="fas fa-clock"></i>
+                                    <span x-text="realTimeMetrics.avgSessionTime"></span> avg
+                                </p>
+                            </div>
+                            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                                <i class="fas fa-video text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Revenue -->
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100 text-sm">Daily Revenue</p>
+                                <p class="text-3xl font-bold">₹<span x-text="realTimeMetrics.dailyRevenue"></span></p>
+                                <p class="text-purple-100 text-sm mt-2">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span x-text="realTimeMetrics.revenueGrowth"></span>% vs yesterday
+                                </p>
+                            </div>
+                            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                                <i class="fas fa-rupee-sign text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Health -->
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-100 text-sm">System Health</p>
+                                <p class="text-3xl font-bold"><span x-text="realTimeMetrics.systemHealth"></span>%</p>
+                                <p class="text-orange-100 text-sm mt-2">
+                                    <i class="fas fa-shield-alt"></i>
+                                    All systems operational
+                                </p>
+                            </div>
+                            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                                <i class="fas fa-server text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real-time Activity Feed -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <!-- Live Activity Stream -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Live Activity Stream</h3>
+                                <div class="flex items-center text-sm text-green-600">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                                    Live
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4 max-h-96 overflow-y-auto">
+                                <template x-for="activity in liveActivity" :key="activity.id">
+                                    <div class="flex items-start space-x-3 animate-fadeIn">
+                                        <div :class="activity.type === 'user' ? 'bg-blue-100 text-blue-600' : activity.type === 'session' ? 'bg-green-100 text-green-600' : activity.type === 'payment' ? 'bg-purple-100 text-purple-600' : 'bg-yellow-100 text-yellow-600'" 
+                                             class="p-2 rounded-full flex-shrink-0">
+                                            <i :class="activity.icon" class="text-sm"></i>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm text-gray-900" x-text="activity.description"></p>
+                                            <p class="text-xs text-gray-500" x-text="activity.time"></p>
+                                        </div>
+                                        <div x-show="activity.amount" class="flex-shrink-0 text-sm font-medium text-green-600">
+                                            ₹<span x-text="activity.amount"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions Panel -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-3">
+                                <button @click="quickAction('user_management')" class="w-full flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                                    <i class="fas fa-users text-blue-600 mr-3"></i>
+                                    <span class="text-sm font-medium text-blue-900">Manage Users</span>
+                                </button>
+                                <button @click="quickAction('session_monitoring')" class="w-full flex items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                                    <i class="fas fa-video text-green-600 mr-3"></i>
+                                    <span class="text-sm font-medium text-green-900">Monitor Sessions</span>
+                                </button>
+                                <button @click="quickAction('payment_overview')" class="w-full flex items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+                                    <i class="fas fa-credit-card text-purple-600 mr-3"></i>
+                                    <span class="text-sm font-medium text-purple-900">Payment Reports</span>
+                                </button>
+                                <button @click="quickAction('system_settings')" class="w-full flex items-center p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
+                                    <i class="fas fa-cog text-orange-600 mr-3"></i>
+                                    <span class="text-sm font-medium text-orange-900">System Settings</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- User Growth Chart -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">User Growth Trend</h3>
+                                <select x-model="chartPeriod" @change="updateCharts()" class="text-sm border border-gray-300 rounded-md px-3 py-1">
+                                    <option value="7">Last 7 days</option>
+                                    <option value="30">Last 30 days</option>
+                                    <option value="90">Last 3 months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <canvas id="userGrowthChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Revenue Chart -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Revenue Analytics</h3>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-2xl font-bold text-green-600">₹<span x-text="totalRevenue"></span></span>
+                                    <span class="text-sm text-gray-500">Total</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <canvas id="revenueChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management Tab -->
+            <div x-show="activeTab === 'users'" x-cloak>
+                <!-- User Management Interface -->
+                <div class="space-y-6">
+                    <!-- Enhanced User Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-100 rounded-lg">
+                                    <i class="fas fa-user-graduate text-blue-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">Total Learners</p>
+                                    <p class="text-2xl font-bold" x-text="userStats.learners"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-green-100 rounded-lg">
+                                    <i class="fas fa-chalkboard-teacher text-green-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">Active Mentors</p>
+                                    <p class="text-2xl font-bold" x-text="userStats.mentors"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-yellow-100 rounded-lg">
+                                    <i class="fas fa-user-clock text-yellow-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">Pending Approval</p>
+                                    <p class="text-2xl font-bold" x-text="userStats.pending"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-red-100 rounded-lg">
+                                    <i class="fas fa-user-slash text-red-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">Suspended Users</p>
+                                    <p class="text-2xl font-bold" x-text="userStats.suspended"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Search and Filters -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">User Management Console</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                                <div class="md:col-span-2">
+                                    <div class="relative">
+                                        <input type="text" x-model="userSearch" 
+                                               @input="searchUsers()"
+                                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="Search users by name, email, or skills...">
+                                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <select x-model="roleFilter" @change="applyFilters()" class="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                        <option value="">All Roles</option>
+                                        <option value="mentor">Mentors</option>
+                                        <option value="learner">Learners</option>
+                                        <option value="admin">Admins</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <select x-model="statusFilter" @change="applyFilters()" class="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                        <option value="">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="suspended">Suspended</option>
+                                    </select>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button @click="exportUsers()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-sm">
+                                        <i class="fas fa-download mr-2"></i>Export
+                                    </button>
+                                    <button @click="showAddUserModal = true" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm">
+                                        <i class="fas fa-plus mr-2"></i>Add User
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Users Table -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                <input type="checkbox" @change="selectAllUsers($event)" class="rounded">
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Details</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role & Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activity</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Earnings/Spent</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <template x-for="user in paginatedUsers" :key="user.id">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <input type="checkbox" :value="user.id" class="rounded">
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center">
+                                                        <div class="h-12 w-12 relative">
+                                                            <img :src="user.avatar" :alt="user.name" class="h-12 w-12 rounded-full object-cover">
+                                                            <div x-show="user.isOnline" class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900" x-text="user.name"></div>
+                                                            <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                                            <div x-show="user.skills" class="text-xs text-blue-600 mt-1" x-text="user.skills"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="space-y-1">
+                                                        <span :class="user.role === 'mentor' ? 'bg-green-100 text-green-800' : user.role === 'learner' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'"
+                                                              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" 
+                                                              x-text="user.role"></span>
+                                                        <br>
+                                                        <span :class="user.status === 'active' ? 'bg-green-100 text-green-800' : user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : user.status === 'suspended' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'"
+                                                              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" 
+                                                              x-text="user.status"></span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                                    <div class="space-y-1">
+                                                        <div><span x-text="user.totalSessions"></span> sessions</div>
+                                                        <div class="text-xs text-gray-500"><span x-text="user.rating"></span>★ rating</div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-sm">
+                                                    <div x-show="user.role === 'mentor'" class="text-green-600 font-medium">
+                                                        ₹<span x-text="user.totalEarnings"></span>
+                                                    </div>
+                                                    <div x-show="user.role === 'learner'" class="text-blue-600 font-medium">
+                                                        ₹<span x-text="user.totalSpent"></span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-500" x-text="user.lastActive"></td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex space-x-2">
+                                                        <button @click="viewUser(user)" class="text-blue-600 hover:text-blue-900" title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button @click="editUser(user)" class="text-green-600 hover:text-green-900" title="Edit User">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button @click="suspendUser(user)" class="text-yellow-600 hover:text-yellow-900" title="Suspend User">
+                                                            <i class="fas fa-user-lock"></i>
+                                                        </button>
+                                                        <button @click="deleteUser(user)" class="text-red-600 hover:text-red-900" title="Delete User">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Enhanced Pagination -->
+                            <div class="mt-6 flex items-center justify-between">
+                                <div class="text-sm text-gray-700">
+                                    Showing <span class="font-medium" x-text="(currentPage - 1) * pageSize + 1"></span> to 
+                                    <span class="font-medium" x-text="Math.min(currentPage * pageSize, totalUsers)"></span> of 
+                                    <span class="font-medium" x-text="totalUsers"></span> users
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button @click="previousPage()" 
+                                            :disabled="currentPage === 1"
+                                            class="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <template x-for="page in visiblePages" :key="page">
+                                        <button @click="currentPage = page" 
+                                                :class="currentPage === page ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'"
+                                                class="px-3 py-2 border border-gray-300 rounded-md text-sm transition-colors"
+                                                x-text="page"></button>
+                                    </template>
+                                    <button @click="nextPage()" 
+                                            :disabled="currentPage === totalPages"
+                                            class="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sessions Tab -->
+            <div x-show="activeTab === 'sessions'" x-cloak>
+                <div class="space-y-6">
+                    <!-- Session Analytics Header -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-indigo-100 text-sm">Total Sessions</p>
+                                    <p class="text-3xl font-bold" x-text="sessionMetrics.total"></p>
+                                </div>
+                                <i class="fas fa-calendar-alt text-2xl opacity-80"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100 text-sm">Live Sessions</p>
+                                    <p class="text-3xl font-bold" x-text="sessionMetrics.live"></p>
+                                </div>
+                                <i class="fas fa-video text-2xl opacity-80"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-yellow-100 text-sm">Scheduled</p>
+                                    <p class="text-3xl font-bold" x-text="sessionMetrics.scheduled"></p>
+                                </div>
+                                <i class="fas fa-clock text-2xl opacity-80"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-purple-100 text-sm">Completed</p>
+                                    <p class="text-3xl font-bold" x-text="sessionMetrics.completed"></p>
+                                </div>
+                                <i class="fas fa-check-circle text-2xl opacity-80"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Session Monitoring -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Live Session Monitoring</h3>
+                                <div class="flex items-center text-sm text-green-600">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                                    <span x-text="sessionMetrics.live"></span> sessions active
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                <template x-for="session in liveSessions" :key="session.id">
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex-1">
+                                                <h4 class="font-medium text-gray-900" x-text="session.title"></h4>
+                                                <p class="text-sm text-gray-600" x-text="session.mentor"></p>
+                                            </div>
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Live</span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <p class="text-gray-500">Participants</p>
+                                                <p class="font-medium" x-text="session.participants + '/' + session.maxParticipants"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-500">Duration</p>
+                                                <p class="font-medium" x-text="session.duration"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-500">Quality</p>
+                                                <div class="flex items-center">
+                                                    <div :class="session.quality >= 80 ? 'bg-green-500' : session.quality >= 60 ? 'bg-yellow-500' : 'bg-red-500'" 
+                                                         class="w-2 h-2 rounded-full mr-2"></div>
+                                                    <span x-text="session.quality + '%'"></span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-500">Revenue</p>
+                                                <p class="font-medium text-green-600">₹<span x-text="session.revenue"></span></p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 flex space-x-2">
+                                            <button @click="monitorSession(session)" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded text-sm">
+                                                Monitor
+                                            </button>
+                                            <button @click="endSession(session)" class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 py-2 px-3 rounded text-sm">
+                                                End Session
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div x-show="activeTab === 'analytics'" x-cloak>
+                <div class="space-y-6">
+                    <!-- Analytics Dashboard -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                            <h3 class="text-lg font-semibold mb-4">Platform Performance</h3>
+                            <canvas id="platformChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                            <h3 class="text-lg font-semibold mb-4">User Engagement</h3>
+                            <canvas id="engagementChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div x-show="activeTab === 'settings'" x-cloak>
+                <div class="space-y-6">
+                    <!-- System Settings -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Platform Configuration</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Platform Name</label>
+                                    <input type="text" value="PeerLearn" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Support Email</label>
+                                    <input type="email" value="support@peerlearn.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Commission Rate (%)</label>
+                                    <input type="number" value="15" min="0" max="50" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Session Duration (hours)</label>
+                                    <input type="number" value="4" min="1" max="8" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                                    Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function adminDashboard() {
+            return {
+                // UI State
+                activeTab: 'overview',
+                mobileMenuOpen: false,
+                currentTime: '',
+                pageTitle: 'Dashboard Overview',
+                showAddUserModal: false,
+                chartPeriod: '30',
+                
+                // Navigation
+                navigationItems: [
+                    { id: 'overview', name: 'Dashboard', icon: 'fas fa-chart-pie', badge: false },
+                    { id: 'users', name: 'Users', icon: 'fas fa-users', badge: false },
+                    { id: 'sessions', name: 'Sessions', icon: 'fas fa-video', badge: true, badgeCount: 8 },
+                    { id: 'analytics', name: 'Analytics', icon: 'fas fa-chart-bar', badge: false },
+                    { id: 'payments', name: 'Payments', icon: 'fas fa-credit-card', badge: false },
+                    { id: 'reports', name: 'Reports', icon: 'fas fa-file-alt', badge: false },
+                    { id: 'settings', name: 'Settings', icon: 'fas fa-cog', badge: false }
+                ],
+                
+                // Real-time metrics from Django backend
+                realTimeMetrics: {
+                    totalUsers: '{{ total_users|floatformat:0 }}',
+                    userGrowth: '{{ user_growth }}',
+                    activeSessions: '{{ live_sessions }}',
+                    avgSessionTime: '45m',
+                    dailyRevenue: '{{ daily_revenue|floatformat:0 }}',
+                    revenueGrowth: '15.2',
+                    systemHealth: '{{ success_rate }}'
+                },
+                
+                liveStats: {
+                    onlineUsers: '{{ total_users|floatformat:0 }}',
+                    activeSessions: '{{ live_sessions }}'
+                },
+                
+                // Notifications
+                unreadNotifications: 5,
+                notifications: [
+                    {
+                        id: 1,
+                        type: 'alert',
+                        icon: 'fas fa-exclamation-triangle',
+                        message: 'High server load detected on video streaming service',
+                        time: '2 minutes ago'
+                    },
+                    {
+                        id: 2,
+                        type: 'info',
+                        icon: 'fas fa-user-plus',
+                        message: 'New mentor verification request from Dr. Sarah Johnson',
+                        time: '15 minutes ago'
+                    },
+                    {
+                        id: 3,
+                        type: 'warning',
+                        icon: 'fas fa-credit-card',
+                        message: 'Payment gateway experiencing delays',
+                        time: '32 minutes ago'
+                    },
+                    {
+                        id: 4,
+                        type: 'success',
+                        icon: 'fas fa-check',
+                        message: 'System backup completed successfully',
+                        time: '1 hour ago'
+                    }
+                ],
+                
+                // Live Activity
+                liveActivity: [
+                    {
+                        id: 1,
+                        type: 'user',
+                        icon: 'fas fa-user-plus',
+                        description: 'New learner registered: Alex Chen',
+                        time: 'Just now',
+                        amount: null
+                    },
+                    {
+                        id: 2,
+                        type: 'session',
+                        icon: 'fas fa-play',
+                        description: 'Session started: "Advanced Python" by Dr. Mike Wilson',
+                        time: '2 min ago',
+                        amount: null
+                    },
+                    {
+                        id: 3,
+                        type: 'payment',
+                        icon: 'fas fa-rupee-sign',
+                        description: 'Payment received from Sarah Kumar',
+                        time: '5 min ago',
+                        amount: '1,200'
+                    },
+                    {
+                        id: 4,
+                        type: 'system',
+                        icon: 'fas fa-cog',
+                        description: 'Recommendation engine updated',
+                        time: '8 min ago',
+                        amount: null
+                    }
+                ],
+                
+                // User Management
+                userSearch: '',
+                roleFilter: '',
+                statusFilter: '',
+                currentPage: 1,
+                pageSize: 10,
+                totalUsers: 15247,
+                totalRevenue: '12,45,000',
+                
+                userStats: {
+                    learners: '11,892',
+                    mentors: '2,847',
+                    pending: '123',
+                    suspended: '45'
+                },
+                
+                // Session Management
+                sessionMetrics: {
+                    total: '8,456',
+                    live: '47',
+                    scheduled: '234',
+                    completed: '7,892'
+                },
+                
+                liveSessions: [
+                    {
+                        id: 1,
+                        title: 'Advanced React Hooks',
+                        mentor: 'John Smith',
+                        participants: 8,
+                        maxParticipants: 15,
+                        duration: '45m',
+                        quality: 85,
+                        revenue: '2,400'
+                    },
+                    {
+                        id: 2,
+                        title: 'Machine Learning Basics',
+                        mentor: 'Dr. Sarah Wilson',
+                        participants: 12,
+                        maxParticipants: 20,
+                        duration: '1h 15m',
+                        quality: 92,
+                        revenue: '3,600'
+                    },
+                    {
+                        id: 3,
+                        title: 'UI/UX Design Principles',
+                        mentor: 'Maria Garcia',
+                        participants: 6,
+                        maxParticipants: 10,
+                        duration: '28m',
+                        quality: 78,
+                        revenue: '1,800'
+                    }
+                ],
+                
+                // Sample users data
+                users: [
+                    {
+                        id: 1,
+                        name: 'Dr. John Smith',
+                        email: 'john.smith@email.com',
+                        role: 'mentor',
+                        status: 'active',
+                        totalSessions: 156,
+                        rating: '4.9',
+                        totalEarnings: '2,45,000',
+                        totalSpent: '0',
+                        lastActive: '2 hours ago',
+                        avatar: '/static/images/avatars/mentor1.jpg',
+                        isOnline: true,
+                        skills: 'Python, Machine Learning, Data Science'
+                    },
+                    {
+                        id: 2,
+                        name: 'Sarah Johnson',
+                        email: 'sarah.j@email.com',
+                        role: 'learner',
+                        status: 'active',
+                        totalSessions: 23,
+                        rating: '4.7',
+                        totalEarnings: '0',
+                        totalSpent: '15,600',
+                        lastActive: '30 minutes ago',
+                        avatar: '/static/images/avatars/learner1.jpg',
+                        isOnline: true,
+                        skills: null
+                    },
+                    {
+                        id: 3,
+                        name: 'Michael Chen',
+                        email: 'mike.chen@email.com',
+                        role: 'mentor',
+                        status: 'pending',
+                        totalSessions: 0,
+                        rating: 'N/A',
+                        totalEarnings: '0',
+                        totalSpent: '0',
+                        lastActive: '1 day ago',
+                        avatar: '/static/images/avatars/mentor2.jpg',
+                        isOnline: false,
+                        skills: 'React, JavaScript, Node.js'
+                    }
+                ],
+                
+                // Computed properties
+                get filteredUsers() {
+                    let filtered = this.users;
+                    
+                    if (this.userSearch) {
+                        const search = this.userSearch.toLowerCase();
+                        filtered = filtered.filter(user => 
+                            user.name.toLowerCase().includes(search) ||
+                            user.email.toLowerCase().includes(search) ||
+                            (user.skills && user.skills.toLowerCase().includes(search))
+                        );
+                    }
+                    
+                    if (this.roleFilter) {
+                        filtered = filtered.filter(user => user.role === this.roleFilter);
+                    }
+                    
+                    if (this.statusFilter) {
+                        filtered = filtered.filter(user => user.status === this.statusFilter);
+                    }
+                    
+                    return filtered;
+                },
+                
+                get paginatedUsers() {
+                    const start = (this.currentPage - 1) * this.pageSize;
+                    const end = start + this.pageSize;
+                    return this.filteredUsers.slice(start, end);
+                },
+                
+                get totalPages() {
+                    return Math.ceil(this.filteredUsers.length / this.pageSize);
+                },
+                
+                get visiblePages() {
+                    const pages = [];
+                    const start = Math.max(1, this.currentPage - 2);
+                    const end = Math.min(this.totalPages, this.currentPage + 2);
+                    
+                    for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                    }
+                    
+                    return pages;
+                },
+                
+                // Methods
+                init() {
+                    this.updateTime();
+                    setInterval(() => this.updateTime(), 1000);
+                    setInterval(() => this.updateLiveData(), 5000);
+                    this.initCharts();
+                    
+                    this.$watch('activeTab', (value) => {
+                        this.updatePageTitle(value);
+                    });
+                },
+                
+                updateTime() {
+                    const now = new Date();
+                    this.currentTime = now.toLocaleTimeString();
+                },
+                
+                updateLiveData() {
+                    // Simulate real-time data updates
+                    this.liveStats.onlineUsers = String(parseInt(this.liveStats.onlineUsers.replace(',', '')) + Math.floor(Math.random() * 10 - 5));
+                    this.liveStats.activeSessions = String(parseInt(this.liveStats.activeSessions) + Math.floor(Math.random() * 3 - 1));
+                    
+                    // Add new activity
+                    if (Math.random() < 0.3) {
+                        this.addNewActivity();
+                    }
+                },
+                
+                addNewActivity() {
+                    const activities = [
+                        { type: 'user', icon: 'fas fa-user-plus', description: 'New user registered', time: 'Just now' },
+                        { type: 'payment', icon: 'fas fa-rupee-sign', description: 'Payment received', time: 'Just now', amount: Math.floor(Math.random() * 5000 + 500) },
+                        { type: 'session', icon: 'fas fa-play', description: 'Session started', time: 'Just now' }
+                    ];
+                    
+                    const newActivity = activities[Math.floor(Math.random() * activities.length)];
+                    newActivity.id = Date.now();
+                    
+                    this.liveActivity.unshift(newActivity);
+                    if (this.liveActivity.length > 10) {
+                        this.liveActivity.pop();
+                    }
+                },
+                
+                updatePageTitle(tab) {
+                    const titles = {
+                        overview: 'Dashboard Overview',
+                        users: 'User Management',
+                        sessions: 'Session Management',
+                        analytics: 'Analytics & Reports',
+                        payments: 'Payment Management',
+                        reports: 'System Reports',
+                        settings: 'Platform Settings'
+                    };
+                    this.pageTitle = titles[tab] || 'Dashboard';
+                },
+                
+                quickAction(action) {
+                    switch(action) {
+                        case 'add_user':
+                            this.showAddUserModal = true;
+                            break;
+                        case 'user_management':
+                            this.activeTab = 'users';
+                            break;
+                        case 'session_monitoring':
+                            this.activeTab = 'sessions';
+                            break;
+                        case 'payment_overview':
+                            this.activeTab = 'payments';
+                            break;
+                        case 'system_settings':
+                            this.activeTab = 'settings';
+                            break;
+                        default:
+                            alert('Action: ' + action);
+                    }
+                },
+                
+                // User Management Methods
+                searchUsers() {
+                    this.currentPage = 1;
+                },
+                
+                applyFilters() {
+                    this.currentPage = 1;
+                },
+                
+                selectAllUsers(event) {
+                    // Implementation for selecting all users
+                },
+                
+                viewUser(user) {
+                    alert('Viewing user: ' + user.name);
+                },
+                
+                editUser(user) {
+                    alert('Editing user: ' + user.name);
+                },
+                
+                suspendUser(user) {
+                    if (confirm('Are you sure you want to suspend ' + user.name + '?')) {
+                        user.status = 'suspended';
+                    }
+                },
+                
+                deleteUser(user) {
+                    if (confirm('Are you sure you want to delete ' + user.name + '? This action cannot be undone.')) {
+                        const index = this.users.findIndex(u => u.id === user.id);
+                        if (index > -1) {
+                            this.users.splice(index, 1);
+                        }
+                    }
+                },
+                
+                exportUsers() {
+                    alert('Exporting users data...');
+                },
+                
+                // Session Management Methods
+                monitorSession(session) {
+                    alert('Monitoring session: ' + session.title);
+                },
+                
+                endSession(session) {
+                    if (confirm('Are you sure you want to end the session "' + session.title + '"?')) {
+                        const index = this.liveSessions.findIndex(s => s.id === session.id);
+                        if (index > -1) {
+                            this.liveSessions.splice(index, 1);
+                            this.sessionMetrics.live = String(parseInt(this.sessionMetrics.live) - 1);
+                        }
+                    }
+                },
+                
+                // Pagination
+                previousPage() {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                    }
+                },
+                
+                nextPage() {
+                    if (this.currentPage < this.totalPages) {
+                        this.currentPage++;
+                    }
+                },
+                
+                // Charts
+                initCharts() {
+                    this.$nextTick(() => {
+                        this.createUserGrowthChart();
+                        this.createRevenueChart();
+                        this.createPlatformChart();
+                        this.createEngagementChart();
+                    });
+                },
+                
+                updateCharts() {
+                    // Update charts based on selected period
+                    this.createUserGrowthChart();
+                    this.createRevenueChart();
+                },
+                
+                createUserGrowthChart() {
+                    const ctx = document.getElementById('userGrowthChart');
+                    if (!ctx) return;
+                    
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                            datasets: [{
+                                label: 'New Users',
+                                data: [1200, 1900, 3000, 5000, 2000, 3000],
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                },
+                
+                createRevenueChart() {
+                    const ctx = document.getElementById('revenueChart');
+                    if (!ctx) return;
+                    
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                            datasets: [{
+                                label: 'Revenue (₹)',
+                                data: [650000, 780000, 900000, 810000],
+                                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                },
+                
+                createPlatformChart() {
+                    const ctx = document.getElementById('platformChart');
+                    if (!ctx) return;
+                    
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Desktop', 'Mobile', 'Tablet'],
+                            datasets: [{
+                                data: [65, 30, 5],
+                                backgroundColor: [
+                                    'rgba(59, 130, 246, 0.8)',
+                                    'rgba(34, 197, 94, 0.8)',
+                                    'rgba(249, 115, 22, 0.8)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                },
+                
+                createEngagementChart() {
+                    const ctx = document.getElementById('engagementChart');
+                    if (!ctx) return;
+                    
+                    new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: ['Sessions', 'Messages', 'Reviews', 'Bookings', 'Payments'],
+                            datasets: [{
+                                label: 'User Engagement',
+                                data: [85, 70, 90, 75, 80],
+                                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                                borderColor: 'rgba(139, 92, 246, 1)',
+                                pointBackgroundColor: 'rgba(139, 92, 246, 1)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    beginAtZero: true,
+                                    max: 100
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</body>
+</html>
