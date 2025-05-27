@@ -3,6 +3,8 @@
 {% block title %}Learner Dashboard - PeerLearn{% endblock %}
 
 {% block extra_head %}
+<!-- Razorpay Payment Gateway -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
     .learner-bg {
         background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
@@ -242,14 +244,11 @@
                                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
                                         Details
                                     </a>
-                                    <form method="post" action="{% url 'book_session' session.id %}" class="inline">
-                                        {% csrf_token %}
-                                        <button type="submit"
-                                                {% if session.is_full %}disabled{% endif %}
-                                                class="{% if session.is_full %}bg-gray-300 cursor-not-allowed{% else %}bg-blue-600 hover:bg-blue-700{% endif %} text-white px-4 py-2 rounded-lg text-sm font-medium">
-                                            {% if session.is_full %}Full{% else %}Book Now{% endif %}
-                                        </button>
-                                    </form>
+                                    <button onclick="bookSession('{{ session.id }}', '{{ session.title }}', {{ session.price }})"
+                                            {% if session.is_full %}disabled{% endif %}
+                                            class="{% if session.is_full %}bg-gray-300 cursor-not-allowed{% else %}bg-blue-600 hover:bg-blue-700{% endif %} text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                        {% if session.is_full %}Full{% else %}Book Now{% endif %}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -994,6 +993,139 @@ function markReady(sessionId) {
 // Join Early Room Function
 function joinEarlyRoom(sessionId) {
     window.location.href = `/sessions/${sessionId}/room/?early=true`;
+}
+
+// Book Session with Razorpay Payment
+async function bookSession(sessionId, sessionTitle, sessionPrice) {
+    try {
+        // For free sessions, book directly
+        if (sessionPrice === 0) {
+            const response = await fetch(`/api/sessions/${sessionId}/book/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (response.ok) {
+                showSuccessMessage('Session booked successfully!');
+                location.reload();
+            } else {
+                const error = await response.json();
+                showErrorMessage(error.message || 'Failed to book session');
+            }
+            return;
+        }
+        
+        // For paid sessions, initiate Razorpay payment
+        const paymentResponse = await fetch('/api/learner/create-payment/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                session_id: sessionId
+            })
+        });
+        
+        const paymentData = await paymentResponse.json();
+        
+        if (paymentData.success) {
+            // Initialize Razorpay payment
+            const options = {
+                key: paymentData.key,
+                amount: paymentData.amount * 100,
+                currency: paymentData.currency,
+                order_id: paymentData.order_id,
+                name: paymentData.name,
+                description: paymentData.description,
+                prefill: paymentData.prefill,
+                theme: paymentData.theme,
+                handler: function(response) {
+                    verifyPayment(response, sessionId);
+                },
+                modal: {
+                    ondismiss: function() {
+                        showErrorMessage('Payment cancelled');
+                    }
+                }
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            showErrorMessage(paymentData.error || 'Failed to initiate payment');
+        }
+    } catch (error) {
+        console.error('Booking error:', error);
+        showErrorMessage('Failed to book session. Please try again.');
+    }
+}
+
+// Verify Payment and Complete Booking
+async function verifyPayment(response, sessionId) {
+    try {
+        const verifyResponse = await fetch('/api/learner/verify-payment/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                session_id: sessionId
+            })
+        });
+        
+        const verifyData = await verifyResponse.json();
+        
+        if (verifyData.success) {
+            showSuccessMessage('Payment successful! Session booked.');
+            // Redirect to success page or reload dashboard
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showErrorMessage(verifyData.error || 'Payment verification failed');
+        }
+    } catch (error) {
+        console.error('Payment verification error:', error);
+        showErrorMessage('Payment verification failed. Please contact support.');
+    }
+}
+
+// Helper functions
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+}
+
+function showSuccessMessage(message) {
+    // Create success notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function showErrorMessage(message) {
+    // Create error notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
 }
 
 // Countdown Timer Function
