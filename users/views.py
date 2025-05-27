@@ -376,12 +376,19 @@ def check_username_api(request):
 
 def check_email_api(request):
     """Real-time email availability check with smart detection"""
-    if request.method != 'GET':
-        return JsonResponse({'error': 'GET method required'}, status=405)
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip()
+        except:
+            email = request.POST.get('email', '').strip()
+    else:
+        email = request.GET.get('email', '').strip()
     
-    email = request.GET.get('email', '').strip().lower()
+    email = email.lower()
     if not email:
-        return JsonResponse({'valid': False, 'message': 'Email is required'})
+        return JsonResponse({'available': False, 'message': 'Email is required'})
     
     # Basic email validation
     import re

@@ -28,6 +28,9 @@
 {% endblock %}
 
 {% block content %}
+{% load static %}
+{% csrf_token %}
+
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8" 
      x-data="registrationWizard()" 
      x-init="init()">
@@ -914,11 +917,20 @@ function registrationWizard() {
 
         addSkillSuggestion(skill) {
             const currentSkills = this.formData.skills.split(',').map(s => s.trim()).filter(s => s);
-            if (!currentSkills.includes(skill)) {
+            
+            // Check if skill already exists (case-insensitive)
+            const skillExists = currentSkills.some(existingSkill => 
+                existingSkill.toLowerCase() === skill.toLowerCase()
+            );
+            
+            if (!skillExists) {
                 currentSkills.push(skill);
                 this.formData.skills = currentSkills.join(', ');
             }
             this.skillSuggestions = [];
+            
+            // Focus back on the input for continued typing
+            document.querySelector('input[x-model="formData.skills"]')?.focus();
         },
 
         handleImageUpload(event) {
@@ -954,8 +966,23 @@ function registrationWizard() {
         },
 
         getCSRFToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            // Try multiple ways to get CSRF token
+            let token = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            if (!token) {
+                token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            }
+            if (!token) {
+                // Try to get from cookie
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        token = value;
+                        break;
+                    }
+                }
+            }
+            return token || '';
         },
         
         updateIcons() {
