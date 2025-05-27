@@ -163,6 +163,34 @@ def admin_user_action(request):
 
 
 @staff_member_required
+@require_http_methods(["POST"])
+def admin_session_action(request):
+    """Handle session management actions"""
+    session_id = request.POST.get('session_id')
+    action = request.POST.get('action')
+    new_title = request.POST.get('new_title', '')
+    
+    try:
+        from sessions.models import Session
+        session = get_object_or_404(Session, id=session_id)
+        
+        if action == 'edit' and new_title:
+            session.title = new_title
+            session.save()
+            message = f"Session '{new_title}' updated successfully"
+        elif action == 'delete':
+            title = session.title
+            session.delete()
+            message = f"Session '{title}' deleted successfully"
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid action or missing title'})
+            
+        return JsonResponse({'success': True, 'message': message})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@staff_member_required
 @require_http_methods(["GET"])
 def admin_users_api(request):
     """API endpoint for user management data"""
