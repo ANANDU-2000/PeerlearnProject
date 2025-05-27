@@ -1408,13 +1408,14 @@ function mentorDashboard() {
     return {
         activeTab: 'sessions',
         sessionView: 'scheduled',
+        userId: {{ user.id }},  // Fix for Alpine.js userId error
         
-        // Data
+        // Data - will be loaded from database
         stats: {
-            totalStudents: 156,
-            sessionsThisMonth: 23,
-            averageRating: 4.8,
-            monthlyEarnings: '$2,340'
+            totalStudents: 0,
+            sessionsThisMonth: 0,
+            averageRating: 0,
+            monthlyEarnings: '₹0'
         },
         
         tabs: [
@@ -1432,16 +1433,7 @@ function mentorDashboard() {
         mySessions: {
             draft: [],
             scheduled: [],
-            past: [
-                {
-                    id: 3,
-                    title: 'React Fundamentals',
-                    completedDate: 'Jan 20, 2024',
-                    participants: 10,
-                    averageRating: 5,
-                    earnings: 120
-                }
-            ]
+            past: []
         },
         
         sessionRequests: [
