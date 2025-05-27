@@ -606,18 +606,17 @@ function registrationWizard() {
         },
         
         domains: [
+            { value: 'programming', name: 'Programming & Development', icon: '💻' },
             { value: 'web-development', name: 'Web Development', icon: '🌐' },
             { value: 'mobile-development', name: 'Mobile Development', icon: '📱' },
-            { value: 'data-science', name: 'Data Science', icon: '📊' },
-            { value: 'machine-learning', name: 'AI & Machine Learning', icon: '🤖' },
+            { value: 'data-science', name: 'Data Science & Analytics', icon: '📊' },
+            { value: 'ai-ml', name: 'AI & Machine Learning', icon: '🤖' },
             { value: 'design', name: 'UI/UX Design', icon: '🎨' },
-            { value: 'business', name: 'Business & Marketing', icon: '💼' },
-            { value: 'devops', name: 'DevOps & Cloud', icon: '⚙️' },
-            { value: 'blockchain', name: 'Blockchain & Web3', icon: '🔗' },
-            { value: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
-            { value: 'photography', name: 'Photography', icon: '📸' },
-            { value: 'writing', name: 'Writing & Content', icon: '✍️' },
-            { value: 'other', name: 'Other', icon: '🔧' }
+            { value: 'business', name: 'Business & Marketing', icon: '📈' },
+            { value: 'language', name: 'Language Learning', icon: '🗣️' },
+            { value: 'music', name: 'Music & Arts', icon: '🎵' },
+            { value: 'fitness', name: 'Health & Fitness', icon: '💪' },
+            { value: 'other', name: 'Other', icon: '📚' }
         ],
         
         init() {
@@ -705,7 +704,7 @@ function registrationWizard() {
             if (this.validateEmail()) {
                 this.isCheckingEmail = true;
                 try {
-                    const response = await fetch(`/api/check-email-new/?email=${encodeURIComponent(email)}`);
+                    const response = await fetch(`/api/check-email/?email=${encodeURIComponent(email)}`);
                     const data = await response.json();
                     this.emailAvailable = data.available;
                     this.emailStatus = data.available ? 
@@ -724,11 +723,32 @@ function registrationWizard() {
 
         getSkillSuggestions() {
             const skillSuggestions = [
-                'Python Programming', 'JavaScript', 'React', 'Node.js', 'Django', 'Flask',
-                'Machine Learning', 'Data Science', 'Web Development', 'Mobile Development',
-                'UI/UX Design', 'Digital Marketing', 'Content Writing', 'Photography',
-                'Video Editing', 'Business Strategy', 'Project Management', 'Leadership',
-                'Communication Skills', 'Problem Solving', 'Critical Thinking', 'Creativity'
+                // Programming & Development
+                'Python', 'JavaScript', 'Java', 'C++', 'C#', 'PHP', 'Ruby', 'Go', 'Rust',
+                'React', 'Vue.js', 'Angular', 'Node.js', 'Django', 'Flask', 'Spring Boot',
+                'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Git', 'Docker', 'Kubernetes',
+                
+                // Web Development
+                'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS', 'WordPress', 'Shopify',
+                'REST API', 'GraphQL', 'Webpack', 'Vite', 'Progressive Web Apps',
+                
+                // Mobile Development
+                'React Native', 'Flutter', 'Swift', 'Kotlin', 'Ionic', 'Xamarin',
+                'Android Development', 'iOS Development', 'Mobile UI/UX',
+                
+                // Data Science & AI/ML
+                'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'Pandas',
+                'NumPy', 'Scikit-learn', 'Data Analysis', 'Statistics', 'R Programming',
+                'Power BI', 'Tableau', 'Excel', 'SQL', 'Big Data', 'Apache Spark',
+                
+                // Design
+                'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Sketch', 'Photoshop',
+                'Illustrator', 'Prototyping', 'User Research', 'Wireframing',
+                
+                // Business & Marketing
+                'Digital Marketing', 'SEO', 'Content Marketing', 'Social Media Marketing',
+                'Google Ads', 'Facebook Ads', 'Email Marketing', 'Project Management',
+                'Business Strategy', 'Leadership', 'Communication Skills', 'Sales'
             ];
             return skillSuggestions.filter(skill => 
                 skill.toLowerCase().includes(this.formData.skills.toLowerCase()) && 
