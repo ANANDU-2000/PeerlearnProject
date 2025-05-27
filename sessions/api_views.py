@@ -482,15 +482,18 @@ def mentor_dashboard_data(request):
                 'status': 'active'
             })
         
-        # REAL EARNINGS: ₹500 per confirmed booking (your actual rate)
-        booking_count = completed_bookings.count()
-        total_earnings = booking_count * 500  # Your real rate: ₹500 per session
+        # REAL EARNINGS: Calculate from actual session prices
+        total_earnings = 0
+        monthly_earnings = 0
         
-        monthly_bookings = completed_bookings.filter(
-            created_at__month=timezone.now().month,
-            created_at__year=timezone.now().year
-        ).count()
-        monthly_earnings = monthly_bookings * 500
+        for booking in completed_bookings:
+            session_price = booking.session.price or 0
+            total_earnings += float(session_price)
+            
+            # Add to monthly earnings if booking was this month
+            if (booking.created_at.month == timezone.now().month and 
+                booking.created_at.year == timezone.now().year):
+                monthly_earnings += float(session_price)
         
         # Organize real sessions by status
         draft_sessions = []
