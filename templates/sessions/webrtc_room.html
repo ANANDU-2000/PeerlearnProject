@@ -660,6 +660,53 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', initializeWebRTC);
 
+        // Enhanced End Session with Rating Carousel
+        function endSession() {
+            const sessionDuration = document.getElementById('sessionTimer').textContent;
+            
+            // Cleanup WebRTC connections
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            
+            // Trigger session ended event for rating carousel
+            const sessionEndedEvent = new CustomEvent('sessionEnded', {
+                detail: {
+                    sessionId: '{{ session.id }}',
+                    duration: sessionDuration
+                }
+            });
+            window.dispatchEvent(sessionEndedEvent);
+            
+            showNotification('Session ended successfully', 'success');
+        }
+        
+        function leaveSession() {
+            const sessionDuration = document.getElementById('sessionTimer').textContent;
+            
+            // Cleanup WebRTC connections
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            
+            // Trigger session ended event for rating carousel (learner perspective)
+            const sessionEndedEvent = new CustomEvent('sessionEnded', {
+                detail: {
+                    sessionId: '{{ session.id }}',
+                    duration: sessionDuration
+                }
+            });
+            window.dispatchEvent(sessionEndedEvent);
+            
+            showNotification('Left session successfully', 'success');
+        }
+
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (localStream) {
@@ -670,5 +717,8 @@
             }
         });
     </script>
+
+    <!-- Include Interactive Rating Carousel -->
+    {% include 'sessions/rating_carousel.html' %}
 </body>
 </html>

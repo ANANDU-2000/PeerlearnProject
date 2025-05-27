@@ -1,0 +1,411 @@
+<!-- Interactive WebRTC Session Rating Carousel -->
+<div id="ratingCarousel" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="ratingModal">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold">Rate This Session</h3>
+                    <p class="text-blue-100 text-sm">Help us improve your learning experience</p>
+                </div>
+                <div class="text-3xl">⭐</div>
+            </div>
+        </div>
+
+        <!-- Rating Content -->
+        <div class="p-6 space-y-6">
+            <!-- Session Info -->
+            <div class="text-center">
+                <h4 id="sessionTitleDisplay" class="font-semibold text-gray-800 text-lg">{{ session.title }}</h4>
+                <p class="text-gray-600 text-sm">with <span id="mentorNameDisplay">{{ session.mentor.get_full_name }}</span></p>
+                <div class="flex items-center justify-center mt-2 text-sm text-gray-500">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                    </svg>
+                    <span id="sessionDurationDisplay">Duration: --:--</span>
+                </div>
+            </div>
+
+            <!-- Interactive Star Rating -->
+            <div class="text-center">
+                <div class="flex justify-center space-x-2 mb-4">
+                    <div class="star-container" data-rating="1">
+                        <button type="button" class="star-btn w-12 h-12 text-gray-300 hover:text-yellow-400 transition-all duration-200 transform hover:scale-110" onclick="setRating(1)">
+                            <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="star-container" data-rating="2">
+                        <button type="button" class="star-btn w-12 h-12 text-gray-300 hover:text-yellow-400 transition-all duration-200 transform hover:scale-110" onclick="setRating(2)">
+                            <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="star-container" data-rating="3">
+                        <button type="button" class="star-btn w-12 h-12 text-gray-300 hover:text-yellow-400 transition-all duration-200 transform hover:scale-110" onclick="setRating(3)">
+                            <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="star-container" data-rating="4">
+                        <button type="button" class="star-btn w-12 h-12 text-gray-300 hover:text-yellow-400 transition-all duration-200 transform hover:scale-110" onclick="setRating(4)">
+                            <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="star-container" data-rating="5">
+                        <button type="button" class="star-btn w-12 h-12 text-gray-300 hover:text-yellow-400 transition-all duration-200 transform hover:scale-110" onclick="setRating(5)">
+                            <svg class="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Rating Description -->
+                <div id="ratingDescription" class="text-gray-600 text-sm min-h-[20px]">
+                    Click stars to rate your experience
+                </div>
+            </div>
+
+            <!-- Quick Feedback Carousel -->
+            <div class="space-y-4">
+                <h5 class="font-medium text-gray-800">What made this session great?</h5>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="toggleFeedbackTag('explanation')" class="feedback-tag px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-blue-100 hover:text-blue-700 transition-all duration-200">
+                        💡 Clear Explanation
+                    </button>
+                    <button type="button" onclick="toggleFeedbackTag('interactive')" class="feedback-tag px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-blue-100 hover:text-blue-700 transition-all duration-200">
+                        🎯 Interactive
+                    </button>
+                    <button type="button" onclick="toggleFeedbackTag('knowledgeable')" class="feedback-tag px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-blue-100 hover:text-blue-700 transition-all duration-200">
+                        🎓 Knowledgeable
+                    </button>
+                    <button type="button" onclick="toggleFeedbackTag('patient')" class="feedback-tag px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-blue-100 hover:text-blue-700 transition-all duration-200">
+                        😊 Patient
+                    </button>
+                    <button type="button" onclick="toggleFeedbackTag('organized')" class="feedback-tag px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-blue-100 hover:text-blue-700 transition-all duration-200">
+                        📋 Well Organized
+                    </button>
+                    <button type="button" onclick="toggleFeedbackTag('engaging')" class="feedback-tag px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-blue-100 hover:text-blue-700 transition-all duration-200">
+                        🔥 Engaging
+                    </button>
+                </div>
+            </div>
+
+            <!-- Comment Section -->
+            <div class="space-y-2">
+                <label for="feedbackComment" class="block text-sm font-medium text-gray-700">
+                    Additional Comments (Optional)
+                </label>
+                <textarea 
+                    id="feedbackComment" 
+                    rows="3" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    placeholder="Share more details about your experience..."></textarea>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bg-gray-50 px-6 py-4 rounded-b-2xl flex space-x-3">
+            <button type="button" onclick="skipRating()" class="flex-1 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                Skip for Now
+            </button>
+            <button type="button" onclick="submitRating()" id="submitRatingBtn" class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Submit Rating
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Rating Success Animation -->
+<div id="ratingSuccess" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4 transform transition-all duration-300">
+        <div class="text-6xl mb-4">🎉</div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Thank You!</h3>
+        <p class="text-gray-600 mb-4">Your feedback helps us improve the learning experience</p>
+        <div class="flex space-x-1 justify-center mb-4" id="finalRatingDisplay">
+            <!-- Stars will be populated by JavaScript -->
+        </div>
+        <button onclick="closeRatingSuccess()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Continue Learning
+        </button>
+    </div>
+</div>
+
+<script>
+// Interactive WebRTC Session Rating System
+let currentSessionRating = 0;
+let selectedFeedbackTags = new Set();
+let sessionData = {
+    sessionId: '{{ session.id }}',
+    mentorId: '{{ session.mentor.id }}',
+    sessionTitle: '{{ session.title }}',
+    sessionDuration: null
+};
+
+// Rating descriptions
+const ratingDescriptions = {
+    1: "Poor - The session didn't meet expectations",
+    2: "Fair - Some improvements needed",
+    3: "Good - Satisfied with the session",
+    4: "Very Good - Exceeded expectations",
+    5: "Excellent - Outstanding session!"
+};
+
+// Set star rating with animations
+function setRating(rating) {
+    currentSessionRating = rating;
+    
+    // Update stars with smooth animation
+    document.querySelectorAll('.star-btn').forEach((star, index) => {
+        const starContainer = star.closest('.star-container');
+        
+        if (index < rating) {
+            star.classList.remove('text-gray-300');
+            star.classList.add('text-yellow-400');
+            
+            // Add sparkle animation
+            starContainer.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                starContainer.style.transform = 'scale(1)';
+            }, 200);
+        } else {
+            star.classList.remove('text-yellow-400');
+            star.classList.add('text-gray-300');
+        }
+    });
+    
+    // Update description
+    document.getElementById('ratingDescription').textContent = ratingDescriptions[rating];
+    
+    // Enable submit button
+    document.getElementById('submitRatingBtn').disabled = false;
+    
+    // Add celebration effect for 5 stars
+    if (rating === 5) {
+        createCelebrationEffect();
+    }
+}
+
+// Toggle feedback tags
+function toggleFeedbackTag(tagName) {
+    const button = event.target;
+    
+    if (selectedFeedbackTags.has(tagName)) {
+        selectedFeedbackTags.delete(tagName);
+        button.classList.remove('bg-blue-500', 'text-white');
+        button.classList.add('bg-gray-100', 'text-gray-700');
+    } else {
+        selectedFeedbackTags.add(tagName);
+        button.classList.remove('bg-gray-100', 'text-gray-700');
+        button.classList.add('bg-blue-500', 'text-white');
+        
+        // Add selection animation
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1)';
+        }, 150);
+    }
+}
+
+// Show rating carousel
+function showRatingCarousel(sessionDuration = null) {
+    // Update session duration if provided
+    if (sessionDuration) {
+        sessionData.sessionDuration = sessionDuration;
+        document.getElementById('sessionDurationDisplay').textContent = `Duration: ${sessionDuration}`;
+    }
+    
+    // Show modal with animation
+    const carousel = document.getElementById('ratingCarousel');
+    const modal = document.getElementById('ratingModal');
+    
+    carousel.classList.remove('hidden');
+    
+    // Animate modal entrance
+    setTimeout(() => {
+        modal.classList.remove('scale-95', 'opacity-0');
+        modal.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+// Submit rating to backend
+async function submitRating() {
+    if (currentSessionRating === 0) {
+        alert('Please select a star rating');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitRatingBtn');
+    const originalText = submitBtn.textContent;
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    
+    try {
+        const response = await fetch(`/sessions/api/sessions/${sessionData.sessionId}/feedback/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                rating: currentSessionRating,
+                comment: document.getElementById('feedbackComment').value,
+                feedback_tags: Array.from(selectedFeedbackTags),
+                session_duration: sessionData.sessionDuration,
+                feedback_type: 'webrtc_session'
+            })
+        });
+        
+        if (response.ok) {
+            hideRatingCarousel();
+            showRatingSuccess();
+            
+            // Send rating to WebRTC room for real-time updates
+            if (typeof updateSessionRating === 'function') {
+                updateSessionRating(currentSessionRating);
+            }
+        } else {
+            throw new Error('Failed to submit rating');
+        }
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+        alert('Failed to submit rating. Please try again.');
+        
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+
+// Skip rating
+function skipRating() {
+    hideRatingCarousel();
+    
+    // Optional: Log that user skipped rating
+    if (typeof logSkippedRating === 'function') {
+        logSkippedRating(sessionData.sessionId);
+    }
+}
+
+// Hide rating carousel
+function hideRatingCarousel() {
+    const carousel = document.getElementById('ratingCarousel');
+    const modal = document.getElementById('ratingModal');
+    
+    modal.classList.remove('scale-100', 'opacity-100');
+    modal.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+        carousel.classList.add('hidden');
+    }, 300);
+}
+
+// Show rating success
+function showRatingSuccess() {
+    const successModal = document.getElementById('ratingSuccess');
+    const starsContainer = document.getElementById('finalRatingDisplay');
+    
+    // Generate final star display
+    starsContainer.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('div');
+        star.innerHTML = `
+            <svg class="w-6 h-6 ${i <= currentSessionRating ? 'text-yellow-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+        `;
+        starsContainer.appendChild(star);
+    }
+    
+    successModal.classList.remove('hidden');
+}
+
+// Close rating success
+function closeRatingSuccess() {
+    document.getElementById('ratingSuccess').classList.add('hidden');
+    
+    // Reset rating data for next session
+    currentSessionRating = 0;
+    selectedFeedbackTags.clear();
+    document.getElementById('feedbackComment').value = '';
+    
+    // Reset star display
+    document.querySelectorAll('.star-btn').forEach(star => {
+        star.classList.remove('text-yellow-400');
+        star.classList.add('text-gray-300');
+    });
+    
+    // Reset feedback tags
+    document.querySelectorAll('.feedback-tag').forEach(tag => {
+        tag.classList.remove('bg-blue-500', 'text-white');
+        tag.classList.add('bg-gray-100', 'text-gray-700');
+    });
+    
+    document.getElementById('submitRatingBtn').disabled = true;
+    document.getElementById('ratingDescription').textContent = 'Click stars to rate your experience';
+}
+
+// Create celebration effect for 5-star ratings
+function createCelebrationEffect() {
+    const celebration = document.createElement('div');
+    celebration.innerHTML = '🎉✨🎊';
+    celebration.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        pointer-events: none;
+        animation: celebrate 1s ease-out forwards;
+        z-index: 100;
+    `;
+    
+    document.body.appendChild(celebration);
+    
+    setTimeout(() => {
+        celebration.remove();
+    }, 1000);
+}
+
+// Auto-trigger rating carousel when session ends
+window.addEventListener('sessionEnded', function(event) {
+    const sessionDuration = event.detail?.duration || null;
+    
+    // Show rating after a brief delay
+    setTimeout(() => {
+        showRatingCarousel(sessionDuration);
+    }, 2000);
+});
+
+// CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes celebrate {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1) translateY(-20px); opacity: 0; }
+    }
+    
+    .star-container {
+        transition: transform 0.2s ease;
+    }
+    
+    .feedback-tag {
+        transition: all 0.2s ease;
+    }
+    
+    .feedback-tag:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+`;
+document.head.appendChild(style);
+</script>
