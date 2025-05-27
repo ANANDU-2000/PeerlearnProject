@@ -458,29 +458,22 @@ def mentor_dashboard_data(request):
             session__mentor=request.user
         ).aggregate(avg=Avg('rating'))['avg'] or 0.0
         
-        # Real earnings from Razorpay payments
-        from users.models import Payment
-        completed_payments = Payment.objects.filter(
+        # Real earnings calculation from actual bookings only
+        completed_bookings = Booking.objects.filter(
             session__mentor=request.user,
-            status='success',
-            created_at__month=timezone.now().month,
-            created_at__year=timezone.now().year
+            status='confirmed'
         )
         
-        monthly_earnings = sum(payment.amount for payment in completed_payments)
-        total_earnings = Payment.objects.filter(
-            session__mentor=request.user,
-            status='success'
-        ).aggregate(total=models.Sum('amount'))['total'] or 0
+        # Calculate earnings based on actual session prices
+        monthly_earnings = 0
+        total_earnings = 0
         
-        # Available for payout (after 7 days)
-        available_date = timezone.now() - timezone.timedelta(days=7)
-        available_earnings = Payment.objects.filter(
-            session__mentor=request.user,
-            status='success',
-            created_at__lte=available_date,
-            payout_status='pending'
-        ).aggregate(total=models.Sum('amount'))['total'] or 0
+        for booking in completed_bookings:
+            session_price = booking.session.price if hasattr(booking.session, 'price') and booking.session.price else 0
+            total_earnings += session_price
+            
+            if booking.created_at.month == timezone.now().month and booking.created_at.year == timezone.now().year:
+                monthly_earnings += session_price
         
         # Organize real sessions by status
         draft_sessions = []
