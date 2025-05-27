@@ -541,10 +541,8 @@
                                         {% else %}
                                             <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Free</span>
                                         {% endif %}
-                                        <form method="post" action="{% url 'book_session' session.id %}" class="inline">
-                                            {% csrf_token %}
-                                            <button type="submit" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium">Book</button>
-                                        </form>
+                                        <button onclick="bookSession('{{ session.id }}', '{{ session.title }}', {{ session.price }})" 
+                                                class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium">Book</button>
                                     </div>
                                 </div>
                             </div>
