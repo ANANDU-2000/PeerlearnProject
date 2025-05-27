@@ -127,7 +127,11 @@ def register_steps_view(request):
             if User.objects.filter(email=email).exists():
                 return JsonResponse({'success': False, 'error': 'Email already registered'})
             
-            # Create user
+            # Clean and standardize data for ML recommendations
+            clean_skills = ', '.join([skill.strip().title() for skill in skills.split(',') if skill.strip()]) if skills else ''
+            clean_domains = ', '.join([domain.strip().title() for domain in domains if domain.strip()]) if domains else ''
+            
+            # Create user with properly formatted data
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -135,12 +139,12 @@ def register_steps_view(request):
                 first_name=first_name,
                 last_name=last_name,
                 role=role,
-                skills=skills,
-                interests=expertise,  # Using domains as interests
-                domain=expertise,
-                expertise=experience,
+                skills=clean_skills,
+                interests=clean_domains,  # Domains as interests for learners
+                domain=clean_domains,     # Primary domain
+                expertise=clean_skills if role == 'mentor' else clean_domains,
                 bio=bio,
-                career_goals=''  # Not collected in wizard
+                career_goals=''
             )
             
             # Handle profile image upload

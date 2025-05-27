@@ -19,18 +19,24 @@ class RecommendationEngine:
     def __init__(self, user):
         self.user = user
         self.user_skills = self.parse_skills(user.skills or '')
-        self.user_interests = self.parse_skills(user.expertise or '')
+        self.user_interests = self.parse_skills(user.interests or '')  # Fixed: use interests field
+        self.user_domain = user.domain or ''
         
     def parse_skills(self, skills_data):
-        """Parse skills from various formats"""
+        """Parse skills from various formats with proper cleaning"""
+        if not skills_data:
+            return []
+            
         if isinstance(skills_data, str):
             try:
                 skills_data = json.loads(skills_data)
             except:
-                skills_data = [s.strip() for s in skills_data.split(',') if s.strip()]
+                # Clean quotes, normalize spacing, split by comma
+                cleaned = skills_data.replace('"', '').replace("'", '').strip()
+                skills_data = [s.strip().lower() for s in cleaned.split(',') if s.strip()]
         
         if isinstance(skills_data, list):
-            return [skill.lower().strip() for skill in skills_data if skill]
+            return [str(skill).lower().strip().replace('"', '').replace("'", '') for skill in skills_data if skill]
         
         return []
     
