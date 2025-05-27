@@ -77,7 +77,7 @@ def admin_dashboard(request):
     
     # Add revenue calculation to sessions
     for session in recent_sessions:
-        session_bookings = session.booking_set.filter(status='confirmed')
+        session_bookings = session.bookings.filter(status='confirmed')
         session.total_revenue = session_bookings.count() * 500  # ₹500 per confirmed booking
     
     context = {
