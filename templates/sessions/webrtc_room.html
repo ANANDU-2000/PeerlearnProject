@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ session.title }} - Live Session</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script>
+        // Global CSRF token function for all API calls
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        }
+    </script>
     <style>
         body {
             margin: 0;
@@ -670,7 +676,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': getCSRFToken()
                 },
                 body: JSON.stringify({
                     duration: sessionDuration,
@@ -718,7 +724,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': getCSRFToken()
                 },
                 body: JSON.stringify({
                     duration: sessionDuration
@@ -819,11 +825,11 @@
                 return cookieValue;
             }
 
-            fetch(`/sessions/api/sessions/{{ session.id }}/live-feedback/`, {
+            fetch(`/sessions/api/sessions/{{ session.id }}/submit-rating/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken') || '{{ csrf_token }}'
+                    'X-CSRFToken': getCSRFToken()
                 },
                 body: JSON.stringify(ratingData)
             })
