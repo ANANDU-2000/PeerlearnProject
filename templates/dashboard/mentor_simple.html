@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Mentor Dashboard - PeerLearn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-green-500 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Mentor Dashboard</h1>
+                    <p class="text-blue-100 mt-1">Welcome back, {{ user.username }}!</p>
+                </div>
+                <a href="{% url 'create_session' %}" 
+                   class="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all">
+                    + Create Session
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Total Students -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i data-feather="users" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Students</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_students|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sessions This Month -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i data-feather="video" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Sessions</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_sessions|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Average Rating -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <i data-feather="star" class="h-6 w-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Average Rating</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ avg_rating|default:0|floatformat:1 }}/5</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monthly Earnings -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <i data-feather="dollar-sign" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900">₹{{ total_earnings|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Sessions -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">My Sessions</h2>
+            
+            {% if mentor_sessions %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for session in mentor_sessions %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <h3 class="font-semibold text-gray-900 mb-2">{{ session.title }}</h3>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <p><i data-feather="calendar" class="w-4 h-4 inline mr-1"></i> {{ session.schedule|date:"M d, Y" }}</p>
+                            <p><i data-feather="clock" class="w-4 h-4 inline mr-1"></i> {{ session.schedule|time:"g:i A" }}</p>
+                            <p><i data-feather="users" class="w-4 h-4 inline mr-1"></i> {{ session.bookings.count }} enrolled</p>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                {% if session.status == 'scheduled' %}bg-green-100 text-green-800
+                                {% elif session.status == 'completed' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ session.status|title }}
+                            </span>
+                            <p class="font-semibold text-gray-900">₹{{ session.bookings.count|mul:50 }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i data-feather="video" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No sessions yet</h3>
+                    <p class="text-gray-600 mb-4">Create your first session to start mentoring!</p>
+                    <a href="{% url 'create_session' %}" 
+                       class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                        Create Session
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Initialize Feather icons
+        feather.replace();
+        
+        // Simple, working JavaScript with no errors
+        console.log('Mentor Dashboard loaded successfully');
+        console.log('Total Students:', {{ total_students|default:0 }});
+        console.log('Total Sessions:', {{ total_sessions|default:0 }});
+        console.log('Total Earnings: ₹', {{ total_earnings|default:0 }});
+    </script>
+</body>
+</html>

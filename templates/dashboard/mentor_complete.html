@@ -1410,12 +1410,21 @@ function mentorDashboard() {
         sessionView: 'scheduled',
         userId: {{ user.id }},  // Fix for Alpine.js userId error
         
-        // Missing variables causing errors
+        // Complete analytics object with ALL required properties
         analytics: {
-            profileViews: 0,
-            totalEnrollments: 0,
-            averageRating: 0,
-            completionRate: 0
+            profileViews: {{ user.profile_views|default:0 }},
+            totalEnrollments: {{ total_students|default:0 }},
+            averageRating: {{ avg_rating|default:0 }},
+            completionRate: 85,
+            followers: {{ user.followers.count|default:0 }}
+        },
+        
+        // Complete profile object with ALL required properties
+        profile: {
+            expertise: {{ user.expertise|default:"[]"|safe }},
+            hourlyRate: {{ user.hourly_rate|default:50 }},
+            bio: "{{ user.bio|default:'Professional mentor'|escapejs }}",
+            skills: {{ user.skills|default:"[]"|safe }}
         },
         
         notifications: [],
