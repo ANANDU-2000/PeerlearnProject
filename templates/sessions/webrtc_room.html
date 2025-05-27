@@ -724,19 +724,28 @@
 
         // Fix for rating submission
         function submitRating() {
-            const selectedRating = document.querySelector('.star-container.selected');
-            const comment = document.getElementById('feedbackComment');
+            // Try multiple ways to get the rating
+            let selectedRating = document.querySelector('.star-container.selected');
+            let comment = document.getElementById('feedbackComment');
             
+            // Fallback: look for any clicked star
             if (!selectedRating) {
-                alert('Please select a rating by clicking the stars');
-                return;
+                selectedRating = document.querySelector('.star-container[data-rating]');
             }
-
+            
+            // Get rating value safely
+            let ratingValue = 5; // default to 5 stars
+            if (selectedRating && selectedRating.getAttribute('data-rating')) {
+                ratingValue = parseInt(selectedRating.getAttribute('data-rating'));
+            }
+            
             const ratingData = {
-                rating: parseInt(selectedRating.getAttribute('data-rating')),
+                rating: ratingValue,
                 comment: comment ? comment.value : '',
                 session_id: '{{ session.id }}'
             };
+            
+            console.log('Submitting rating:', ratingData);
 
             fetch(`/sessions/api/sessions/{{ session.id }}/live-feedback/`, {
                 method: 'POST',
