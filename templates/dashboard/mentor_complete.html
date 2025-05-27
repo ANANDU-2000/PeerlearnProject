@@ -1526,6 +1526,43 @@ function mentorDashboard() {
             this.startRealTimeUpdates();
         },
         
+        async loadRealData() {
+            try {
+                const response = await fetch('/api/sessions/mentor-data/', {
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Update stats with real database data
+                    this.stats.totalStudents = data.total_students || 0;
+                    this.stats.sessionsThisMonth = data.sessions_this_month || 0;
+                    this.stats.averageRating = data.average_rating || 0;
+                    this.stats.monthlyEarnings = `₹${data.monthly_earnings || 0}`;
+                    
+                    // Update analytics with real data
+                    this.analytics.profileViews = data.profile_views || 0;
+                    this.analytics.totalEnrollments = data.total_enrollments || 0;
+                    this.analytics.averageRating = data.average_rating || 0;
+                    this.analytics.completionRate = data.completion_rate || 0;
+                    
+                    // Load real sessions
+                    this.mySessions.scheduled = data.scheduled_sessions || [];
+                    this.mySessions.past = data.past_sessions || [];
+                    this.mySessions.draft = data.draft_sessions || [];
+                    
+                    console.log('Real data loaded:', data);
+                } else {
+                    console.error('Failed to load mentor data:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading real data:', error);
+            }
+        },
+        
         startRealTimeUpdates() {
             // Update timers every minute
             setInterval(() => {
