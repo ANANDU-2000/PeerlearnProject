@@ -38,14 +38,23 @@ def ai_recommendations_api(request):
         for session in available_sessions[:10]:
             # Calculate match score based on interests and skills
             match_score = 0
-            session_tags = (session.tags or []) + [session.category or '']
+            session_tags = []
+            
+            # Handle session attributes safely
+            if hasattr(session, 'tags') and session.tags:
+                session_tags.extend(session.tags)
+            if hasattr(session, 'category') and session.category:
+                session_tags.append(session.category)
+            
+            # Add title and description as searchable tags
+            session_tags.extend([session.title, session.description])
             
             for interest in user_interests:
-                if any(interest.lower() in tag.lower() for tag in session_tags if tag):
+                if any(interest.lower() in str(tag).lower() for tag in session_tags if tag):
                     match_score += 20
             
             for skill in user_skills:
-                if any(skill.lower() in tag.lower() for tag in session_tags if tag):
+                if any(skill.lower() in str(tag).lower() for tag in session_tags if tag):
                     match_score += 15
             
             # Add randomness for diversity
