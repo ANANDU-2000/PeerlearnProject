@@ -397,19 +397,19 @@ def check_email_api(request):
     
     email = request.GET.get('email', '').strip().lower()
     if not email:
-        return JsonResponse({'valid': False, 'message': 'Email is required'})
+        return JsonResponse({'available': False, 'message': 'Email is required'})
     
     # Basic email validation
     import re
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not re.match(email_pattern, email):
-        return JsonResponse({'valid': False, 'message': 'Please enter a valid email address'})
+        return JsonResponse({'available': False, 'message': 'Please enter a valid email address'})
     
     # Check if email already exists
     if User.objects.filter(email=email).exists():
-        return JsonResponse({'valid': False, 'message': 'Email already registered'})
+        return JsonResponse({'available': False, 'message': 'Email already registered'})
     
-    return JsonResponse({'valid': True, 'message': 'Email is available'})
+    return JsonResponse({'available': True, 'message': 'Email is available'})
 
 @login_required
 def admin_dashboard(request):
