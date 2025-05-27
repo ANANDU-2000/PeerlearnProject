@@ -1420,12 +1420,12 @@ function mentorDashboard() {
         
         notifications: [],
         
-        // Data - will be loaded from database
+        // Data - REAL from database
         stats: {
-            totalStudents: 0,
-            sessionsThisMonth: 0,
-            averageRating: 0,
-            monthlyEarnings: '₹0'
+            totalStudents: {{ total_students|default:0 }},
+            sessionsThisMonth: {{ upcoming_sessions|default:0 }},
+            averageRating: {{ avg_rating|default:0 }},
+            monthlyEarnings: '₹{{ total_earnings|default:0 }}'
         },
         
         tabs: [
