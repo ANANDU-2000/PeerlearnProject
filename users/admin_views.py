@@ -451,23 +451,39 @@ def admin_live_activity_api(request):
 @require_http_methods(["POST"])
 def admin_user_action(request):
     """Handle user management actions"""
-    
-    data = json.loads(request.body)
-    action = data.get('action')
-    user_id = data.get('user_id')
+    user_id = request.POST.get('user_id')
+    action = request.POST.get('action')
     
     try:
         user = get_object_or_404(User, id=user_id)
         
-        if action == 'suspend':
+        if action == 'ban':
             user.is_active = False
             user.save()
-            message = f"User {user.get_full_name()} has been suspended."
-            
-        elif action == 'activate':
+            message = f"User {user.username} banned successfully"
+        elif action == 'unban':
             user.is_active = True
             user.save()
-            message = f"User {user.get_full_name()} has been activated."
+            message = f"User {user.username} unbanned successfully"
+        elif action == 'delete':
+            username = user.username
+            user.delete()
+            message = f"User {username} deleted permanently"
+        elif action == 'view_activity':
+            # Return user activity data
+            from sessions.models import Session, Booking
+            user_sessions = Session.objects.filter(mentor=user).count()
+            user_bookings = Booking.objects.filter(learner=user).count()
+            return JsonResponse({
+                'success': True, 
+                'activity': {
+                    'sessions_created': user_sessions,
+                    'sessions_booked': user_bookings,
+                    'last_login': user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never',
+                    'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M'),
+                    'total_revenue': user_sessions * 500
+                }
+            })
             
         elif action == 'verify':
             user.is_verified = True
