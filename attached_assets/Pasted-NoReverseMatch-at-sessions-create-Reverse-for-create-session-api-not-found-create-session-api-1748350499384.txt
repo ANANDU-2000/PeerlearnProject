@@ -1,0 +1,61 @@
+NoReverseMatch at /sessions/create/
+Reverse for 'create_session_api' not found. 'create_session_api' is not a valid view function or pattern name.
+Request Method:	GET
+Request URL:	http://3e4c4c4a-b60b-4556-9647-2c6022f13499-00-186qnvr9j3jvh.worf.replit.dev/sessions/create/
+Django Version:	5.2.1
+Exception Type:	NoReverseMatch
+Exception Value:	
+Reverse for 'create_session_api' not found. 'create_session_api' is not a valid view function or pattern name.
+Exception Location:	/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/urls/resolvers.py, line 831, in _reverse_with_prefix
+Raised during:	sessions.views.create_session
+Python Executable:	/home/runner/workspace/.pythonlibs/bin/python
+Python Version:	3.11.10
+Python Path:	
+['/home/runner/workspace',
+ '/nix/store/lc7qv2ldzrs1aq3hbyzmbgvn0h2w26pl-sitecustomize/lib/python/site-packages',
+ '/nix/store/dfg63lldbvcj207iyr9z0xw21d8ax02n-python3.11-pip-24.0/lib/python3.11/site-packages',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python311.zip',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/lib-dynload',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages',
+ '/nix/store/wblvmd5y7izx0z10d1w7ga7zc4apjxmb-python3.11-setuptools-75.1.1/lib/python3.11/site-packages',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/setuptools/_vendor']
+Server time:	Tue, 27 May 2025 12:54:53 +0000
+Error during template rendering
+In template /home/runner/workspace/templates/sessions/create_advanced.html, error at line 40
+
+Reverse for 'create_session_api' not found. 'create_session_api' is not a valid view function or pattern name.
+30	                <a href="{% url 'mentor_dashboard' %}" 
+31	                   class="bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-green-50 transition-colors">
+32	                    Back to Dashboard
+33	                </a>
+34	            </div>
+35	        </div>
+36	    </div>
+37	
+38	    <!-- Form -->
+39	    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+40	        <form method="post" action="{% url 'create_session_api' %}" class="space-y-6" enctype="multipart/form-data">
+41	            {% csrf_token %}
+42	            
+43	            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+44	                <!-- Left Column -->
+45	                <div class="space-y-6">
+46	                    <!-- Session Title -->
+47	                    <div class="form-section bg-white rounded-xl p-6 shadow-lg">
+48	                        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+49	                            Session Title *
+50	                        </label>
+Traceback Switch to copy-and-paste view
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/core/handlers/exception.py, line 42, in inner
+                response = await get_response(request)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+Local vars
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/core/handlers/base.py, line 253, in _get_response_async
+                response = await wrapped_callback(
+                                 …
+Local vars
+/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/concurrent/futures/thread.py, line 58, in run
+            result = self.fn(*self.args, **self.kwargs)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
