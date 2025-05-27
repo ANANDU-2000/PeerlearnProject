@@ -95,7 +95,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Total Students</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.totalStudents"></p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_students|default:0 }}</p>
                     </div>
                 </div>
             </div>
@@ -107,7 +107,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Sessions This Month</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.sessionsThisMonth"></p>
+                        <p class="text-2xl font-bold text-gray-900">{{ upcoming_sessions|default:0 }}</p>
                     </div>
                 </div>
             </div>
@@ -119,7 +119,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Average Rating</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.averageRating"></p>
+                        <p class="text-2xl font-bold text-gray-900">{{ avg_rating|default:0|floatformat:1 }}</p>
                     </div>
                 </div>
             </div>
@@ -131,7 +131,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Monthly Earnings</p>
-                        <p class="text-2xl font-bold text-gray-900" x-text="stats.monthlyEarnings"></p>
+                        <p class="text-2xl font-bold text-gray-900">₹{{ total_earnings|default:0 }}</p>
                     </div>
                 </div>
             </div>
