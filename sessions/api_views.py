@@ -1047,3 +1047,90 @@ def export_insights_report(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+# Advanced Feedback System API Views
+@require_http_methods(["POST"])
+@login_required
+def live_feedback(request, session_id):
+    """Handle real-time feedback during WebRTC sessions"""
+    try:
+        session = Session.objects.get(id=session_id)
+        data = json.loads(request.body)
+        
+        # Create feedback record in database
+        feedback = Feedback.objects.create(
+            session=session,
+            user=request.user,
+            comment=data.get('message', ''),
+            rating=data.get('rating', 0)
+        )
+        
+        # Send real-time notification to mentor if this is from learner
+        if request.user.role == 'learner' and session.mentor != request.user:
+            Notification.objects.create(
+                user=session.mentor,
+                title="New Live Feedback",
+                message=f"{request.user.get_full_name()}: {data.get('message', 'Quick action')}",
+                notification_type='live_feedback'
+            )
+        
+        return JsonResponse({
+            'status': 'success',
+            'feedback_id': feedback.id,
+            'message': 'Feedback sent successfully'
+        })
+        
+    except Session.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+@login_required  
+def feedback_messages(request, session_id):
+    """Get feedback messages for session inbox"""
+    try:
+        session = Session.objects.get(id=session_id)
+        
+        # Get feedback messages for this session
+        messages = Feedback.objects.filter(session=session).order_by('-created_at')
+        
+        message_data = []
+        for msg in messages:
+            message_data.append({
+                'id': msg.id,
+                'sender_name': msg.user.get_full_name(),
+                'sender_id': msg.user.id,
+                'message': msg.comment,
+                'rating': msg.rating,
+                'timestamp': msg.created_at.isoformat(),
+                'unread': True
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'messages': message_data
+        })
+        
+    except Session.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@require_http_methods(["POST"])
+@login_required
+def mark_message_read(request, message_id):
+    """Mark feedback message as read"""
+    try:
+        feedback = Feedback.objects.get(id=message_id)
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Message marked as read'
+        })
+        
+    except Feedback.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Message not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
