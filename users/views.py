@@ -459,3 +459,18 @@ def admin_dashboard(request):
     }
     
     return render(request, 'dashboard/admin_complete.html', context)
+
+
+@login_required
+def communication_insights_view(request):
+    """Communication Insights Dashboard View"""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    context = {
+        'user': request.user,
+        'page_title': 'Communication Insights',
+        'active_tab': 'insights'
+    }
+    
+    return render(request, 'dashboard/communication_insights.html', context)
