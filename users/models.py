@@ -17,6 +17,11 @@ class User(AbstractUser):
     expertise = models.CharField(max_length=100, blank=True, help_text="Primary domain/area of expertise")
     career_goals = models.TextField(blank=True, help_text="Career aspirations for AI guidance")
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    
+    # Password Reset Fields
+    password_reset_token = models.CharField(max_length=100, blank=True, null=True)
+    password_reset_expires = models.DateTimeField(blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
