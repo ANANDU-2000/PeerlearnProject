@@ -717,7 +717,7 @@ function registrationWizard() {
             if (this.validateEmail()) {
                 this.isCheckingEmail = true;
                 try {
-                    const response = await fetch(`/api/check-email/?email=${encodeURIComponent(email)}`);
+                    const response = await fetch(`/api/check-email-new/?email=${encodeURIComponent(email)}`);
                     const data = await response.json();
                     this.emailAvailable = data.available;
                     this.emailStatus = data.available ? 
@@ -770,10 +770,14 @@ function registrationWizard() {
         },
 
         selectSkillSuggestion(skill) {
-            const currentSkills = this.formData.skills.toLowerCase().split(',').map(s => s.trim());
+            const currentSkills = this.formData.skills ? 
+                this.formData.skills.toLowerCase().split(',').map(s => s.trim()) : [];
             if (!currentSkills.includes(skill.toLowerCase())) {
-                this.formData.skills = this.formData.skills ? 
-                    `${this.formData.skills}, ${skill}` : skill;
+                if (this.formData.skills && this.formData.skills.trim()) {
+                    this.formData.skills = `${this.formData.skills.trim()}, ${skill}`;
+                } else {
+                    this.formData.skills = skill;
+                }
             }
         },
 

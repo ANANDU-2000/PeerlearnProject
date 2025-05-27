@@ -6,21 +6,24 @@ import json
 
 User = get_user_model()
 
-@csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["GET"])
 def check_email_exists(request):
     """Check if email already exists in database - live validation"""
-    try:
-        data = json.loads(request.body)
-        email = data.get('email', '').strip().lower()
-        
-        if not email:
-            return JsonResponse({'exists': False})
-        
-        # Check if email exists in database
-        exists = User.objects.filter(email__iexact=email).exists()
-        
-        return JsonResponse({'exists': exists})
-        
-    except (json.JSONDecodeError, Exception):
-        return JsonResponse({'exists': False})
+    email = request.GET.get('email', '').strip().lower()
+    
+    if not email:
+        return JsonResponse({'available': False, 'message': 'Email is required'})
+    
+    # Basic email validation
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return JsonResponse({'available': False, 'message': 'Please enter a valid email address'})
+    
+    # Check if email exists in database
+    exists = User.objects.filter(email__iexact=email).exists()
+    
+    if exists:
+        return JsonResponse({'available': False, 'message': 'Email already registered'})
+    else:
+        return JsonResponse({'available': True, 'message': 'Email is available'})
