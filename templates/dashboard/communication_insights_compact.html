@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}Communication Insights - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<style>
+    .insights-bg {
+        background: linear-gradient(135deg, #0056d3 0%, #1e40af 100%);
+    }
+    .insight-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 86, 211, 0.08);
+        transition: all 0.3s ease;
+        border-left: 3px solid #0056d3;
+    }
+    .insight-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 86, 211, 0.12);
+    }
+    .compact-chart {
+        height: 200px;
+    }
+    .metric-ring {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(#0056d3 0deg 252deg, #e5e7eb 252deg 360deg);
+        position: relative;
+    }
+    .metric-ring::before {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: white;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="bg-gray-50 pb-6" x-data="communicationInsights()">
+    
+    <!-- Compact Header -->
+    <div class="insights-bg text-white py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Communication Insights</h1>
+                    <p class="text-blue-100 text-sm">Real-time mentor-learner analytics</p>
+                </div>
+                <div class="flex space-x-3">
+                    <select x-model="timeRange" @change="loadInsights()" 
+                            class="bg-white text-gray-900 px-3 py-2 rounded-lg text-sm font-medium">
+                        <option value="7">7 Days</option>
+                        <option value="30">30 Days</option>
+                        <option value="90">3 Months</option>
+                    </select>
+                    <button @click="exportReport()" 
+                            class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-50">
+                        <i data-feather="download" class="h-4 w-4 inline mr-1"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Compact Key Metrics -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="insight-card p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-600">Total Interactions</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="metrics.totalInteractions">0</p>
+                        <span class="text-xs text-green-600 font-medium" x-text="`+${metrics.interactionGrowth}%`">+0%</span>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="message-circle" class="h-5 w-5 text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insight-card p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-600">Response Time</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="metrics.avgResponseTime">0min</p>
+                        <span class="text-xs text-green-600 font-medium" x-text="`-${metrics.responseImprovement}%`">-0%</span>
+                    </div>
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="clock" class="h-5 w-5 text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insight-card p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-600">Completion Rate</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="`${metrics.completionRate}%`">0%</p>
+                        <span class="text-xs text-green-600 font-medium" x-text="`+${metrics.completionGrowth}%`">+0%</span>
+                    </div>
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="check-circle" class="h-5 w-5 text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insight-card p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-gray-600">Satisfaction</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="metrics.satisfactionScore">0.0</p>
+                        <span class="text-xs text-green-600 font-medium" x-text="`+${metrics.satisfactionGrowth}%`">+0%</span>
+                    </div>
+                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i data-feather="star" class="h-5 w-5 text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Engagement Overview -->
+            <div class="insight-card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Engagement Score</h3>
+                <div class="flex items-center justify-between">
+                    <div class="metric-ring relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <p class="text-lg font-bold text-gray-900" x-text="`${metrics.engagementScore}%`">0%</p>
+                                <p class="text-xs text-gray-500">Overall</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 flex-1 ml-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">Messages</span>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded" x-text="`${metrics.messageFrequency}%`">0%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">Quality</span>
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded" x-text="`${metrics.responseQuality}%`">0%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">Follow-up</span>
+                            <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded" x-text="`${metrics.followUpRate}%`">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication Chart -->
+            <div class="insight-card p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Communication Patterns</h3>
+                    <div class="flex space-x-1">
+                        <button @click="chartType = 'messages'" 
+                                :class="chartType === 'messages' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-3 py-1 rounded text-xs font-medium">Messages</button>
+                        <button @click="chartType = 'sessions'" 
+                                :class="chartType === 'sessions' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+                                class="px-3 py-1 rounded text-xs font-medium">Sessions</button>
+                    </div>
+                </div>
+                <div class="compact-chart">
+                    <canvas id="communicationChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            
+            <!-- Top Mentors -->
+            <div class="insight-card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
+                <div class="space-y-3 max-h-48 overflow-y-auto">
+                    <template x-for="mentor in topMentors.slice(0, 4)" :key="mentor.id">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                    <span x-text="mentor.name.charAt(0)"></span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 text-sm" x-text="mentor.name"></p>
+                                    <p class="text-xs text-gray-500" x-text="`${mentor.sessions} sessions`"></p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-blue-600 text-sm" x-text="`${mentor.rating}⭐`"></p>
+                                <p class="text-xs text-gray-500" x-text="`${mentor.responseTime}min`"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Activity Summary -->
+            <div class="insight-card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <div class="space-y-3 max-h-48 overflow-y-auto">
+                    <template x-for="activity in recentActivities.slice(0, 5)" :key="activity.id">
+                        <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-900 text-sm" x-text="activity.title"></p>
+                                <p class="text-xs text-gray-600" x-text="activity.description"></p>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span :class="`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${activity.type === 'session' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`"
+                                          x-text="activity.type"></span>
+                                    <span class="text-xs text-gray-400" x-text="activity.time"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function communicationInsights() {
+    return {
+        timeRange: '30',
+        chartType: 'messages',
+        chart: null,
+        
+        metrics: {
+            totalInteractions: 0,
+            interactionGrowth: 0,
+            avgResponseTime: '0min',
+            responseImprovement: 0,
+            completionRate: 0,
+            completionGrowth: 0,
+            satisfactionScore: 0.0,
+            satisfactionGrowth: 0,
+            engagementScore: 0,
+            messageFrequency: 0,
+            responseQuality: 0,
+            followUpRate: 0
+        },
+        
+        recentActivities: [],
+        topMentors: [],
+        
+        init() {
+            this.loadInsights();
+            this.initChart();
+        },
+        
+        async loadInsights() {
+            try {
+                const response = await fetch(`/api/communication/insights/?days=${this.timeRange}`);
+                const data = await response.json();
+                
+                this.metrics = { ...this.metrics, ...data.metrics };
+                this.recentActivities = data.recent_activities || [];
+                this.topMentors = data.top_mentors || [];
+                
+                if (this.chart) {
+                    this.updateChart(data.chart_data);
+                }
+            } catch (error) {
+                console.error('Failed to load insights:', error);
+            }
+        },
+        
+        initChart() {
+            const ctx = document.getElementById('communicationChart').getContext('2d');
+            this.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Activity',
+                        data: [12, 19, 13, 15, 22, 18, 25],
+                        borderColor: '#0056d3',
+                        backgroundColor: 'rgba(0, 86, 211, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 11 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 11 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        },
+        
+        updateChart(data) {
+            if (this.chart && data) {
+                this.chart.data.labels = data.labels || this.chart.data.labels;
+                this.chart.data.datasets[0].data = data.values || this.chart.data.datasets[0].data;
+                this.chart.update();
+            }
+        },
+        
+        async exportReport() {
+            try {
+                const response = await fetch('/api/communication/export-report/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        timeRange: this.timeRange,
+                        metrics: this.metrics
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Report exported successfully!');
+                } else {
+                    alert('Failed to export report');
+                }
+            } catch (error) {
+                alert('Error exporting report');
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

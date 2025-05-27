@@ -473,4 +473,4 @@ def communication_insights_view(request):
         'active_tab': 'insights'
     }
     
-    return render(request, 'dashboard/communication_insights.html', context)
+    return render(request, 'dashboard/communication_insights_compact.html', context)
