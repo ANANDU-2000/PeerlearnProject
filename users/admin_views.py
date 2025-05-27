@@ -51,12 +51,12 @@ def admin_dashboard(request):
     
     # Growth calculations
     last_month = today.replace(month=today.month-1 if today.month > 1 else 12)
-    last_month_users = CustomUser.objects.filter(
+    last_month_users = User.objects.filter(
         date_joined__month=last_month.month,
         date_joined__year=last_month.year if today.month > 1 else today.year-1
     ).count()
     
-    this_month_users = CustomUser.objects.filter(
+    this_month_users = User.objects.filter(
         date_joined__month=today.month,
         date_joined__year=today.year
     ).count()
@@ -70,7 +70,7 @@ def admin_dashboard(request):
     # Recent activity
     recent_bookings = Booking.objects.select_related('learner', 'session').order_by('-created_at')[:10]
     recent_sessions = Session.objects.select_related('mentor').order_by('-created_at')[:10]
-    recent_users = CustomUser.objects.order_by('-date_joined')[:10]
+    recent_users = User.objects.order_by('-date_joined')[:10]
     
     # Live sessions for display
     live_sessions_list = Session.objects.filter(status='live')[:6]
@@ -121,7 +121,7 @@ def admin_users_api(request):
     page_size = int(request.GET.get('page_size', 10))
     
     # Build query
-    users_query = CustomUser.objects.all()
+    users_query = User.objects.all()
     
     if search:
         users_query = users_query.filter(
@@ -267,7 +267,7 @@ def admin_analytics_api(request):
     date_range = [start_date + timedelta(days=x) for x in range(int(period))]
     
     for date in date_range:
-        users_count = CustomUser.objects.filter(date_joined__date=date).count()
+        users_count = User.objects.filter(date_joined__date=date).count()
         user_growth_data.append({
             'date': date.strftime('%Y-%m-%d'),
             'users': users_count
@@ -314,7 +314,7 @@ def admin_live_activity_api(request):
     activities = []
     
     # Recent user registrations
-    recent_users = CustomUser.objects.order_by('-date_joined')[:5]
+    recent_users = User.objects.order_by('-date_joined')[:5]
     for user in recent_users:
         time_diff = timezone.now() - user.date_joined
         if time_diff.seconds < 3600:  # Last hour
@@ -375,7 +375,7 @@ def admin_user_action(request):
     user_id = data.get('user_id')
     
     try:
-        user = get_object_or_404(CustomUser, id=user_id)
+        user = get_object_or_404(User, id=user_id)
         
         if action == 'suspend':
             user.is_active = False
@@ -462,8 +462,8 @@ def admin_system_stats(request):
     """Get real-time system statistics"""
     
     # Calculate various metrics
-    total_users = CustomUser.objects.count()
-    online_users = CustomUser.objects.filter(
+    total_users = User.objects.count()
+    online_users = User.objects.filter(
         last_login__gte=timezone.now() - timedelta(minutes=30)
     ).count()
     
