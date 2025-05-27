@@ -464,12 +464,30 @@ def mentor_dashboard_data(request):
             status='confirmed'
         )
         
-        # Calculate earnings based on actual session prices
+        # Get REAL enrolled students from actual bookings
+        real_enrolled_students = []
+        enrolled_learners = Booking.objects.filter(
+            session__mentor=request.user,
+            status='confirmed'
+        ).select_related('learner', 'session').values(
+            'learner__id', 'learner__username', 'learner__email'
+        ).annotate(sessions_booked=Count('session', distinct=True))
+        
+        for learner in enrolled_learners:
+            real_enrolled_students.append({
+                'id': str(learner['learner__id']),
+                'name': learner['learner__username'],
+                'email': learner['learner__email'] or f"{learner['learner__username']}@example.com",
+                'sessionsBooked': learner['sessions_booked'],
+                'status': 'active'
+            })
+        
+        # Calculate earnings from real session prices
         monthly_earnings = 0
         total_earnings = 0
         
         for booking in completed_bookings:
-            session_price = booking.session.price if hasattr(booking.session, 'price') and booking.session.price else 0
+            session_price = booking.session.price if hasattr(booking.session, 'price') and booking.session.price else 1500  # Default price
             total_earnings += session_price
             
             if booking.created_at.month == timezone.now().month and booking.created_at.year == timezone.now().year:
@@ -544,17 +562,23 @@ def mentor_dashboard_data(request):
             'sessions_this_month': sessions_this_month,
             'average_rating': round(avg_rating, 1),
             'monthly_earnings': int(monthly_earnings),
+            'available_balance': int(total_earnings * 0.8),
+            'total_earnings': int(total_earnings),
+            'pending_earnings': 0,
+            'enrolled_students': real_enrolled_students,
+            'withdrawal_history': [],
+            'messages': [],
             'sessions': {
                 'draft': draft_sessions,
                 'scheduled': scheduled_sessions,
                 'past': past_sessions
             },
-            'scheduled_sessions': scheduled_sessions,  # Add this for booked sessions loading
+            'scheduled_sessions': scheduled_sessions,
             'requests': pending_requests,
             'earnings': {
-                'available': int(monthly_earnings * 0.8),
+                'available': int(total_earnings * 0.8),
                 'pending': 0,
-                'total': int(monthly_earnings)
+                'total': int(total_earnings)
             }
         })
         

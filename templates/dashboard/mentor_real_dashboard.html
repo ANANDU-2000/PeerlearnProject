@@ -390,18 +390,21 @@
                         const response = await fetch('/api/sessions/mentor-data/');
                         const data = await response.json();
                         
+                        // Use ONLY actual data from your database
                         this.realData = {
-                            totalStudents: data.real_total_students || 0,
-                            sessionsThisMonth: data.real_sessions_this_month || 0,
-                            monthlyEarnings: data.real_monthly_earnings || 0,
-                            averageRating: data.real_average_rating || 0,
-                            availableBalance: data.real_available_balance || 0,
-                            totalEarnings: data.real_total_earnings || 0,
-                            pendingEarnings: data.real_pending_earnings || 0,
-                            enrolledStudents: data.real_enrolled_students || [],
-                            withdrawalHistory: data.real_withdrawal_history || [],
-                            messages: data.real_messages || []
+                            totalStudents: data.total_students || 0,
+                            sessionsThisMonth: data.sessions_this_month || 0,
+                            monthlyEarnings: data.monthly_earnings || 0,
+                            averageRating: data.average_rating || 0,
+                            availableBalance: data.available_balance || 0,
+                            totalEarnings: data.total_earnings || 0,
+                            pendingEarnings: data.pending_earnings || 0,
+                            enrolledStudents: data.enrolled_students || [],
+                            withdrawalHistory: data.withdrawal_history || [],
+                            messages: data.messages || []
                         };
+                        
+                        console.log('Real data loaded:', this.realData);
                     } catch (error) {
                         console.error('Error loading real data:', error);
                     }
