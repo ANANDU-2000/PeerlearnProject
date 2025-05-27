@@ -527,7 +527,7 @@ def mentor_dashboard_data(request):
                 'participants': bookings_count,
                 'current_bookings': bookings_count,
                 'status': session.status,
-                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}',
+                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}' if bookings_count > 0 else 'No bookings yet',
                 'timeToStart': time_to_start,
                 'mentorReady': False,
                 'learnersReady': bookings_count > 0,
