@@ -497,8 +497,8 @@ def advanced_profile_view(request, user_id):
     # Get recent activities
     recent_activities = UserActivity.objects.filter(user=profile_user)[:10]
     
-    # Get user badges
-    badges = UserBadge.objects.filter(user=profile_user)
+    # Get user badges (simplified for now)
+    badges = []
     
     # Get recent sessions if mentor
     recent_sessions = []
