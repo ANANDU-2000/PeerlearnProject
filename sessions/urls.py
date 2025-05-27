@@ -58,4 +58,5 @@ urlpatterns = [
     path('api/sessions/<uuid:session_id>/live-feedback/', api_views.live_feedback, name='api_live_feedback'),
     path('api/sessions/<uuid:session_id>/feedback-messages/', api_views.feedback_messages, name='api_feedback_messages'),
     path('api/messages/<int:message_id>/mark-read/', api_views.mark_message_read, name='api_mark_message_read'),
+    path('api/mentor-feedback/', api_views.mentor_feedback, name='api_mentor_feedback'),
 ]

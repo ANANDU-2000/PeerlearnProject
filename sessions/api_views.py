@@ -1134,3 +1134,43 @@ def mark_message_read(request, message_id):
         return JsonResponse({'status': 'error', 'message': 'Message not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+@login_required
+def mentor_feedback(request):
+    """Get feedback data for mentor dashboard"""
+    try:
+        if request.user.role != 'mentor':
+            return JsonResponse({'status': 'error', 'message': 'Access denied'}, status=403)
+        
+        # Get all feedback for mentor's sessions
+        mentor_sessions = Session.objects.filter(mentor=request.user)
+        feedback = Feedback.objects.filter(session__in=mentor_sessions).order_by('-created_at')
+        
+        # Calculate stats
+        total_feedback = feedback.count()
+        avg_rating = feedback.aggregate(avg_rating=models.Avg('rating'))['avg_rating'] or 0
+        
+        # Format feedback data
+        feedback_data = []
+        for f in feedback:
+            feedback_data.append({
+                'id': f.id,
+                'session_title': f.session.title,
+                'student_name': f.user.get_full_name(),
+                'rating': f.rating,
+                'comment': f.comment,
+                'created_at': f.created_at.isoformat()
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'stats': {
+                'total_feedback': total_feedback,
+                'average_rating': round(avg_rating, 1)
+            },
+            'feedback': feedback_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
