@@ -9,6 +9,7 @@ import json
 
 from .models import Session, Booking, Request, Notification, Feedback
 from users.models import User
+from decimal import Decimal
 
 
 @login_required

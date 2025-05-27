@@ -35,7 +35,7 @@ urlpatterns = [
     path('api/notifications/read/', api_views.mark_notifications_read, name='mark_notifications_read'),
     
     # Earnings endpoints
-    path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
+    path('api/earnings/payout/', api_views.earnings_payout, name='api_earnings_payout'),
     
     # Dashboard data endpoints
     path('api/mentor-dashboard/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
