@@ -58,5 +58,6 @@ urlpatterns = [
     path('api/recommendations/ai/', learner_api.ai_recommendations_api, name='ai_recommendations'),
     path('api/session-requests/', learner_api.create_session_request_api, name='create_session_request'),
     path('api/refund-request/', learner_api.request_refund_api, name='request_refund'),
+    path('api/notifications/', learner_api.get_notifications_api, name='get_notifications'),
     path('api/notifications/mark-all-read/', learner_api.mark_all_notifications_read_api, name='mark_all_notifications_read'),
 ]
