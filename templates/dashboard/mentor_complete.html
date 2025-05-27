@@ -1410,6 +1410,16 @@ function mentorDashboard() {
         sessionView: 'scheduled',
         userId: {{ user.id }},  // Fix for Alpine.js userId error
         
+        // Missing variables causing errors
+        analytics: {
+            profileViews: 0,
+            totalEnrollments: 0,
+            averageRating: 0,
+            completionRate: 0
+        },
+        
+        notifications: [],
+        
         // Data - will be loaded from database
         stats: {
             totalStudents: 0,

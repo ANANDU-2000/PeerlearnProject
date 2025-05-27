@@ -1,0 +1,385 @@
+    at [Alpine] analytics.profileViews (eval at <anonymous> (cdn.min.js:5:665), <anonymous>:3:32)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33251
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at Function.<anonymous> (cdn.min.js:5:33244)
+    at r (cdn.min.js:5:2323)
+[Alpine] analytics.profileViews @ VM567:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] analytics.totalEnrollments (eval at <anonymous> (cdn.min.js:5:665), <anonymous>:3:32)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33251
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at Function.<anonymous> (cdn.min.js:5:33244)
+    at r (cdn.min.js:5:2323)
+[Alpine] analytics.totalEnrollments @ VM569:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] `${analytics.averageRating}/5` (eval at <anonymous> (cdn.min.js:5:665), <anonymous>:3:35)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33251
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at Function.<anonymous> (cdn.min.js:5:33244)
+    at r (cdn.min.js:5:2323)
+[Alpine] `${analytics.averageRating}/5` @ VM571:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] i <= Math.floor(mentor/analytics.averageRating) ? 'fas fa-star' : 'far fa-star' (eval at <anonymous> (https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js:5:665), <anonymous>:3:48)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33747
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at vn (cdn.min.js:5:33741)
+    at r (cdn.min.js:5:2323)
+[Alpine] i <= Math.floor(analytics.averageRating) ? 'fas fa-star' : 'far fa-star' @ VM599:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+vn @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+m @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Ne @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] i <= Math.floor(mentor/analytics.averageRating) ? 'fas fa-star' : 'far fa-star' (eval at <anonymous> (https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js:5:665), <anonymous>:3:48)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33747
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at vn (cdn.min.js:5:33741)
+    at r (cdn.min.js:5:2323)
+[Alpine] i <= Math.floor(analytics.averageRating) ? 'fas fa-star' : 'far fa-star' @ VM599:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+vn @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+m @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Ne @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] i <= Math.floor(mentor/analytics.averageRating) ? 'fas fa-star' : 'far fa-star' (eval at <anonymous> (https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js:5:665), <anonymous>:3:48)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33747
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at vn (cdn.min.js:5:33741)
+    at r (cdn.min.js:5:2323)
+[Alpine] i <= Math.floor(analytics.averageRating) ? 'fas fa-star' : 'far fa-star' @ VM599:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+vn @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+m @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Ne @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] i <= Math.floor(mentor/analytics.averageRating) ? 'fas fa-star' : 'far fa-star' (eval at <anonymous> (https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js:5:665), <anonymous>:3:48)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33747
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at vn (cdn.min.js:5:33741)
+    at r (cdn.min.js:5:2323)
+[Alpine] i <= Math.floor(analytics.averageRating) ? 'fas fa-star' : 'far fa-star' @ VM599:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+vn @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+m @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Ne @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] i <= Math.floor(mentor/analytics.averageRating) ? 'fas fa-star' : 'far fa-star' (eval at <anonymous> (https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js:5:665), <anonymous>:3:48)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33747
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at vn (cdn.min.js:5:33741)
+    at r (cdn.min.js:5:2323)
+[Alpine] i <= Math.floor(analytics.averageRating) ? 'fas fa-star' : 'far fa-star' @ VM599:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+vn @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+m @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+Ne @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+to @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: analytics is not defined
+    at [Alpine] `${analytics.completionRate}%` (eval at <anonymous> (cdn.min.js:5:665), <anonymous>:3:35)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:33251
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at Function.<anonymous> (cdn.min.js:5:33244)
+    at r (cdn.min.js:5:2323)
+[Alpine] `${analytics.completionRate}%` @ VM570:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: activeTab is not defined
+    at [Alpine] activeTab === 'notifications' (eval at <anonymous> (cdn.min.js:5:665), <anonymous>:3:32)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at cdn.min.js:5:35180
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at Function.<anonymous> (cdn.min.js:5:35174)
+    at r (cdn.min.js:5:2323)
+[Alpine] activeTab === 'notifications' @ VM603:3
+(anonymous) @ cdn.min.js:5
+or @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+rn @ cdn.min.js:5
+N @ cdn.min.js:1
+(anonymous) @ cdn.min.js:1
+(anonymous) @ cdn.min.js:5
+r @ cdn.min.js:5
+n @ cdn.min.js:5
+fr @ cdn.min.js:5
+S @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5
+gr @ cdn.min.js:5
+(anonymous) @ cdn.min.js:5Understand this error
+mentor/:14 Script error caught: null
+cdn.min.js:5 Uncaught ReferenceError: notifications is not defined
+    at [Alpine] notifications (eval at <anonymous> (cdn.min.js:5:665), <anonymous>:3:32)
+    at cdn.min.js:5:1068
+    at or (cdn.min.js:1:4957)
+    at to (cdn.min.js:5:35605)
+    at cdn.min.js:5:35405
+    at r (cdn.min.js:5:18580)
+    at Object.rn [as effect] (cdn.min.js:5:18368)
+    at N (cdn.min.js:1:398)
+    at cdn.min.js:1:511
+    at Function.<anonymous> (cdn.min.js:5:35399)
