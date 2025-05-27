@@ -269,7 +269,7 @@ def mentor_dashboard(request):
         ).count()
     }
     
-    return render(request, 'dashboard/mentor_complete.html', context)
+    return render(request, 'dashboard/mentor_real_dashboard.html', context)
 
 @login_required
 def learner_dashboard(request):
