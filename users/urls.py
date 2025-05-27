@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from . import views, api_views, admin_api, real_admin_api, learner_payment_api
+from . import views, api_views, admin_api, real_admin_api, learner_payment_api, skill_suggestion_api
 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
@@ -21,6 +21,9 @@ urlpatterns = [
     path('api/check-username/', views.check_username_api, name='check_username_api'),
     path('api/check-email-new/', views.check_email_api, name='check_email_api'),
     path('api/users/profile/update/', views.update_profile_api, name='api_update_profile'),
+    
+    # Advanced ML-powered skill suggestions
+    path('api/skill-suggestions/', skill_suggestion_api.get_skill_suggestions, name='skill_suggestions'),
     
     # REAL Working Admin API endpoints
     path('api/admin/toggle-user-status/<uuid:user_id>/', real_admin_api.toggle_user_status, name='admin_toggle_user_status'),
