@@ -12,6 +12,7 @@ urlpatterns = [
     path('<uuid:session_id>/feedback/', views.submit_feedback, name='submit_feedback'),
     path('create/', views.create_session, name='create_session'),
     path('<uuid:session_id>/edit/', views.edit_session, name='edit_session'),
+    path('<uuid:session_id>/payment/', views.razorpay_checkout, name='razorpay_checkout'),
     
     # API endpoints
     path('api/sessions/', api_views.get_sessions_api, name='get_sessions_api'),

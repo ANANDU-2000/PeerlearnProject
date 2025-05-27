@@ -105,7 +105,7 @@ def session_detail_new(request, session_id):
 @login_required
 @require_http_methods(["POST"])
 def book_session(request, session_id):
-    """Book a session for a learner"""
+    """Book a session for a learner - handle both free and paid sessions"""
     if not request.user.is_learner:
         messages.error(request, 'Only learners can book sessions.')
         return redirect('session_detail', session_id=session_id)
@@ -116,18 +116,63 @@ def book_session(request, session_id):
         messages.error(request, 'Session is full.')
         return redirect('learner_dashboard')
     
-    booking, created = Booking.objects.get_or_create(
+    # Check if already booked
+    existing_booking = Booking.objects.filter(
         learner=request.user,
-        session=session,
-        defaults={'status': 'confirmed'}
-    )
+        session=session
+    ).first()
     
-    if created:
-        messages.success(request, f'Successfully booked "{session.title}"! Check your My Sessions tab.')
-    else:
+    if existing_booking:
         messages.info(request, 'You are already booked for this session.')
+        return redirect('learner_dashboard')
     
-    return redirect('learner_dashboard')
+    # Check if this is a paid session
+    if session.price and session.price > 0:
+        # Redirect to payment page for paid sessions
+        messages.info(request, f'This session costs ₹{session.price}. Please complete payment to confirm your booking.')
+        return redirect('razorpay_checkout', session_id=session_id)
+    else:
+        # Free session - book directly
+        booking = Booking.objects.create(
+            learner=request.user,
+            session=session,
+            status='confirmed'
+        )
+        messages.success(request, f'Successfully booked "{session.title}"! Check your My Sessions tab.')
+        return redirect('learner_dashboard')
+
+@login_required
+def razorpay_checkout(request, session_id):
+    """Display Razorpay payment page for session booking"""
+    session = get_object_or_404(Session, id=session_id)
+    
+    # Check if user already booked
+    existing_booking = Booking.objects.filter(
+        learner=request.user,
+        session=session
+    ).first()
+    
+    if existing_booking:
+        messages.info(request, 'You are already booked for this session.')
+        return redirect('learner_dashboard')
+    
+    # Check if session is free
+    if not session.price or session.price <= 0:
+        messages.info(request, 'This is a free session. Booking directly...')
+        Booking.objects.create(
+            learner=request.user,
+            session=session,
+            status='confirmed'
+        )
+        return redirect('learner_dashboard')
+    
+    context = {
+        'session': session,
+        'razorpay_key_id': os.getenv('RAZORPAY_KEY_ID'),
+        'user': request.user
+    }
+    
+    return render(request, 'payments/razorpay_checkout.html', context)
 
 @login_required
 def create_session(request):
