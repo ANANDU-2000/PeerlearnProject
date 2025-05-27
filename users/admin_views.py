@@ -80,6 +80,12 @@ def admin_dashboard(request):
         session_bookings = session.bookings.filter(status='confirmed')
         session.total_revenue = session_bookings.count() * 500  # ₹500 per confirmed booking
     
+    # Add user statistics and online status
+    for user in recent_users:
+        user.sessions_count = Session.objects.filter(mentor=user).count() if hasattr(user, 'sessions') else 0
+        user.total_revenue = user.sessions_count * 500  # Simplified calculation
+        user.is_online = True  # You can implement real online detection later
+    
     context = {
         'total_users': total_users,
         'total_mentors': total_mentors,
@@ -102,10 +108,13 @@ def admin_dashboard(request):
         'recent_bookings': recent_bookings,
         'users': recent_users,  # For user management section
         'platform_fees': monthly_revenue * 0.1,  # 10% platform fee
-        'notifications_count': 5,  # You can calculate real notifications later
+        'mentor_earnings': monthly_revenue * 0.9,  # 90% to mentors
+        'online_users': total_users // 3,  # Simplified online calculation
+        'system_load': '65%',  # You can implement real system monitoring
+        'notifications_count': 5
     }
     
-    return render(request, 'admin/real_dashboard.html', context)
+    return render(request, 'admin/advanced_dashboard.html', context)
 
 
 @staff_member_required

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn Admin Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .status-online { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .metric-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .revenue-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .users-card { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .sessions-card { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    </style>
+</head>
+<body class="h-full overflow-hidden" x-data="adminDashboard()">
+    <!-- Mobile Menu Button -->
+    <div class="lg:hidden fixed top-4 left-4 z-50">
+        <button @click="sidebarOpen = !sidebarOpen" class="bg-blue-600 text-white p-3 rounded-lg shadow-lg">
+            <i class="fas fa-bars text-lg"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 left-0 z-40 sidebar-transition" 
+         :class="sidebarOpen ? 'w-64' : 'w-16'" 
+         x-cloak>
+        <!-- Sidebar Background -->
+        <div class="h-full bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl">
+            <!-- Logo Section -->
+            <div class="flex items-center justify-center h-16 bg-gray-900 border-b border-gray-700">
+                <div x-show="sidebarOpen" class="text-white font-bold text-xl">
+                    <i class="fas fa-shield-alt text-blue-400 mr-2"></i>PeerLearn Admin
+                </div>
+                <div x-show="!sidebarOpen" class="text-white">
+                    <i class="fas fa-shield-alt text-blue-400 text-xl"></i>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="mt-8">
+                <div class="px-4 space-y-2">
+                    <!-- Dashboard -->
+                    <a @click="activeTab = 'dashboard'" 
+                       :class="activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200">
+                        <i class="fas fa-tachometer-alt w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3">Dashboard</span>
+                    </a>
+
+                    <!-- User Management -->
+                    <a @click="activeTab = 'users'" 
+                       :class="activeTab === 'users' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200">
+                        <i class="fas fa-users w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3">User Management</span>
+                    </a>
+
+                    <!-- Session Management -->
+                    <a @click="activeTab = 'sessions'" 
+                       :class="activeTab === 'sessions' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200">
+                        <i class="fas fa-video w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3">Sessions</span>
+                    </a>
+
+                    <!-- Analytics -->
+                    <a @click="activeTab = 'analytics'" 
+                       :class="activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200">
+                        <i class="fas fa-chart-line w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3">Analytics</span>
+                    </a>
+
+                    <!-- Live Monitor -->
+                    <a @click="activeTab = 'monitor'" 
+                       :class="activeTab === 'monitor' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200">
+                        <i class="fas fa-eye w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3">Live Monitor</span>
+                    </a>
+
+                    <!-- Financial -->
+                    <a @click="activeTab = 'finance'" 
+                       :class="activeTab === 'finance' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200">
+                        <i class="fas fa-rupee-sign w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3">Revenue</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Sidebar Toggle -->
+            <div class="absolute bottom-4 left-4 right-4">
+                <button @click="sidebarOpen = !sidebarOpen" 
+                        class="w-full text-gray-400 hover:text-white transition-colors duration-200 hidden lg:block">
+                    <i :class="sidebarOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right'"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="sidebar-transition" :class="sidebarOpen ? 'ml-64' : 'ml-16'">
+        <!-- Top Bar -->
+        <header class="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-6">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-2xl font-bold text-gray-900" x-text="getTabTitle()"></h1>
+                <div class="hidden md:flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-400 rounded-full status-online"></div>
+                    <span class="text-sm text-gray-600">Live System</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Notifications -->
+                <div class="relative">
+                    <button class="text-gray-600 hover:text-gray-900 relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                    </button>
+                </div>
+                
+                <!-- Admin Profile -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-shield text-white text-sm"></i>
+                    </div>
+                    <span class="hidden md:block text-sm font-medium text-gray-900">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="h-screen overflow-y-auto bg-gray-50 p-6">
+            <!-- Dashboard Tab -->
+            <div x-show="activeTab === 'dashboard'" class="space-y-6">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Total Users -->
+                    <div class="users-card rounded-xl p-6 text-white card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Total Users</p>
+                                <p class="text-3xl font-bold">{{ total_users }}</p>
+                                <p class="text-white/70 text-xs mt-1">+{{ user_growth|floatformat:1 }}% this month</p>
+                            </div>
+                            <i class="fas fa-users text-4xl text-white/20"></i>
+                        </div>
+                    </div>
+
+                    <!-- Revenue -->
+                    <div class="revenue-card rounded-xl p-6 text-white card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Monthly Revenue</p>
+                                <p class="text-3xl font-bold">₹{{ monthly_revenue|floatformat:0 }}</p>
+                                <p class="text-white/70 text-xs mt-1">₹{{ daily_revenue|floatformat:0 }} today</p>
+                            </div>
+                            <i class="fas fa-rupee-sign text-4xl text-white/20"></i>
+                        </div>
+                    </div>
+
+                    <!-- Active Sessions -->
+                    <div class="sessions-card rounded-xl p-6 text-white card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Live Sessions</p>
+                                <p class="text-3xl font-bold">{{ live_sessions }}</p>
+                                <p class="text-white/70 text-xs mt-1">{{ total_sessions }} total</p>
+                            </div>
+                            <i class="fas fa-video text-4xl text-white/20"></i>
+                        </div>
+                    </div>
+
+                    <!-- System Health -->
+                    <div class="metric-card rounded-xl p-6 text-white card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">System Health</p>
+                                <p class="text-3xl font-bold">99.9%</p>
+                                <p class="text-white/70 text-xs mt-1">All systems operational</p>
+                            </div>
+                            <i class="fas fa-heartbeat text-4xl text-white/20"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Revenue Chart -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-semibold mb-4">Revenue Trends</h3>
+                        <canvas id="revenueChart" height="200"></canvas>
+                    </div>
+
+                    <!-- User Growth Chart -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-semibold mb-4">User Growth</h3>
+                        <canvas id="userChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+                    <div class="space-y-4">
+                        {% for booking in recent_bookings %}
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-calendar-check text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">{{ booking.learner.username }}</p>
+                                    <p class="text-sm text-gray-600">Booked: {{ booking.session.title|truncatechars:30 }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-green-600">₹500</p>
+                                <p class="text-xs text-gray-500">{{ booking.created_at|timesince }} ago</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management Tab -->
+            <div x-show="activeTab === 'users'" class="space-y-6">
+                <!-- User Controls -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                        <h3 class="text-lg font-semibold">User Management</h3>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <input type="text" placeholder="Search users..." 
+                                   class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option>All Users</option>
+                                <option>Mentors</option>
+                                <option>Learners</option>
+                                <option>Online</option>
+                                <option>Banned</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for user in recent_users %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                                                <span class="text-white font-semibold">{{ user.username.0|upper }}</span>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                                                <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                               {% if user.is_staff %}bg-purple-100 text-purple-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                            {% if user.is_staff %}Admin{% else %}User{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
+                                            <span class="text-sm text-green-600">Online</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ user.sessions_count|default:0 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                        ₹{{ user.total_revenue|default:0 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-900" title="View Profile">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-yellow-600 hover:text-yellow-900" title="Send Message">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-900" title="Ban User">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                        <button class="text-gray-600 hover:text-gray-900" title="More Actions">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="bg-gray-50 px-6 py-3 flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing 1 to 10 of {{ total_users }} users
+                        </div>
+                        <div class="flex space-x-1">
+                            <button class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50">Previous</button>
+                            <button class="px-3 py-1 text-sm bg-blue-600 text-white rounded">1</button>
+                            <button class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50">2</button>
+                            <button class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Management Tab -->
+            <div x-show="activeTab === 'sessions'" class="space-y-6">
+                <!-- Session Controls -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                        <h3 class="text-lg font-semibold">Session Management</h3>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option>All Sessions</option>
+                                <option>Live</option>
+                                <option>Scheduled</option>
+                                <option>Completed</option>
+                                <option>Cancelled</option>
+                            </select>
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-plus mr-2"></i>Create Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for session in recent_sessions %}
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden card-hover">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                       {% if session.status == 'live' %}bg-green-100 text-green-800
+                                       {% elif session.status == 'scheduled' %}bg-blue-100 text-blue-800
+                                       {% elif session.status == 'completed' %}bg-gray-100 text-gray-800
+                                       {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ session.status|title }}
+                                </span>
+                                <div class="flex space-x-1">
+                                    <button class="text-gray-600 hover:text-blue-600" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="text-gray-600 hover:text-red-600" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <h4 class="font-semibold text-gray-900 mb-2">{{ session.title|truncatechars:40 }}</h4>
+                            <p class="text-sm text-gray-600 mb-4">{{ session.description|truncatechars:100 }}</p>
+                            
+                            <div class="space-y-2 text-sm">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-user-tie w-4 mr-2"></i>
+                                    <span>{{ session.mentor.username }}</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-calendar w-4 mr-2"></i>
+                                    <span>{{ session.schedule|date:"M d, Y H:i" }}</span>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-users w-4 mr-2"></i>
+                                    <span>{{ session.current_participants }}/{{ session.max_participants }}</span>
+                                </div>
+                                <div class="flex items-center text-green-600 font-semibold">
+                                    <i class="fas fa-rupee-sign w-4 mr-2"></i>
+                                    <span>₹{{ session.total_revenue|default:0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div x-show="activeTab === 'analytics'" class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Platform Analytics</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <canvas id="analyticsChart1" height="300"></canvas>
+                        <canvas id="analyticsChart2" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Monitor Tab -->
+            <div x-show="activeTab === 'monitor'" class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Live System Monitor</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-green-600">{{ online_users }}</div>
+                            <div class="text-sm text-gray-600">Users Online</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-blue-600">{{ live_sessions }}</div>
+                            <div class="text-sm text-gray-600">Live Sessions</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-purple-600">{{ system_load }}</div>
+                            <div class="text-sm text-gray-600">System Load</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finance Tab -->
+            <div x-show="activeTab === 'finance'" class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Revenue Management</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-green-600">₹{{ daily_revenue|floatformat:0 }}</div>
+                            <div class="text-sm text-gray-600">Today's Revenue</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-blue-600">₹{{ monthly_revenue|floatformat:0 }}</div>
+                            <div class="text-sm text-gray-600">Monthly Revenue</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-purple-600">₹{{ platform_fees|floatformat:0 }}</div>
+                            <div class="text-sm text-gray-600">Platform Fees</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-orange-600">₹{{ mentor_earnings|floatformat:0 }}</div>
+                            <div class="text-sm text-gray-600">Mentor Earnings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function adminDashboard() {
+            return {
+                sidebarOpen: window.innerWidth >= 1024,
+                activeTab: 'dashboard',
+                
+                init() {
+                    // Auto-close sidebar on mobile
+                    window.addEventListener('resize', () => {
+                        if (window.innerWidth < 1024) {
+                            this.sidebarOpen = false;
+                        } else {
+                            this.sidebarOpen = true;
+                        }
+                    });
+                    
+                    // Initialize charts
+                    this.$nextTick(() => {
+                        this.initCharts();
+                    });
+                },
+                
+                getTabTitle() {
+                    const titles = {
+                        dashboard: 'Admin Dashboard',
+                        users: 'User Management',
+                        sessions: 'Session Management', 
+                        analytics: 'Analytics',
+                        monitor: 'Live Monitor',
+                        finance: 'Revenue Management'
+                    };
+                    return titles[this.activeTab] || 'Dashboard';
+                },
+                
+                initCharts() {
+                    // Revenue Chart
+                    const revenueCtx = document.getElementById('revenueChart');
+                    if (revenueCtx) {
+                        new Chart(revenueCtx, {
+                            type: 'line',
+                            data: {
+                                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                                datasets: [{
+                                    label: 'Revenue',
+                                    data: [12000, 19000, 15000, 25000, 22000],
+                                    borderColor: '#3B82F6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    tension: 0.4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { y: { beginAtZero: true } }
+                            }
+                        });
+                    }
+
+                    // User Chart
+                    const userCtx = document.getElementById('userChart');
+                    if (userCtx) {
+                        new Chart(userCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Mentors', 'Learners', 'Active', 'New'],
+                                datasets: [{
+                                    data: [45, 120, 89, 23],
+                                    backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { y: { beginAtZero: true } }
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
