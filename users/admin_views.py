@@ -35,16 +35,19 @@ def admin_dashboard(request):
     
     # Revenue metrics
     today = timezone.now().date()
-    daily_revenue = Booking.objects.filter(
+    # Calculate revenue based on confirmed bookings (₹500 per session)
+    daily_bookings = Booking.objects.filter(
         created_at__date=today,
-        status='completed'
-    ).aggregate(total=Sum('amount_paid'))['total'] or 0
+        status='confirmed'
+    ).count()
+    daily_revenue = daily_bookings * 500  # ₹500 per session
     
-    monthly_revenue = Booking.objects.filter(
+    monthly_bookings = Booking.objects.filter(
         created_at__month=today.month,
         created_at__year=today.year,
-        status='completed'
-    ).aggregate(total=Sum('amount_paid'))['total'] or 0
+        status='confirmed'
+    ).count()
+    monthly_revenue = monthly_bookings * 500  # ₹500 per session
     
     # Growth calculations
     last_month = today.replace(month=today.month-1 if today.month > 1 else 12)
@@ -74,8 +77,8 @@ def admin_dashboard(request):
     
     # Add revenue calculation to sessions
     for session in recent_sessions:
-        session_bookings = session.booking_set.filter(status='completed')
-        session.total_revenue = sum([b.amount_paid or 500 for b in session_bookings])
+        session_bookings = session.booking_set.filter(status='confirmed')
+        session.total_revenue = session_bookings.count() * 500  # ₹500 per confirmed booking
     
     context = {
         'total_users': total_users,
