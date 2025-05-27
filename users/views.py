@@ -181,6 +181,10 @@ def logout_view(request):
     logout(request)
     return redirect('landing')
 
+def admin_dashboard_redirect(request):
+    """Redirect old admin dashboard URL to new working dashboard"""
+    return redirect('/admin-dashboard/dashboard/')
+
 @login_required
 def profile_view(request):
     if request.method == 'POST':
