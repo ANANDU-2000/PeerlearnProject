@@ -406,7 +406,7 @@
                                 </label>
                             </div>
                             <div class="flex-1">
-                                <input type="file" id="profileImage" name="profile_image" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden" @change="handleImageUpload($event)">
+                                <input type="file" id="profileImage" x-ref="imageInput" name="profile_image" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden" @change="handleImageUpload($event)">
                                 <button type="button" @click="$refs.imageInput.click()" class="inline-flex items-center px-4 py-2 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -593,7 +593,11 @@ function registrationWizard() {
         showConfirmPassword: false,
         usernameStatus: '',
         emailStatus: '',
+        usernameAvailable: false,
+        emailAvailable: false,
         showSkillSuggestions: false,
+        isCheckingUsername: false,
+        isCheckingEmail: false,
         
         passwordStrength: {
             percentage: 0,
@@ -674,40 +678,47 @@ function registrationWizard() {
             }
         },
         
-        checkUsernameAvailability() {
+        async checkUsernameAvailability() {
             const username = this.formData.username.toLowerCase().trim();
             if (username.length >= 3) {
-                fetch(`/api/check-username/?username=${encodeURIComponent(username)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        this.usernameAvailable = data.available;
-                        this.usernameStatus = data.available ? 
-                            '✓ Username is available' : 
-                            '✗ Username already taken';
-                    })
-                    .catch(() => {
-                        this.usernameStatus = '';
-                    });
+                this.isCheckingUsername = true;
+                try {
+                    const response = await fetch(`/api/check-username/?username=${encodeURIComponent(username)}`);
+                    const data = await response.json();
+                    this.usernameAvailable = data.available;
+                    this.usernameStatus = data.available ? 
+                        '✓ Username is available' : 
+                        '✗ Username already taken';
+                } catch (error) {
+                    this.usernameStatus = '';
+                } finally {
+                    this.isCheckingUsername = false;
+                }
             } else {
                 this.usernameStatus = '';
+                this.usernameAvailable = false;
             }
         },
 
-        checkEmailAvailability() {
+        async checkEmailAvailability() {
             const email = this.formData.email.toLowerCase().trim();
             if (this.validateEmail()) {
-                fetch(`/api/check-email-new/?email=${encodeURIComponent(email)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        this.emailStatus = data.available ? 
-                            '✓ Email is available' : 
-                            '✗ Email already registered';
-                    })
-                    .catch(() => {
-                        this.emailStatus = '';
-                    });
+                this.isCheckingEmail = true;
+                try {
+                    const response = await fetch(`/api/check-email-new/?email=${encodeURIComponent(email)}`);
+                    const data = await response.json();
+                    this.emailAvailable = data.available;
+                    this.emailStatus = data.available ? 
+                        '✓ Email is available' : 
+                        '✗ Email already registered';
+                } catch (error) {
+                    this.emailStatus = '';
+                } finally {
+                    this.isCheckingEmail = false;
+                }
             } else {
                 this.emailStatus = '';
+                this.emailAvailable = false;
             }
         },
 
@@ -857,8 +868,11 @@ function registrationWizard() {
         },
 
         getCSRFToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                             document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                             document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                             '{{ csrf_token }}';
+            return csrfToken;
         },
         
         updateIcons() {
