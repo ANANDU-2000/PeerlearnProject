@@ -95,7 +95,9 @@ def advanced_registration_api(request):
                 interests=data.get('interests', ''),
                 domain=data.get('primary_domain', ''),
                 expertise=data.get('primary_domain', ''),
-                location=data.get('country', '')
+                location=data.get('country', ''),
+                bio=data.get('bio', ''),
+                career_goals=data.get('career_goals', '')
             )
             
             # Auto-login the user
