@@ -13,10 +13,13 @@ from recommendations.models import PopularityMetric
 import json
 
 
-@staff_member_required
 @login_required
 def admin_dashboard(request):
     """Main admin dashboard with comprehensive analytics"""
+    
+    # Check if user is admin/staff
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect('login')  # Redirect non-admin users to login
     
     # Real-time metrics
     total_users = User.objects.count()

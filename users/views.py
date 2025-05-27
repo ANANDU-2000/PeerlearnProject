@@ -79,7 +79,10 @@ class UserRegistrationView(CreateView):
         login(self.request, user)
         messages.success(self.request, 'Registration successful!')
         
-        if user.role == 'mentor':
+        # Smart admin detection and redirection
+        if user.is_staff or user.is_superuser:
+            return redirect('/admin-dashboard/dashboard/')
+        elif user.role == 'mentor':
             return redirect('mentor_dashboard')
         else:
             return redirect('learner_dashboard')
@@ -151,10 +154,19 @@ def register_steps_view(request):
             user = authenticate(username=username, password=password1)
             if user:
                 login(request, user)
+                
+                # Smart admin detection and redirection
+                if user.is_staff or user.is_superuser:
+                    redirect_url = '/admin-dashboard/dashboard/'
+                elif role == 'mentor':
+                    redirect_url = '/dashboard/mentor/'
+                else:
+                    redirect_url = '/dashboard/learner/'
+                
                 return JsonResponse({
                     'success': True, 
                     'message': 'Registration successful!',
-                    'redirect_url': '/dashboard/mentor/' if role == 'mentor' else '/dashboard/learner/'
+                    'redirect_url': redirect_url
                 })
             else:
                 return JsonResponse({'success': False, 'error': 'Authentication failed'})
