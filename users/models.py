@@ -29,6 +29,14 @@ class User(AbstractUser):
     
     def __str__(self):
         return f"{self.username} ({self.role})"
+    
+    @property
+    def is_mentor(self):
+        return self.role == 'mentor'
+    
+    @property
+    def is_learner(self):
+        return self.role == 'learner'
 
 # Advanced Social Features
 class Follow(models.Model):

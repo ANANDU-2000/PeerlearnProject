@@ -819,39 +819,228 @@
                 </div>
             </div>
 
-            <!-- 5. Profile -->
+            <!-- 6. Advanced Profile -->
             <div x-show="activeTab === 'profile'" class="tab-content p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-6">Mentor Profile</h3>
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Advanced Profile</h3>
+                    <a :href="`/profile/advanced/${userId}/`" target="_blank"
+                       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                        <i data-feather="external-link" class="h-4 w-4 mr-2"></i>
+                        View Public Profile
+                    </a>
+                </div>
                 
-                <form @submit.prevent="updateProfile()">
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Expertise Areas</label>
-                                <input type="text" x-model="profile.expertise"
-                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                <!-- Profile Sub-tabs -->
+                <div class="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-6" x-data="{ profileTab: 'overview' }">
+                    <button @click="profileTab = 'overview'"
+                            :class="profileTab === 'overview' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
+                        Overview
+                    </button>
+                    <button @click="profileTab = 'social'"
+                            :class="profileTab === 'social' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
+                        Social Stats
+                    </button>
+                    <button @click="profileTab = 'activity'"
+                            :class="profileTab === 'activity' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
+                        Activity Feed
+                    </button>
+                    <button @click="profileTab = 'settings'"
+                            :class="profileTab === 'settings' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
+                        Privacy Settings
+                    </button>
+                    
+                    <!-- Profile Overview -->
+                    <div x-show="profileTab === 'overview'" class="space-y-6 mt-6">
+                        <!-- Profile Image & Basic Info -->
+                        <div class="bg-white border border-gray-200 rounded-xl p-6">
+                            <div class="flex items-center space-x-6 mb-6">
+                                <div class="relative">
+                                    <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                                        {{ request.user.username|first|upper }}{{ request.user.username|slice:"1:2"|upper }}
+                                    </div>
+                                    <button class="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700">
+                                        <i data-feather="camera" class="h-4 w-4"></i>
+                                    </button>
+                                </div>
+                                <div>
+                                    <h4 class="text-xl font-bold text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                                    <p class="text-gray-600">{{ request.user.role|title }} • @{{ request.user.username }}</p>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <span class="text-sm text-gray-500">
+                                            <i data-feather="users" class="h-4 w-4 inline mr-1"></i>
+                                            {{ analytics.followers }} followers
+                                        </span>
+                                        <span class="text-sm text-gray-500">
+                                            <i data-feather="eye" class="h-4 w-4 inline mr-1"></i>
+                                            {{ analytics.profileViews }} profile views
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Hourly Rate</label>
-                                <input type="number" x-model="profile.hourlyRate"
-                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            
+                            <form @submit.prevent="updateProfile()">
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Expertise Areas</label>
+                                            <input type="text" x-model="profile.expertise"
+                                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Hourly Rate (₹)</label>
+                                            <input type="number" x-model="profile.hourlyRate"
+                                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Bio</label>
+                                        <textarea x-model="profile.bio" rows="3"
+                                                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Skills & Technologies</label>
+                                        <input type="text" x-model="profile.skills"
+                                               placeholder="React, Python, Data Science, etc."
+                                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="submit"
+                                                class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700">
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Social Stats Tab -->
+                    <div x-show="profileTab === 'social'" class="space-y-6 mt-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white border border-gray-200 rounded-xl p-6 text-center">
+                                <div class="text-3xl font-bold text-blue-600" x-text="analytics.followers"></div>
+                                <div class="text-sm text-gray-600 mt-1">Followers</div>
+                                <div class="text-xs text-green-600 mt-1">+12 this week</div>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-xl p-6 text-center">
+                                <div class="text-3xl font-bold text-purple-600" x-text="analytics.profileViews"></div>
+                                <div class="text-sm text-gray-600 mt-1">Profile Views</div>
+                                <div class="text-xs text-green-600 mt-1">+45 this week</div>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-xl p-6 text-center">
+                                <div class="text-3xl font-bold text-green-600" x-text="analytics.totalEnrollments"></div>
+                                <div class="text-sm text-gray-600 mt-1">Total Students</div>
+                                <div class="text-xs text-green-600 mt-1">+8 this month</div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Bio</label>
-                            <textarea x-model="profile.bio" rows="4"
-                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                        
+                        <!-- Engagement Metrics -->
+                        <div class="bg-white border border-gray-200 rounded-xl p-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Engagement Metrics</h4>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Average Rating</span>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm font-medium" x-text="`${analytics.averageRating}/5`"></span>
+                                        <div class="flex text-yellow-400">
+                                            <template x-for="i in 5" :key="i">
+                                                <i :class="i <= Math.floor(analytics.averageRating) ? 'fas fa-star' : 'far fa-star'" class="text-xs"></i>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Session Completion Rate</span>
+                                    <span class="text-sm font-medium text-green-600" x-text="`${analytics.completionRate}%`"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Response Time</span>
+                                    <span class="text-sm font-medium">< 2 hours</span>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Skills & Technologies</label>
-                            <input type="text" x-model="profile.skills"
-                                   placeholder="React, Python, Data Science, etc."
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    
+                    <!-- Activity Feed Tab -->
+                    <div x-show="profileTab === 'activity'" class="space-y-4 mt-6">
+                        <div class="bg-white border border-gray-200 rounded-xl p-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Recent Activity</h4>
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <i data-feather="user-plus" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">New follower: Alex Thompson</p>
+                                        <p class="text-xs text-gray-500">2 hours ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                        <i data-feather="video" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">Completed session: React Advanced Patterns</p>
+                                        <p class="text-xs text-gray-500">5 hours ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
+                                    <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                        <i data-feather="star" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">Received 5-star rating from Maria Garcia</p>
+                                        <p class="text-xs text-gray-500">1 day ago</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <button type="submit"
-                                    class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700">
-                                Save Changes
+                    </div>
+                    
+                    <!-- Privacy Settings Tab -->
+                    <div x-show="profileTab === 'settings'" class="space-y-6 mt-6">
+                        <div class="bg-white border border-gray-200 rounded-xl p-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Privacy Settings</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Profile Visibility</p>
+                                        <p class="text-xs text-gray-500">Who can see your profile</p>
+                                    </div>
+                                    <select class="border-gray-300 rounded-md text-sm">
+                                        <option>Public</option>
+                                        <option>Followers Only</option>
+                                        <option>Private</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Show Online Status</p>
+                                        <p class="text-xs text-gray-500">Let others see when you're online</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked>
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Session History Visible</p>
+                                        <p class="text-xs text-gray-500">Show your completed sessions</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked>
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                             </button>
                         </div>
                     </div>
