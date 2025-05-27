@@ -355,7 +355,7 @@ def learner_dashboard(request):
     mentors = User.objects.filter(role='mentor', is_active=True)
     context['mentors'] = mentors
     
-    return render(request, 'dashboard/learner_complete.html', context)
+    return render(request, 'dashboard/learner_premium.html', context)
 
 
 @login_required
