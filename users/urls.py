@@ -14,7 +14,7 @@ urlpatterns = [
     path('profile/view/<uuid:user_id>/', views.mentor_profile_view, name='mentor_profile_view'),
     path('profile/upload-image/', views.upload_profile_image, name='upload_profile_image'),
     path('dashboard/mentor/', views.mentor_dashboard, name='mentor_dashboard'),
-    path('dashboard/analytics/', views.real_analytics, name='real_analytics'),
+
     path('dashboard/learner/', views.learner_dashboard, name='learner_dashboard'),
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/communication-insights/', views.communication_insights_view, name='communication_insights'),
