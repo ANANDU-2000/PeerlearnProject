@@ -716,6 +716,50 @@
                 peerConnection.close();
             }
         });
+
+        // Fix for feedback modal function
+        function openFeedbackModal() {
+            document.getElementById('feedbackInbox').classList.remove('hidden');
+        }
+
+        // Fix for rating submission
+        function submitRating() {
+            const rating = document.querySelector('input[name="rating"]:checked');
+            const comment = document.getElementById('ratingComment');
+            
+            if (!rating) {
+                alert('Please select a rating');
+                return;
+            }
+
+            const ratingData = {
+                rating: parseInt(rating.value),
+                comment: comment ? comment.value : '',
+                session_id: '{{ session.id }}'
+            };
+
+            fetch(`/sessions/api/sessions/{{ session.id }}/live-feedback/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(ratingData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showNotification('Rating submitted successfully!', 'success');
+                    document.getElementById('sessionRatingModal').style.display = 'none';
+                } else {
+                    showNotification('Failed to submit rating. Please try again.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting rating:', error);
+                showNotification('Failed to submit rating. Please try again.', 'error');
+            });
+        }
     </script>
 
     <!-- Include Interactive Rating Carousel -->
