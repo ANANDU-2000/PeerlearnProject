@@ -539,6 +539,70 @@ def create_gift_payment(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required
+@require_http_methods(["POST"])
+def start_session(request, session_id):
+    """Start a session - FIXED FOR MENTORS"""
+    try:
+        session = get_object_or_404(Session, id=session_id)
+        
+        # Check if user is the mentor
+        if request.user != session.mentor:
+            return JsonResponse({'error': 'Only the mentor can start this session'}, status=403)
+        
+        # Update session status
+        session.status = 'in_progress'
+        session.save()
+        
+        # Create notification for all booked learners
+        from users.models import Notification
+        booked_learners = Booking.objects.filter(
+            session=session, 
+            status='confirmed'
+        ).values_list('learner', flat=True)
+        
+        for learner_id in booked_learners:
+            Notification.objects.create(
+                user_id=learner_id,
+                title='🟢 Session Started!',
+                message=f'"{session.title}" has started. Join now!',
+                type='session_started'
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Session started successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def end_session(request, session_id):
+    """End a session"""
+    try:
+        session = get_object_or_404(Session, id=session_id)
+        
+        # Check if user is the mentor
+        if request.user != session.mentor:
+            return JsonResponse({'error': 'Only the mentor can end this session'}, status=403)
+        
+        # Update session status
+        session.status = 'completed'
+        session.save()
+        
+        # Update all bookings to completed
+        Booking.objects.filter(session=session, status='confirmed').update(status='completed')
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Session ended successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def verify_gift_payment(request):
