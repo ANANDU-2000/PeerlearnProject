@@ -1174,3 +1174,33 @@ def mentor_feedback(request):
         
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt  
+@require_http_methods(["POST"])
+def submit_rating_simple(request, session_id):
+    """Working rating submission endpoint for real feedback data"""
+    try:
+        session = Session.objects.get(id=session_id)
+        data = json.loads(request.body)
+        
+        rating = int(data.get('rating', 5))
+        comment = data.get('comment', '')
+        
+        feedback = Feedback.objects.create(
+            session=session,
+            user=request.user,
+            rating=rating,
+            comment=comment
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Rating submitted successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'message': f'Error: {str(e)}'
+        }, status=400)
