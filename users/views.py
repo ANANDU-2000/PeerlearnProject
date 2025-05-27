@@ -163,17 +163,27 @@ def register_steps_view(request):
                 user.profile_image = profile_image
                 user.save()
             
-            # Authenticate and login
-            user = authenticate(username=username, password=password1)
-            if user:
-                login(request, user)
+            # Authenticate and login the newly created user
+            authenticated_user = authenticate(request, username=username, password=password1)
+            if authenticated_user:
+                login(request, authenticated_user)
                 return JsonResponse({
                     'success': True, 
                     'message': 'Registration successful!',
                     'redirect_url': '/dashboard/mentor/' if role == 'mentor' else '/dashboard/learner/'
                 })
             else:
-                return JsonResponse({'success': False, 'error': 'Authentication failed'})
+                # Fallback: try authenticating with email
+                authenticated_user = authenticate(request, username=email, password=password1)
+                if authenticated_user:
+                    login(request, authenticated_user)
+                    return JsonResponse({
+                        'success': True, 
+                        'message': 'Registration successful!',
+                        'redirect_url': '/dashboard/mentor/' if role == 'mentor' else '/dashboard/learner/'
+                    })
+                else:
+                    return JsonResponse({'success': False, 'error': 'Authentication failed after registration'})
                 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
