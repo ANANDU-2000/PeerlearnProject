@@ -2,13 +2,18 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from . import views, api_views, admin_api, real_admin_api, learner_payment_api
+from . import views, api_views, admin_api, real_admin_api, learner_payment_api, registration_api
 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('register/', views.UserRegistrationView.as_view(), name='register'),
+    path('register/', views.advanced_register_view, name='register'),
     path('register/steps/', views.register_steps_view, name='register_steps'),
+    
+    # Advanced Registration API
+    path('api/register/', registration_api.advanced_registration_api, name='api_register'),
+    path('api/check-email-availability/', registration_api.check_email_availability, name='check_email_availability'),
+    path('api/skill-suggestions/', registration_api.get_skill_suggestions, name='skill_suggestions'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/view/<uuid:user_id>/', views.mentor_profile_view, name='mentor_profile_view'),
