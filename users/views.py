@@ -7,11 +7,16 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
 from django.utils import timezone
 import json
 from .forms import UserRegistrationForm, UserProfileForm
-from .models import User
-from sessions.models import Session, Booking, Request
+from django.shortcuts import get_object_or_404
+from .models import User, UserSocialStats, Follow, UserActivity, PersonalMessage
+from .follow_models import Follow
+from .social_api import get_user_social_stats, create_user_activity
+from sessions.models import Session, Booking, Request, Feedback
 from recommendations.recommendation_engine import get_recommendations_for_user, get_mentor_recommendations_for_user
 
 def landing_page(request):
@@ -521,3 +526,67 @@ def advanced_profile_view(request, user_id):
     }
     
     return render(request, 'profile/advanced_profile.html', context)
+
+def mentor_profile_view(request, user_id):
+    """Beautiful modern mentor profile view page"""
+    mentor = get_object_or_404(User, id=user_id)
+    
+    # Get social stats
+    social_stats = get_user_social_stats(mentor)
+    
+    # Get followers and following
+    followers = Follow.objects.filter(following=mentor).select_related('follower')
+    following = Follow.objects.filter(follower=mentor).select_related('following')
+    
+    # Get recent activity
+    recent_activities = UserActivity.objects.filter(user=mentor).order_by('-created_at')[:10]
+    
+    # Get mentor's sessions and feedback
+    mentor_sessions = Session.objects.filter(mentor=mentor).order_by('-created_at')[:5]
+    mentor_feedback = Feedback.objects.filter(session__mentor=mentor).order_by('-created_at')[:5]
+    
+    # Split skills into list
+    skills_list = []
+    if hasattr(mentor, 'skills') and mentor.skills:
+        skills_list = [skill.strip() for skill in mentor.skills.split(',') if skill.strip()]
+    
+    context = {
+        'mentor': mentor,
+        'social_stats': social_stats,
+        'followers': followers,
+        'following': following,
+        'recent_activities': recent_activities,
+        'mentor_sessions': mentor_sessions,
+        'mentor_feedback': mentor_feedback,
+        'skills_list': skills_list,
+        'is_following': Follow.objects.filter(follower=request.user, following=mentor).exists() if request.user.is_authenticated else False,
+    }
+    
+    return render(request, 'profile/mentor_profile_view.html', context)
+
+@login_required
+@csrf_exempt
+def upload_profile_image(request):
+    """Handle profile image upload with cropping"""
+    if request.method == 'POST':
+        try:
+            if 'profile_image' in request.FILES:
+                # Handle regular file upload
+                image_file = request.FILES['profile_image']
+                
+                # Save the image
+                file_name = f"profile_images/{request.user.id}_{image_file.name}"
+                path = default_storage.save(file_name, image_file)
+                
+                # Update user profile
+                request.user.profile_image = path
+                request.user.save()
+                
+                return JsonResponse({'success': True, 'image_url': default_storage.url(path)})
+            else:
+                return JsonResponse({'success': False, 'error': 'No image provided'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
