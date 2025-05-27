@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerLearn Admin - Complete Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-card { transition: all 0.3s ease; }
+        .admin-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .stat-number { font-size: 2.5rem; font-weight: 800; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .modern-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Header -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="h-10 w-10 bg-white rounded-lg flex items-center justify-center">
+                            <i class="fas fa-crown text-purple-600 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h1 class="text-xl font-bold text-white">PeerLearn Admin</h1>
+                            <p class="text-purple-100 text-sm">Complete Control Center</p>
+                        </div>
+                    </div>
+                    <div class="ml-8 bg-orange-500 px-4 py-2 rounded-full">
+                        <span class="text-white text-sm font-bold">OWNER ACCESS</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="text-white text-sm">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span id="currentTime"></span>
+                    </div>
+                    <div class="relative">
+                        <button class="text-white hover:text-purple-200 p-2">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ notifications_count|default:0 }}</span>
+                        </button>
+                    </div>
+                    <div class="text-white">
+                        <i class="fas fa-user-shield mr-2"></i>
+                        <span>{{ user.get_full_name|default:user.username }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Quick Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Dashboard Card -->
+            <div class="admin-card bg-white rounded-xl p-6 modern-shadow cursor-pointer" onclick="window.location.href='#dashboard'">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i class="fas fa-chart-pie text-purple-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Dashboard</h3>
+                        <p class="text-gray-600">Real-time analytics</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="stat-number text-purple-600">{{ total_users|default:0 }}</div>
+                    <p class="text-sm text-gray-500">Total Users</p>
+                </div>
+            </div>
+
+            <!-- User Management Card -->
+            <div class="admin-card bg-white rounded-xl p-6 modern-shadow cursor-pointer" onclick="showUserManagement()">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">User Management</h3>
+                        <p class="text-gray-600">Control users</p>
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mt-1">{{ pending_users|default:0 }} pending</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="stat-number text-blue-600">{{ total_mentors|default:0 }}</div>
+                    <p class="text-sm text-gray-500">Active Mentors</p>
+                </div>
+            </div>
+
+            <!-- Session Control Card -->
+            <div class="admin-card bg-white rounded-xl p-6 modern-shadow cursor-pointer" onclick="showSessionControl()">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-video text-green-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Session Control</h3>
+                        <p class="text-gray-600">Monitor sessions</p>
+                        <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mt-1">{{ live_sessions|default:0 }} live</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="stat-number text-green-600">{{ total_sessions|default:0 }}</div>
+                    <p class="text-sm text-gray-500">Total Sessions</p>
+                </div>
+            </div>
+
+            <!-- Financial Card -->
+            <div class="admin-card bg-white rounded-xl p-6 modern-shadow cursor-pointer" onclick="showFinancial()">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-rupee-sign text-yellow-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Financial</h3>
+                        <p class="text-gray-600">Revenue tracking</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="stat-number text-yellow-600">₹{{ daily_revenue|default:0|floatformat:0 }}</div>
+                    <p class="text-sm text-gray-500">Today's Revenue</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Card -->
+        <div class="admin-card bg-white rounded-xl p-6 modern-shadow cursor-pointer mb-6" onclick="showAnalytics()">
+            <div class="flex items-center">
+                <div class="p-3 bg-indigo-100 rounded-lg">
+                    <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Analytics</h3>
+                    <p class="text-gray-600">Detailed insights and reports</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="mainContent">
+            <!-- User Management Section -->
+            <div id="userManagement" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">User Management</h2>
+                        <button onclick="exportUsers()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-download mr-2"></i>Export Users
+                        </button>
+                    </div>
+
+                    <!-- Search and Filters -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <input type="text" id="userSearch" placeholder="Search users..." 
+                               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        
+                        <select id="roleFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Roles</option>
+                            <option value="mentor">Mentors</option>
+                            <option value="learner">Learners</option>
+                        </select>
+                        
+                        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        
+                        <button onclick="filterUsers()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            Apply Filters
+                        </button>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sessions</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                                {% for user in users %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 bg-gray-300 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-gray-600"></i>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
+                                                <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                               {% if user.role == 'mentor' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                            {{ user.role|capfirst }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                               {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ user.session_count|default:0 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button onclick="viewUser('{{ user.id }}')" class="text-blue-600 hover:text-blue-900 mr-3">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="editUser('{{ user.id }}')" class="text-green-600 hover:text-green-900 mr-3">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% if user.is_active %}
+                                        <button onclick="banUser('{{ user.id }}')" class="text-red-600 hover:text-red-900">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                        {% else %}
+                                        <button onclick="activateUser('{{ user.id }}')" class="text-green-600 hover:text-green-900">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No users found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Control Section -->
+            <div id="sessionControl" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Session Control</h2>
+                    
+                    <!-- Live Sessions -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Live Sessions</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {% for session in live_sessions_list %}
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-medium text-gray-900">{{ session.title|truncatechars:30 }}</h4>
+                                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">LIVE</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Mentor: {{ session.mentor.get_full_name }}</p>
+                                <p class="text-sm text-gray-600 mb-4">Participants: {{ session.current_participants }}/{{ session.max_participants }}</p>
+                                <div class="flex space-x-2">
+                                    <button onclick="monitorSession('{{ session.id }}')" class="flex-1 bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                                        Monitor
+                                    </button>
+                                    <button onclick="endSession('{{ session.id }}')" class="flex-1 bg-red-500 text-white px-3 py-1 rounded text-sm">
+                                        End
+                                    </button>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-span-3 text-center text-gray-500 py-8">
+                                <i class="fas fa-video text-4xl mb-4"></i>
+                                <p>No live sessions at the moment</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Recent Sessions -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Sessions</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-auto">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Session</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mentor</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenue</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for session in recent_sessions %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ session.title|truncatechars:40 }}</div>
+                                            <div class="text-sm text-gray-500">{{ session.schedule|date:"M d, H:i" }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ session.mentor.get_full_name }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                                   {% if session.status == 'completed' %}bg-green-100 text-green-800
+                                                   {% elif session.status == 'live' %}bg-red-100 text-red-800
+                                                   {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                                {{ session.status|capfirst }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            ₹{{ session.total_revenue|default:0|floatformat:0 }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button onclick="viewSession('{{ session.id }}')" class="text-blue-600 hover:text-blue-900">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">No sessions found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Section -->
+            <div id="financial" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Financial Dashboard</h2>
+                    
+                    <!-- Revenue Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gradient-to-r from-green-400 to-green-600 rounded-xl p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100">Daily Revenue</p>
+                                    <p class="text-3xl font-bold">₹{{ daily_revenue|default:0|floatformat:0 }}</p>
+                                </div>
+                                <i class="fas fa-chart-line text-3xl text-green-200"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-blue-400 to-blue-600 rounded-xl p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-blue-100">Monthly Revenue</p>
+                                    <p class="text-3xl font-bold">₹{{ monthly_revenue|default:0|floatformat:0 }}</p>
+                                </div>
+                                <i class="fas fa-calendar text-3xl text-blue-200"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-purple-400 to-purple-600 rounded-xl p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-purple-100">Platform Fee</p>
+                                    <p class="text-3xl font-bold">₹{{ platform_fees|default:0|floatformat:0 }}</p>
+                                </div>
+                                <i class="fas fa-percentage text-3xl text-purple-200"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-auto">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Session</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for booking in recent_bookings %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ booking.created_at|date:"M d, H:i" }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ booking.learner.get_full_name }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ booking.session.title|truncatechars:30 }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            ₹{{ booking.amount_paid|default:0|floatformat:0 }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                                   {% if booking.payment_status == 'completed' %}bg-green-100 text-green-800
+                                                   {% elif booking.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
+                                                   {% else %}bg-red-100 text-red-800{% endif %}">
+                                                {{ booking.payment_status|capfirst }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">No transactions found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analytics" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Analytics & Reports</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- User Growth Chart -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">User Growth</h3>
+                            <div class="h-64 flex items-center justify-center text-gray-500">
+                                <div class="text-center">
+                                    <i class="fas fa-chart-line text-4xl mb-4"></i>
+                                    <p>Chart visualization would go here</p>
+                                    <p class="text-sm">{{ user_growth|default:0 }}% growth this month</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Revenue Analytics -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue Trends</h3>
+                            <div class="h-64 flex items-center justify-center text-gray-500">
+                                <div class="text-center">
+                                    <i class="fas fa-chart-bar text-4xl mb-4"></i>
+                                    <p>Revenue analytics chart</p>
+                                    <p class="text-sm">₹{{ monthly_revenue|default:0|floatformat:0 }} this month</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <p class="text-gray-500 text-sm">© 2025 PeerLearn. All rights reserved.</p>
+                <p class="text-gray-500 text-sm">Admin Panel v2.0</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Navigation functions
+        function showUserManagement() {
+            hideAllSections();
+            document.getElementById('userManagement').classList.remove('hidden');
+        }
+
+        function showSessionControl() {
+            hideAllSections();
+            document.getElementById('sessionControl').classList.remove('hidden');
+        }
+
+        function showFinancial() {
+            hideAllSections();
+            document.getElementById('financial').classList.remove('hidden');
+        }
+
+        function showAnalytics() {
+            hideAllSections();
+            document.getElementById('analytics').classList.remove('hidden');
+        }
+
+        function hideAllSections() {
+            document.getElementById('userManagement').classList.add('hidden');
+            document.getElementById('sessionControl').classList.add('hidden');
+            document.getElementById('financial').classList.add('hidden');
+            document.getElementById('analytics').classList.add('hidden');
+        }
+
+        // User management functions
+        function filterUsers() {
+            const search = document.getElementById('userSearch').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            // This would make an AJAX call to filter users
+            console.log('Filtering users:', { search, role, status });
+        }
+
+        function viewUser(userId) {
+            alert('Viewing user: ' + userId);
+        }
+
+        function editUser(userId) {
+            alert('Editing user: ' + userId);
+        }
+
+        function banUser(userId) {
+            if (confirm('Are you sure you want to ban this user?')) {
+                // AJAX call to ban user
+                console.log('Banning user:', userId);
+            }
+        }
+
+        function activateUser(userId) {
+            if (confirm('Are you sure you want to activate this user?')) {
+                // AJAX call to activate user
+                console.log('Activating user:', userId);
+            }
+        }
+
+        function exportUsers() {
+            alert('Exporting users data...');
+        }
+
+        // Session management functions
+        function monitorSession(sessionId) {
+            alert('Monitoring session: ' + sessionId);
+        }
+
+        function endSession(sessionId) {
+            if (confirm('Are you sure you want to end this session?')) {
+                // AJAX call to end session
+                console.log('Ending session:', sessionId);
+            }
+        }
+
+        function viewSession(sessionId) {
+            alert('Viewing session: ' + sessionId);
+        }
+
+        // Show user management by default
+        showUserManagement();
+    </script>
+</body>
+</html>

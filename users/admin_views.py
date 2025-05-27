@@ -69,6 +69,14 @@ def admin_dashboard(request):
     recent_sessions = Session.objects.select_related('mentor').order_by('-created_at')[:10]
     recent_users = CustomUser.objects.order_by('-date_joined')[:10]
     
+    # Live sessions for display
+    live_sessions_list = Session.objects.filter(status='live')[:6]
+    
+    # Add revenue calculation to sessions
+    for session in recent_sessions:
+        session_bookings = session.booking_set.filter(payment_status='completed')
+        session.total_revenue = sum([b.amount_paid or 500 for b in session_bookings])
+    
     context = {
         'total_users': total_users,
         'total_mentors': total_mentors,
@@ -76,6 +84,7 @@ def admin_dashboard(request):
         'pending_users': pending_users,
         'total_sessions': total_sessions,
         'live_sessions': live_sessions,
+        'live_sessions_list': live_sessions_list,
         'scheduled_sessions': scheduled_sessions,
         'completed_sessions': completed_sessions,
         'daily_revenue': daily_revenue,
@@ -86,9 +95,14 @@ def admin_dashboard(request):
         'recent_bookings': recent_bookings,
         'recent_sessions': recent_sessions,
         'recent_users': recent_users,
+        'recent_sessions': recent_sessions,
+        'recent_bookings': recent_bookings,
+        'users': recent_users,  # For user management section
+        'platform_fees': monthly_revenue * 0.1,  # 10% platform fee
+        'notifications_count': 5,  # You can calculate real notifications later
     }
     
-    return render(request, 'admin/dashboard_modern.html', context)
+    return render(request, 'admin/real_dashboard.html', context)
 
 
 @staff_member_required
