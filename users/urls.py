@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from . import views, api_views, admin_api, real_admin_api, learner_payment_api, learner_api
+from . import views, api_views, admin_api, real_admin_api, learner_payment_api
 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
@@ -53,10 +53,4 @@ urlpatterns = [
     path('api/learner/verify-payment/', learner_payment_api.verify_session_payment, name='verify_session_payment'),
     path('api/learner/submit-review/', learner_payment_api.submit_mentor_review, name='submit_mentor_review'),
     path('api/learner/reviews/', learner_payment_api.get_mentor_reviews, name='get_mentor_reviews'),
-    
-    # New Learner Dashboard API
-    path('api/recommendations/ai/', learner_api.ai_recommendations_api, name='ai_recommendations'),
-    path('api/session-requests/', learner_api.create_session_request_api, name='create_session_request'),
-    path('api/refund-request/', learner_api.request_refund_api, name='request_refund'),
-    path('api/notifications/mark-all-read/', learner_api.mark_all_notifications_read_api, name='mark_all_notifications_read'),
 ]
