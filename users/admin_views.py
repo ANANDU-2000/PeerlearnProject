@@ -37,13 +37,13 @@ def admin_dashboard(request):
     today = timezone.now().date()
     daily_revenue = Booking.objects.filter(
         created_at__date=today,
-        payment_status='completed'
+        status='completed'
     ).aggregate(total=Sum('amount_paid'))['total'] or 0
     
     monthly_revenue = Booking.objects.filter(
         created_at__month=today.month,
         created_at__year=today.year,
-        payment_status='completed'
+        status='completed'
     ).aggregate(total=Sum('amount_paid'))['total'] or 0
     
     # Growth calculations
@@ -74,7 +74,7 @@ def admin_dashboard(request):
     
     # Add revenue calculation to sessions
     for session in recent_sessions:
-        session_bookings = session.booking_set.filter(payment_status='completed')
+        session_bookings = session.booking_set.filter(status='completed')
         session.total_revenue = sum([b.amount_paid or 500 for b in session_bookings])
     
     context = {

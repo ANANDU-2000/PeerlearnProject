@@ -402,10 +402,10 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                                   {% if booking.payment_status == 'completed' %}bg-green-100 text-green-800
-                                                   {% elif booking.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
+                                                   {% if booking.status == 'completed' %}bg-green-100 text-green-800
+                                                   {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800
                                                    {% else %}bg-red-100 text-red-800{% endif %}">
-                                                {{ booking.payment_status|capfirst }}
+                                                {{ booking.status|capfirst }}
                                             </span>
                                         </td>
                                     </tr>

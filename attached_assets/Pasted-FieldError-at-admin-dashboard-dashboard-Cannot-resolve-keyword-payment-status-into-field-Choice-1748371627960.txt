@@ -1,0 +1,33 @@
+FieldError at /admin-dashboard/dashboard/
+Cannot resolve keyword 'payment_status' into field. Choices are: created_at, id, learner, learner_id, session, session_id, status, updated_at
+Request Method:	GET
+Request URL:	http://3e4c4c4a-b60b-4556-9647-2c6022f13499-00-186qnvr9j3jvh.worf.replit.dev/admin-dashboard/dashboard/
+Django Version:	5.2.1
+Exception Type:	FieldError
+Exception Value:	
+Cannot resolve keyword 'payment_status' into field. Choices are: created_at, id, learner, learner_id, session, session_id, status, updated_at
+Exception Location:	/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/db/models/sql/query.py, line 1802, in names_to_path
+Raised during:	users.admin_views.admin_dashboard
+Python Executable:	/home/runner/workspace/.pythonlibs/bin/python
+Python Version:	3.11.10
+Python Path:	
+['/home/runner/workspace',
+ '/nix/store/lc7qv2ldzrs1aq3hbyzmbgvn0h2w26pl-sitecustomize/lib/python/site-packages',
+ '/nix/store/dfg63lldbvcj207iyr9z0xw21d8ax02n-python3.11-pip-24.0/lib/python3.11/site-packages',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python311.zip',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11',
+ '/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/lib-dynload',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages',
+ '/nix/store/wblvmd5y7izx0z10d1w7ga7zc4apjxmb-python3.11-setuptools-75.1.1/lib/python3.11/site-packages',
+ '/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/setuptools/_vendor']
+Server time:	Tue, 27 May 2025 18:46:58 +0000
+Traceback Switch to copy-and-paste view
+
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/core/handlers/exception.py, line 42, in inner
+                response = await get_response(request)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^ …
+Local vars
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/django/core/handlers/base.py, line 253, in _get_response_async
+                response = await wrapped_callback(
+                                 
