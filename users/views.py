@@ -349,7 +349,13 @@ def learner_dashboard(request):
         }
     }
     
-    return render(request, 'dashboard/learner_complete.html', context)
+    # Add mentors for request modal
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    mentors = User.objects.filter(role='mentor', is_active=True)
+    context['mentors'] = mentors
+    
+    return render(request, 'dashboard/learner_premium.html', context)
 
 
 @login_required
