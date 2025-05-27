@@ -19,10 +19,10 @@ def admin_dashboard(request):
     """Main admin dashboard with comprehensive analytics"""
     
     # Real-time metrics
-    total_users = CustomUser.objects.count()
-    total_mentors = CustomUser.objects.filter(role='mentor').count()
-    total_learners = CustomUser.objects.filter(role='learner').count()
-    pending_users = CustomUser.objects.filter(is_verified=False).count()
+    total_users = User.objects.count()
+    total_mentors = User.objects.filter(role='mentor').count()
+    total_learners = User.objects.filter(role='learner').count()
+    pending_users = User.objects.filter(is_active=True).count()  # Adjust based on your verification field
     
     # Session metrics
     total_sessions = Session.objects.count()
