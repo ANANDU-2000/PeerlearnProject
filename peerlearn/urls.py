@@ -20,6 +20,9 @@ urlpatterns = [
     path('api/follow-mentor/', api_views.follow_mentor_api, name='follow_mentor_api'),
     path('api/request-mentor-session/', api_views.request_mentor_session_api, name='request_mentor_session_api'),
     path('recommendations/', include('recommendations.urls')),
+    
+    # LIVE VIDEO DEMO - DIRECT ACCESS (NO LOGIN NEEDED)
+    path('demo/video/', TemplateView.as_view(template_name='demo_video_room.html'), name='demo_video_room'),
 ]
 
 if settings.DEBUG:
