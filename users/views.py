@@ -619,3 +619,30 @@ def advanced_register_view(request):
         return redirect("learner_dashboard")
     
     return render(request, "registration/register_advanced.html")
+
+
+def role_selection_view(request):
+    """Show role selection page"""
+    if request.user.is_authenticated:
+        if hasattr(request.user, "role"):
+            if request.user.role == "mentor":
+                return redirect("mentor_dashboard")
+            else:
+                return redirect("learner_dashboard")
+        return redirect("learner_dashboard")
+    
+    return render(request, "registration/role_selection.html")
+
+def learner_register_view(request):
+    """Show learner-specific registration page"""
+    if request.user.is_authenticated:
+        return redirect("learner_dashboard")
+    
+    return render(request, "registration/learner_register.html")
+
+def mentor_register_view(request):
+    """Show mentor-specific registration page"""
+    if request.user.is_authenticated:
+        return redirect("mentor_dashboard")
+    
+    return render(request, "registration/mentor_register.html")

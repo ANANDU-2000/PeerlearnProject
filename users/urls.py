@@ -7,10 +7,11 @@ from . import views, api_views, admin_api, real_admin_api, learner_payment_api, 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('register/', views.advanced_register_view, name='register'),
-    path('register/steps/', views.register_steps_view, name='register_steps'),
+    path('register/', views.role_selection_view, name='register'),
+    path('register/learner/', views.learner_register_view, name='learner_register'),
+    path('register/mentor/', views.mentor_register_view, name='mentor_register'),
     
-    # Advanced Registration API
+    # Registration API
     path('api/register/', registration_api.advanced_registration_api, name='api_register'),
     path('api/check-email-availability/', registration_api.check_email_availability, name='check_email_availability'),
     path('api/skill-suggestions/', registration_api.get_skill_suggestions, name='skill_suggestions'),
