@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime, timedelta
 from sessions.models import Session, Booking, Feedback
-from users.models import User, Notification
+from users.models import User
 import json
 
 class RealTimeSessionManager:
