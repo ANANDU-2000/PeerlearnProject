@@ -23,20 +23,6 @@ def create_session_api(request):
         max_participants = int(request.POST.get('max_participants', 10))
         status = request.POST.get('status', 'draft')
         
-        # CRITICAL: Handle pricing data from your form
-        session_type = request.POST.get('session_type', 'free')
-        price = None
-        
-        # Process your entered price (₹200)
-        if session_type == 'paid':
-            price_value = request.POST.get('price')
-            if price_value and price_value.strip():
-                try:
-                    price = float(price_value)
-                except ValueError:
-                    messages.error(request, 'Invalid price format')
-                    return redirect('mentor_dashboard')
-        
         # Parse and validate schedule
         schedule = datetime.strptime(schedule_str, '%Y-%m-%dT%H:%M')
         if timezone.is_naive(schedule):
@@ -47,7 +33,7 @@ def create_session_api(request):
             messages.error(request, 'Session must be scheduled for a future date and time')
             return redirect('mentor_dashboard')
         
-        # Create session with real database save INCLUDING PRICE
+        # Create session with real database save
         session = Session.objects.create(
             mentor=request.user,
             title=title.strip(),
@@ -55,8 +41,7 @@ def create_session_api(request):
             schedule=schedule,
             duration=duration,
             max_participants=max_participants,
-            status=status,
-            price=price  # CRITICAL: Save your ₹200 price here
+            status=status
         )
         
         # Success message with real status

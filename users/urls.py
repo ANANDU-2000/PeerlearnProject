@@ -2,28 +2,18 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from . import views, api_views, admin_api, real_admin_api, learner_payment_api, registration_api
+from . import views, api_views, admin_api, real_admin_api, learner_payment_api
 
 urlpatterns = [
     path('', views.landing_page, name='landing'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('register/', views.role_selection_view, name='register'),
-    path('register/learner/', views.learner_register_view, name='learner_register'),
-    path('register/mentor/', views.mentor_register_view, name='mentor_register'),
-    
-    # Registration API
-    path('api/register/', registration_api.advanced_registration_api, name='api_register'),
-    path('api/check-email-availability/', registration_api.check_email_availability, name='check_email_availability'),
-    path('api/skill-suggestions/', registration_api.get_skill_suggestions, name='skill_suggestions'),
+    path('register/', views.UserRegistrationView.as_view(), name='register'),
+    path('register/steps/', views.register_steps_view, name='register_steps'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
-    path('profile/view/<uuid:user_id>/', views.mentor_profile_view, name='mentor_profile_view'),
-    path('profile/upload-image/', views.upload_profile_image, name='upload_profile_image'),
     path('dashboard/mentor/', views.mentor_dashboard, name='mentor_dashboard'),
-
     path('dashboard/learner/', views.learner_dashboard, name='learner_dashboard'),
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
-    path('dashboard/communication-insights/', views.communication_insights_view, name='communication_insights'),
     path('portfolio/anandu/', views.anandu_portfolio, name='anandu_portfolio'),
     
     # API endpoints for live validation

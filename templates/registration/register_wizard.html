@@ -196,43 +196,20 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
                         <input x-model="formData.email" 
-                               @input="checkEmailAvailability()"
-                               @blur="checkEmailAvailability()"
+                               @input="validateEmail()"
                                type="email" 
                                placeholder="Enter your email address"
                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                        
-                        <!-- Email Status Display -->
-                        <div x-show="emailStatus" class="mt-2">
-                            <p :class="emailAvailable ? 'text-green-600' : 'text-red-600'" 
-                               class="text-xs font-medium flex items-center">
-                                <span x-show="isCheckingEmail" class="mr-2">
-                                    <div class="animate-spin w-3 h-3 border border-blue-500 border-t-transparent rounded-full"></div>
-                                </span>
-                                <span x-text="emailStatus"></span>
-                            </p>
-                        </div>
-                        
                         <p class="text-xs text-gray-500 mt-1">We'll use this for login and important notifications</p>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i data-feather="lock" class="w-4 h-4 inline mr-2"></i>
-                            Create Password *
-                        </label>
-                        <div class="relative">
-                            <input x-model="formData.password" 
-                                   @input="checkPasswordStrength()"
-                                   :type="showPassword ? 'text' : 'password'" 
-                                   placeholder="Create a strong password"
-                                   class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                            <button type="button" 
-                                    @click="togglePasswordVisibility()"
-                                    class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors">
-                                <i :data-feather="showPassword ? 'eye-off' : 'eye'" class="w-5 h-5"></i>
-                            </button>
-                        </div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Create Password *</label>
+                        <input x-model="formData.password" 
+                               @input="checkPasswordStrength()"
+                               type="password" 
+                               placeholder="Create a strong password"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         
                         <!-- Password Strength Indicator -->
                         <div x-show="formData.password" class="mt-2">
@@ -252,21 +229,11 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i data-feather="shield" class="w-4 h-4 inline mr-2"></i>
-                            Confirm Password *
-                        </label>
-                        <div class="relative">
-                            <input x-model="formData.confirmPassword" 
-                                   :type="showConfirmPassword ? 'text' : 'password'" 
-                                   placeholder="Confirm your password"
-                                   class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                            <button type="button" 
-                                    @click="toggleConfirmPasswordVisibility()"
-                                    class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors">
-                                <i :data-feather="showConfirmPassword ? 'eye-off' : 'eye'" class="w-5 h-5"></i>
-                            </button>
-                        </div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password *</label>
+                        <input x-model="formData.confirmPassword" 
+                               type="password" 
+                               placeholder="Confirm your password"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         <div x-show="formData.confirmPassword && formData.password !== formData.confirmPassword" class="mt-1">
                             <p class="text-red-600 text-xs flex items-center space-x-1">
                                 <i data-feather="x-circle" class="h-3 w-3"></i>
@@ -336,44 +303,16 @@
                         </p>
                     </div>
                     
-                    <!-- Skills with Intelligent Suggestions -->
-                    <div class="relative">
+                    <!-- Skills -->
+                    <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i data-feather="zap" class="w-4 h-4 inline mr-2"></i>
                             <span x-text="formData.role === 'mentor' ? 'Specific Skills & Technologies You Teach' : 'Skills You Want to Learn'"></span>
                         </label>
-                        <div class="relative">
-                            <input x-model="formData.skills" 
-                                   @input="showSkillSuggestions = formData.skills.length > 1"
-                                   @focus="showSkillSuggestions = formData.skills.length > 1"
-                                   @blur="setTimeout(() => showSkillSuggestions = false, 200)"
-                                   type="text" 
-                                   placeholder="Start typing skills... e.g., React, Python, Machine Learning"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                   autocomplete="off">
-                            <i data-feather="star" class="absolute right-3 top-3.5 w-4 h-4 text-gray-400"></i>
-                        </div>
-                        
-                        <!-- Smart Skill Suggestions -->
-                        <div x-show="showSkillSuggestions && getSkillSuggestions().length > 0" 
-                             class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div class="p-2 bg-gray-50 border-b text-xs text-gray-600 font-medium">
-                                <i data-feather="trending-up" class="w-3 h-3 inline mr-1"></i>
-                                Suggested Skills
-                            </div>
-                            <template x-for="skill in getSkillSuggestions()" :key="skill">
-                                <div @click="selectSkillSuggestion(skill)" 
-                                     class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors">
-                                    <span x-text="skill" class="text-sm text-gray-700"></span>
-                                    <i data-feather="plus-circle" class="w-3 h-3 inline ml-2 text-blue-500"></i>
-                                </div>
-                            </template>
-                        </div>
-                        
-                        <p class="text-xs text-gray-500 mt-1">
-                            <i data-feather="info" class="w-3 h-3 inline mr-1"></i>
-                            Separate multiple skills with commas - this helps with AI-powered matching
-                        </p>
+                        <input x-model="formData.skills" 
+                               type="text" 
+                               :placeholder="formData.role === 'mentor' ? 'e.g., React, Python, UI Design, Machine Learning, Product Management...' : 'e.g., JavaScript, Data Analysis, Digital Marketing, Photography...'"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <p class="text-xs text-gray-500 mt-1">Separate multiple skills with commas - this helps with matching</p>
                     </div>
                     
                     <!-- Experience Level (for mentors) -->
@@ -420,7 +359,7 @@
                                 </label>
                             </div>
                             <div class="flex-1">
-                                <input type="file" id="profileImage" x-ref="imageInput" name="profile_image" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden" @change="handleImageUpload($event)">
+                                <input type="file" id="profileImage" name="profile_image" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden" @change="handleImageUpload($event)">
                                 <button type="button" @click="$refs.imageInput.click()" class="inline-flex items-center px-4 py-2 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -603,16 +542,6 @@ function registrationWizard() {
             acceptMarketing: false
         },
         
-        showPassword: false,
-        showConfirmPassword: false,
-        usernameStatus: '',
-        emailStatus: '',
-        usernameAvailable: false,
-        emailAvailable: false,
-        showSkillSuggestions: false,
-        isCheckingUsername: false,
-        isCheckingEmail: false,
-        
         passwordStrength: {
             percentage: 0,
             text: 'Weak',
@@ -622,14 +551,16 @@ function registrationWizard() {
         domains: [
             { value: 'web-development', name: 'Web Development', icon: '🌐' },
             { value: 'mobile-development', name: 'Mobile Development', icon: '📱' },
-            { value: 'data-science', name: 'Data Science & Analytics', icon: '📊' },
-            { value: 'machine-learning', name: 'Machine Learning & AI', icon: '🤖' },
+            { value: 'data-science', name: 'Data Science', icon: '📊' },
+            { value: 'machine-learning', name: 'AI & Machine Learning', icon: '🤖' },
             { value: 'design', name: 'UI/UX Design', icon: '🎨' },
+            { value: 'business', name: 'Business & Marketing', icon: '💼' },
             { value: 'devops', name: 'DevOps & Cloud', icon: '⚙️' },
+            { value: 'blockchain', name: 'Blockchain & Web3', icon: '🔗' },
             { value: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
-            { value: 'blockchain', name: 'Blockchain & Web3', icon: '⛓️' },
-            { value: 'business', name: 'Business & Strategy', icon: '💼' },
-            { value: 'marketing', name: 'Digital Marketing', icon: '📢' }
+            { value: 'photography', name: 'Photography', icon: '📸' },
+            { value: 'writing', name: 'Writing & Content', icon: '✍️' },
+            { value: 'other', name: 'Other', icon: '🔧' }
         ],
         
         init() {
@@ -690,103 +621,19 @@ function registrationWizard() {
             }
         },
         
-        async checkUsernameAvailability() {
-            const username = this.formData.username.toLowerCase().trim();
-            if (username.length >= 3) {
-                this.isCheckingUsername = true;
-                try {
-                    const response = await fetch(`/api/check-username/?username=${encodeURIComponent(username)}`);
-                    const data = await response.json();
-                    this.usernameAvailable = data.available;
-                    this.usernameStatus = data.available ? 
+        checkUsernameAvailability() {
+            // Simulate username availability check
+            if (this.formData.username.length >= 3) {
+                setTimeout(() => {
+                    const unavailableNames = ['admin', 'test', 'user', 'peerlearn'];
+                    this.usernameAvailable = !unavailableNames.includes(this.formData.username.toLowerCase());
+                    this.usernameStatus = this.usernameAvailable ? 
                         '✓ Username is available' : 
-                        '✗ Username already taken';
-                } catch (error) {
-                    this.usernameStatus = '';
-                } finally {
-                    this.isCheckingUsername = false;
-                }
+                        '✗ Username is not available';
+                }, 500);
             } else {
                 this.usernameStatus = '';
-                this.usernameAvailable = false;
             }
-        },
-
-        async checkEmailAvailability() {
-            const email = this.formData.email.toLowerCase().trim();
-            if (this.validateEmail()) {
-                this.isCheckingEmail = true;
-                try {
-                    const response = await fetch(`/api/check-email-new/?email=${encodeURIComponent(email)}`);
-                    const data = await response.json();
-                    this.emailAvailable = data.available;
-                    this.emailStatus = data.available ? 
-                        '✓ Email is available' : 
-                        '✗ Email already registered';
-                } catch (error) {
-                    this.emailStatus = '';
-                } finally {
-                    this.isCheckingEmail = false;
-                }
-            } else {
-                this.emailStatus = '';
-                this.emailAvailable = false;
-            }
-        },
-
-        getSkillSuggestions() {
-            const skillSuggestions = [
-                // Programming & Development
-                'Python', 'JavaScript', 'Java', 'C++', 'C#', 'PHP', 'Ruby', 'Go', 'Rust',
-                'React', 'Vue.js', 'Angular', 'Node.js', 'Django', 'Flask', 'Spring Boot',
-                'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Git', 'Docker', 'Kubernetes',
-                
-                // Web Development
-                'HTML', 'CSS', 'Sass', 'Bootstrap', 'Tailwind CSS', 'WordPress', 'Shopify',
-                'REST API', 'GraphQL', 'Webpack', 'Vite', 'Progressive Web Apps',
-                
-                // Mobile Development
-                'React Native', 'Flutter', 'Swift', 'Kotlin', 'Ionic', 'Xamarin',
-                'Android Development', 'iOS Development', 'Mobile UI/UX',
-                
-                // Data Science & AI/ML
-                'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'Pandas',
-                'NumPy', 'Scikit-learn', 'Data Analysis', 'Statistics', 'R Programming',
-                'Power BI', 'Tableau', 'Excel', 'SQL', 'Big Data', 'Apache Spark',
-                
-                // Design
-                'UI Design', 'UX Design', 'Figma', 'Adobe XD', 'Sketch', 'Photoshop',
-                'Illustrator', 'Prototyping', 'User Research', 'Wireframing',
-                
-                // Business & Marketing
-                'Digital Marketing', 'SEO', 'Content Marketing', 'Social Media Marketing',
-                'Google Ads', 'Facebook Ads', 'Email Marketing', 'Project Management',
-                'Business Strategy', 'Leadership', 'Communication Skills', 'Sales'
-            ];
-            return skillSuggestions.filter(skill => 
-                skill.toLowerCase().includes(this.formData.skills.toLowerCase()) && 
-                this.formData.skills.length > 1
-            ).slice(0, 5);
-        },
-
-        selectSkillSuggestion(skill) {
-            const currentSkills = this.formData.skills ? 
-                this.formData.skills.toLowerCase().split(',').map(s => s.trim()) : [];
-            if (!currentSkills.includes(skill.toLowerCase())) {
-                if (this.formData.skills && this.formData.skills.trim()) {
-                    this.formData.skills = `${this.formData.skills.trim()}, ${skill}`;
-                } else {
-                    this.formData.skills = skill;
-                }
-            }
-        },
-
-        togglePasswordVisibility() {
-            this.showPassword = !this.showPassword;
-        },
-
-        toggleConfirmPasswordVisibility() {
-            this.showConfirmPassword = !this.showConfirmPassword;
         },
         
         validateEmail() {
@@ -905,11 +752,8 @@ function registrationWizard() {
         },
 
         getCSRFToken() {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                             document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
-                             document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
-                             '{{ csrf_token }}';
-            return csrfToken;
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         },
         
         updateIcons() {

@@ -7,22 +7,11 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.core.files.storage import default_storage
 from django.utils import timezone
 import json
 from .forms import UserRegistrationForm, UserProfileForm
-from django.shortcuts import get_object_or_404
-from .models import User, UserSocialStats, Follow, UserActivity, PersonalMessage
-# Simple fallback for social stats
-def get_user_social_stats(user):
-    return {
-        'followers_count': Follow.objects.filter(following=user).count(),
-        'following_count': Follow.objects.filter(follower=user).count(),
-        'posts_count': 0,
-        'profile_views': 1200,
-    }
-from sessions.models import Session, Booking, Request, Feedback
+from .models import User
+from sessions.models import Session, Booking, Request
 from recommendations.recommendation_engine import get_recommendations_for_user, get_mentor_recommendations_for_user
 
 def landing_page(request):
@@ -73,7 +62,7 @@ class CustomLoginView(LoginView):
 class UserRegistrationView(CreateView):
     model = User
     form_class = UserRegistrationForm
-    template_name = 'registration/register_wizard.html'
+    template_name = 'registration/register_working.html'
     
     def get_initial(self):
         initial = super().get_initial()
@@ -107,19 +96,18 @@ def register_steps_view(request):
     
     elif request.method == 'POST':
         try:
-            # Get form data from wizard - handle both formats
+            # Get form data from wizard
             role = request.POST.get('role')
-            first_name = request.POST.get('firstName') or request.POST.get('first_name')
-            last_name = request.POST.get('lastName') or request.POST.get('last_name')
-            username = request.POST.get('username', '').lower().strip()
-            email = request.POST.get('email', '').lower().strip()
-            password1 = request.POST.get('password') or request.POST.get('password1')
-            password2 = request.POST.get('confirmPassword') or request.POST.get('password2')
+            first_name = request.POST.get('firstName')
+            last_name = request.POST.get('lastName')
+            username = request.POST.get('username')
+            email = request.POST.get('email')
+            password1 = request.POST.get('password')
+            password2 = request.POST.get('confirmPassword')
             
             # Optional fields from wizard
             skills = request.POST.get('skills', '')
-            domains_str = request.POST.get('domains', '')
-            domains = domains_str.split(',') if domains_str else []
+            domains = request.POST.getlist('domains[]')  # Handle multiple domains
             expertise = ','.join(domains) if domains else ''
             bio = request.POST.get('bio', '')
             experience = request.POST.get('experience', '')
@@ -138,11 +126,7 @@ def register_steps_view(request):
             if User.objects.filter(email=email).exists():
                 return JsonResponse({'success': False, 'error': 'Email already registered'})
             
-            # Clean and standardize data for ML recommendations
-            clean_skills = ', '.join([skill.strip().title() for skill in skills.split(',') if skill.strip()]) if skills else ''
-            clean_domains = ', '.join([domain.strip().title() for domain in domains if domain.strip()]) if domains else ''
-            
-            # Create user with properly formatted data
+            # Create user
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -150,12 +134,12 @@ def register_steps_view(request):
                 first_name=first_name,
                 last_name=last_name,
                 role=role,
-                skills=clean_skills,
-                interests=clean_domains,  # Domains as interests for learners
-                domain=clean_domains,     # Primary domain
-                expertise=clean_skills if role == 'mentor' else clean_domains,
+                skills=skills,
+                interests=expertise,  # Using domains as interests
+                domain=expertise,
+                expertise=experience,
                 bio=bio,
-                career_goals=''
+                career_goals=''  # Not collected in wizard
             )
             
             # Handle profile image upload
@@ -163,27 +147,17 @@ def register_steps_view(request):
                 user.profile_image = profile_image
                 user.save()
             
-            # Authenticate and login the newly created user
-            authenticated_user = authenticate(request, username=username, password=password1)
-            if authenticated_user:
-                login(request, authenticated_user)
+            # Authenticate and login
+            user = authenticate(username=username, password=password1)
+            if user:
+                login(request, user)
                 return JsonResponse({
                     'success': True, 
                     'message': 'Registration successful!',
                     'redirect_url': '/dashboard/mentor/' if role == 'mentor' else '/dashboard/learner/'
                 })
             else:
-                # Fallback: try authenticating with email
-                authenticated_user = authenticate(request, username=email, password=password1)
-                if authenticated_user:
-                    login(request, authenticated_user)
-                    return JsonResponse({
-                        'success': True, 
-                        'message': 'Registration successful!',
-                        'redirect_url': '/dashboard/mentor/' if role == 'mentor' else '/dashboard/learner/'
-                    })
-                else:
-                    return JsonResponse({'success': False, 'error': 'Authentication failed after registration'})
+                return JsonResponse({'success': False, 'error': 'Authentication failed'})
                 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -407,19 +381,19 @@ def check_email_api(request):
     
     email = request.GET.get('email', '').strip().lower()
     if not email:
-        return JsonResponse({'available': False, 'message': 'Email is required'})
+        return JsonResponse({'valid': False, 'message': 'Email is required'})
     
     # Basic email validation
     import re
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not re.match(email_pattern, email):
-        return JsonResponse({'available': False, 'message': 'Please enter a valid email address'})
+        return JsonResponse({'valid': False, 'message': 'Please enter a valid email address'})
     
     # Check if email already exists
     if User.objects.filter(email=email).exists():
-        return JsonResponse({'available': False, 'message': 'Email already registered'})
+        return JsonResponse({'valid': False, 'message': 'Email already registered'})
     
-    return JsonResponse({'available': True, 'message': 'Email is available'})
+    return JsonResponse({'valid': True, 'message': 'Email is available'})
 
 @login_required
 def admin_dashboard(request):
@@ -480,169 +454,3 @@ def admin_dashboard(request):
     }
     
     return render(request, 'dashboard/admin_complete.html', context)
-
-
-@login_required
-def communication_insights_view(request):
-    """Communication Insights Dashboard View"""
-    if not request.user.is_authenticated:
-        return redirect('login')
-    
-    context = {
-        'user': request.user,
-        'page_title': 'Communication Insights',
-        'active_tab': 'insights'
-    }
-    
-    return render(request, 'dashboard/communication_insights_compact.html', context)
-
-@login_required
-def advanced_profile_view(request, user_id):
-    """Advanced Instagram/Facebook-like profile view"""
-    from django.shortcuts import get_object_or_404
-    from .models import Follow, UserActivity, UserSocialStats
-    from sessions.models import Session, Feedback
-    
-    profile_user = get_object_or_404(User, id=user_id)
-    
-    # Get or create social stats
-    social_stats, _ = UserSocialStats.objects.get_or_create(user=profile_user)
-    social_stats.update_stats()
-    
-    # Check if current user follows this profile
-    is_following = Follow.objects.filter(
-        follower=request.user,
-        following=profile_user
-    ).exists() if request.user.is_authenticated and request.user != profile_user else False
-    
-    # Get recent activities
-    recent_activities = UserActivity.objects.filter(user=profile_user)[:10]
-    
-    # Get user badges (simplified for now)
-    badges = []
-    
-    # Get recent sessions if mentor
-    recent_sessions = []
-    if profile_user.role == 'mentor':
-        recent_sessions = Session.objects.filter(mentor=profile_user).order_by('-created_at')[:5]
-    
-    # Get recent reviews
-    recent_reviews = []
-    if profile_user.role == 'mentor':
-        recent_reviews = Feedback.objects.filter(session__mentor=profile_user).order_by('-created_at')[:5]
-    
-    context = {
-        'profile_user': profile_user,
-        'social_stats': social_stats,
-        'is_following': is_following,
-        'recent_activities': recent_activities,
-        'badges': badges,
-        'recent_sessions': recent_sessions,
-        'recent_reviews': recent_reviews,
-    }
-    
-    return render(request, 'profile/advanced_profile.html', context)
-
-def mentor_profile_view(request, user_id):
-    """Beautiful modern mentor profile view page"""
-    mentor = get_object_or_404(User, id=user_id)
-    
-    # Get social stats
-    social_stats = get_user_social_stats(mentor)
-    
-    # Get followers and following
-    followers = Follow.objects.filter(following=mentor).select_related('follower')
-    following = Follow.objects.filter(follower=mentor).select_related('following')
-    
-    # Get recent activity
-    recent_activities = UserActivity.objects.filter(user=mentor).order_by('-created_at')[:10]
-    
-    # Get mentor's sessions and feedback
-    mentor_sessions = Session.objects.filter(mentor=mentor).order_by('-created_at')[:5]
-    mentor_feedback = Feedback.objects.filter(session__mentor=mentor).order_by('-created_at')[:5]
-    
-    # Split skills into list
-    skills_list = []
-    if hasattr(mentor, 'skills') and mentor.skills:
-        skills_list = [skill.strip() for skill in mentor.skills.split(',') if skill.strip()]
-    
-    context = {
-        'mentor': mentor,
-        'social_stats': social_stats,
-        'followers': followers,
-        'following': following,
-        'recent_activities': recent_activities,
-        'mentor_sessions': mentor_sessions,
-        'mentor_feedback': mentor_feedback,
-        'skills_list': skills_list,
-        'is_following': Follow.objects.filter(follower=request.user, following=mentor).exists() if request.user.is_authenticated else False,
-    }
-    
-    return render(request, 'profile/mentor_profile_view.html', context)
-
-@login_required
-@csrf_exempt
-def upload_profile_image(request):
-    """Handle profile image upload with cropping"""
-    if request.method == 'POST':
-        try:
-            if 'profile_image' in request.FILES:
-                # Handle regular file upload
-                image_file = request.FILES['profile_image']
-                
-                # Save the image
-                file_name = f"profile_images/{request.user.id}_{image_file.name}"
-                path = default_storage.save(file_name, image_file)
-                
-                # Update user profile
-                request.user.profile_image = path
-                request.user.save()
-                
-                return JsonResponse({'success': True, 'image_url': default_storage.url(path)})
-            else:
-                return JsonResponse({'success': False, 'error': 'No image provided'})
-                
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-
-def advanced_register_view(request):
-    """Render the advanced registration page"""
-    if request.user.is_authenticated:
-        if hasattr(request.user, "role"):
-            if request.user.role == "mentor":
-                return redirect("mentor_dashboard")
-            else:
-                return redirect("learner_dashboard")
-        return redirect("learner_dashboard")
-    
-    return render(request, "registration/register_advanced.html")
-
-
-def role_selection_view(request):
-    """Show role selection page"""
-    if request.user.is_authenticated:
-        if hasattr(request.user, "role"):
-            if request.user.role == "mentor":
-                return redirect("mentor_dashboard")
-            else:
-                return redirect("learner_dashboard")
-        return redirect("learner_dashboard")
-    
-    return render(request, "registration/role_selection.html")
-
-def learner_register_view(request):
-    """Show learner-specific registration page"""
-    if request.user.is_authenticated:
-        return redirect("learner_dashboard")
-    
-    return render(request, "registration/learner_register.html")
-
-def mentor_register_view(request):
-    """Show mentor-specific registration page"""
-    if request.user.is_authenticated:
-        return redirect("mentor_dashboard")
-    
-    return render(request, "registration/mentor_register.html")

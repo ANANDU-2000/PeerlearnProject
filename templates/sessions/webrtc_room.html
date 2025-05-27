@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ session.title }} - Live Session</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <script>
-        // Global CSRF token function for all API calls
-        function getCSRFToken() {
-            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        }
-    </script>
     <style>
         body {
             margin: 0;
@@ -667,102 +660,6 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', initializeWebRTC);
 
-        // Enhanced End Session with Rating Carousel
-        function endSession() {
-            const sessionDuration = document.getElementById('sessionTimer').textContent;
-            
-            // Mark session as completed in database
-            fetch(`/sessions/api/sessions/{{ session.id }}/complete/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify({
-                    duration: sessionDuration,
-                    status: 'completed'
-                })
-            }).then(response => {
-                if (response.ok) {
-                    // Cleanup WebRTC connections
-                    if (localStream) {
-                        localStream.getTracks().forEach(track => track.stop());
-                    }
-                    if (peerConnection) {
-                        peerConnection.close();
-                    }
-                    
-                    // Trigger session ended event for rating carousel
-                    const sessionEndedEvent = new CustomEvent('sessionEnded', {
-                        detail: {
-                            sessionId: '{{ session.id }}',
-                            duration: sessionDuration
-                        }
-                    });
-                    window.dispatchEvent(sessionEndedEvent);
-                    
-                    showNotification('Session ended successfully', 'success');
-                    
-                    // Redirect to mentor dashboard after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = '/dashboard/mentor/';
-                    }, 2000);
-                } else {
-                    showNotification('Error ending session', 'error');
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-                showNotification('Error ending session', 'error');
-            });
-        }
-        
-        function leaveSession() {
-            const sessionDuration = document.getElementById('sessionTimer').textContent;
-            
-            // Update session participation in database
-            fetch(`/sessions/api/sessions/{{ session.id }}/leave/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify({
-                    duration: sessionDuration
-                })
-            }).then(response => {
-                if (response.ok) {
-                    // Cleanup WebRTC connections
-                    if (localStream) {
-                        localStream.getTracks().forEach(track => track.stop());
-                    }
-                    if (peerConnection) {
-                        peerConnection.close();
-                    }
-                    
-                    // Trigger session ended event for rating carousel (learner perspective)
-                    const sessionEndedEvent = new CustomEvent('sessionEnded', {
-                        detail: {
-                            sessionId: '{{ session.id }}',
-                            duration: sessionDuration
-                        }
-                    });
-                    window.dispatchEvent(sessionEndedEvent);
-                    
-                    showNotification('Left session successfully', 'success');
-                    
-                    // Redirect to learner dashboard after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = '/dashboard/learner/';
-                    }, 2000);
-                } else {
-                    showNotification('Error leaving session', 'error');
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-                showNotification('Error leaving session', 'error');
-            });
-        }
-
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (localStream) {
@@ -772,87 +669,6 @@
                 peerConnection.close();
             }
         });
-
-        // Fix for feedback modal function
-        function openFeedbackModal() {
-            document.getElementById('feedbackInbox').classList.remove('hidden');
-        }
-
-        // Rating submission function - Updated v2.0
-        function submitRating() {
-            console.log('submitRating called - v2.0');
-            
-            // Try multiple ways to get the rating
-            let selectedRating = document.querySelector('.star-container.selected');
-            let comment = document.getElementById('ratingComment');
-            
-            console.log('Selected rating element:', selectedRating);
-            console.log('Comment element:', comment);
-            
-            // Fallback: look for any clicked star
-            if (!selectedRating) {
-                selectedRating = document.querySelector('.star-container[data-rating]');
-                console.log('Fallback rating element:', selectedRating);
-            }
-            
-            // Get rating value safely
-            let ratingValue = 5; // default to 5 stars
-            if (selectedRating && selectedRating.getAttribute('data-rating')) {
-                ratingValue = parseInt(selectedRating.getAttribute('data-rating'));
-            }
-            
-            const ratingData = {
-                rating: ratingValue,
-                comment: comment ? comment.value : '',
-                session_id: '{{ session.id }}'
-            };
-            
-            console.log('Final rating data:', ratingData);
-
-            // Get CSRF token from cookie
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
-                }
-                return cookieValue;
-            }
-
-            fetch(`/sessions/api/sessions/{{ session.id }}/submit-rating/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify(ratingData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showNotification('Rating submitted successfully!', 'success');
-                    document.getElementById('sessionRatingModal').style.display = 'none';
-                } else {
-                    showNotification('Failed to submit rating. Please try again.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error submitting rating:', error);
-                showNotification('Failed to submit rating. Please try again.', 'error');
-            });
-        }
     </script>
-
-    <!-- Include Interactive Rating Carousel -->
-    {% include 'sessions/simple_rating_system.html' %}
-    
-    <!-- Include Advanced Feedback System -->
-    {% include 'sessions/advanced_feedback_system.html' %}
 </body>
 </html>

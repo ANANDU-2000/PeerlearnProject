@@ -6,37 +6,25 @@
 <meta name="csrf-token" content="{{ csrf_token }}">
 <style>
     .mentor-bg {
-        background: linear-gradient(135deg, #0056d3 0%, #1e40af 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
     }
     .session-card {
         transition: all 0.3s ease;
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
     }
     .session-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 20px 40px rgba(0, 86, 211, 0.15);
-        border-color: #0056d3;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     }
     .earnings-card {
-        background: linear-gradient(45deg, #f0f9ff, #e0f2fe);
-        border-left: 4px solid #0056d3;
+        background: linear-gradient(45deg, #ecfdf5, #d1fae5);
+        border-left: 4px solid #10b981;
     }
     .ready-button {
         animation: glow 2s ease-in-out infinite alternate;
     }
     @keyframes glow {
-        from { box-shadow: 0 0 10px #0056d3; }
-        to { box-shadow: 0 0 20px #0056d3, 0 0 30px #0056d3; }
-    }
-    .paid-badge {
-        background: linear-gradient(45deg, #0056d3, #1e40af);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
+        from { box-shadow: 0 0 10px #10b981; }
+        to { box-shadow: 0 0 20px #10b981, 0 0 30px #10b981; }
     }
 </style>
 {% endblock %}
@@ -144,8 +132,8 @@
         <!-- Navigation Tabs -->
         <div class="bg-white rounded-xl shadow-lg mb-6">
             <!-- Web Navigation -->
-            <div class="hidden md:block border-b border-gray-200 overflow-x-auto">
-                <nav class="flex space-x-4 min-w-max px-4" aria-label="Tabs">
+            <div class="hidden md:block border-b border-gray-200">
+                <nav class="flex space-x-8" aria-label="Tabs">
                     <template x-for="tab in tabs" :key="tab.id">
                         <button @click="activeTab = tab.id"
                                 :class="activeTab === tab.id ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
@@ -179,13 +167,6 @@
             <div x-show="activeTab === 'sessions'" class="tab-content p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-semibold text-gray-900">My Sessions</h3>
-                    <a href="/sessions/create/" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                        <i class="fas fa-plus"></i>
-                        <span>Create Session</span>
-                    </a>
-                </div>
-                <div class="flex justify-between items-center mb-6">
-                    <div></div>
                     <div class="flex space-x-2 overflow-x-auto">
                         <button @click="sessionView = 'draft'"
                                 :class="sessionView === 'draft' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
@@ -263,10 +244,7 @@
                                     </div>
                                     <!-- Price Badge -->
                                     <div class="absolute top-3 right-3">
-                                        <span x-show="session.price > 0" class="paid-badge">
-                                            ₹<span x-text="session.price"></span>
-                                        </span>
-                                        <span x-show="!session.price || session.price === 0" class="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-bold">
+                                        <span class="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-bold">
                                             FREE
                                         </span>
                                     </div>
@@ -619,147 +597,7 @@
                 </div>
             </div>
 
-            <!-- 3. Learner Management -->
-            <div x-show="activeTab === 'learners'" class="tab-content p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-6">Learner Management</h3>
-                
-                <!-- Learner Stats Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-blue-500">
-                                <i data-feather="users" class="h-6 w-6 text-white"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-blue-800">Total Students</p>
-                                <p class="text-2xl font-bold text-blue-900">156</p>
-                                <p class="text-xs text-blue-600">+8 this month</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-green-500">
-                                <i data-feather="star" class="h-6 w-6 text-white"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-green-800">Avg Rating</p>
-                                <p class="text-2xl font-bold text-green-900">4.8</p>
-                                <p class="text-xs text-green-600">+0.2 this month</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-xl">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-purple-500">
-                                <i data-feather="message-circle" class="h-6 w-6 text-white"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-purple-800">Messages</p>
-                                <p class="text-2xl font-bold text-purple-900">47</p>
-                                <p class="text-xs text-purple-600">7 unread</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 p-6 rounded-xl">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-yellow-500">
-                                <i data-feather="heart" class="h-6 w-6 text-white"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-yellow-800">Followers</p>
-                                <p class="text-2xl font-bold text-yellow-900">234</p>
-                                <p class="text-xs text-yellow-600">+12 this week</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Enrolled Students List -->
-                <div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-semibold text-gray-900">Enrolled Students</h4>
-                        <div class="flex space-x-2">
-                            <input type="text" placeholder="Search students..." class="border border-gray-300 rounded-md px-3 py-1 text-sm">
-                            <button class="bg-blue-600 text-white px-4 py-1 rounded-md text-sm hover:bg-blue-700">Filter</button>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <!-- Student Item -->
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                    AK
-                                </div>
-                                <div>
-                                    <h5 class="font-medium text-gray-900">Anita Kumar</h5>
-                                    <p class="text-sm text-gray-600">@anita_k • 3 sessions completed</p>
-                                    <div class="flex items-center space-x-2 mt-1">
-                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span>
-                                        <div class="flex text-yellow-400">
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="fas fa-star text-xs"></i>
-                                        </div>
-                                        <span class="text-xs text-gray-500">5.0</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="bg-blue-100 text-blue-700 p-2 rounded-lg hover:bg-blue-200" title="Send Message">
-                                    <i data-feather="message-circle" class="h-4 w-4"></i>
-                                </button>
-                                <button class="bg-green-100 text-green-700 p-2 rounded-lg hover:bg-green-200" title="View Profile">
-                                    <i data-feather="user" class="h-4 w-4"></i>
-                                </button>
-                                <button class="bg-purple-100 text-purple-700 p-2 rounded-lg hover:bg-purple-200" title="Session History">
-                                    <i data-feather="clock" class="h-4 w-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- More Student Items -->
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                                    MG
-                                </div>
-                                <div>
-                                    <h5 class="font-medium text-gray-900">Maria Garcia</h5>
-                                    <p class="text-sm text-gray-600">@maria_g • 7 sessions completed</p>
-                                    <div class="flex items-center space-x-2 mt-1">
-                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span>
-                                        <div class="flex text-yellow-400">
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="fas fa-star text-xs"></i>
-                                            <i class="far fa-star text-xs"></i>
-                                        </div>
-                                        <span class="text-xs text-gray-500">4.8</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="bg-blue-100 text-blue-700 p-2 rounded-lg hover:bg-blue-200" title="Send Message">
-                                    <i data-feather="message-circle" class="h-4 w-4"></i>
-                                </button>
-                                <button class="bg-green-100 text-green-700 p-2 rounded-lg hover:bg-green-200" title="View Profile">
-                                    <i data-feather="user" class="h-4 w-4"></i>
-                                </button>
-                                <button class="bg-purple-100 text-purple-700 p-2 rounded-lg hover:bg-purple-200" title="Session History">
-                                    <i data-feather="clock" class="h-4 w-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. Earnings -->
+            <!-- 3. Earnings -->
             <div x-show="activeTab === 'earnings'" class="tab-content p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-6">Earnings & Payouts</h3>
                 
@@ -821,107 +659,7 @@
                 </div>
             </div>
 
-            <!-- 4. Communication Insights -->
-            <div x-show="activeTab === 'insights'" class="tab-content p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Communication Insights</h3>
-                    <a href="/dashboard/communication-insights/" 
-                       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        <i data-feather="external-link" class="h-4 w-4 mr-2"></i>
-                        Open Full Dashboard
-                    </a>
-                </div>
-                
-                <!-- Quick Overview Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-blue-500">
-                                <i data-feather="message-circle" class="h-6 w-6 text-white"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-blue-800">Total Interactions</p>
-                                <p class="text-2xl font-bold text-blue-900">247</p>
-                                <p class="text-xs text-blue-600">+12% this month</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-green-500">
-                                <i data-feather="trending-up" class="h-6 w-6 text-white"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-green-800">Engagement Rate</p>
-                                <p class="text-2xl font-bold text-green-900">94%</p>
-                                <p class="text-xs text-green-600">+8% this month</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-xl">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-purple-500">
-                                <i data-feather="clock" class="h-6 w-6 text-white"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-purple-800">Avg Response Time</p>
-                                <p class="text-2xl font-bold text-purple-900">2.3h</p>
-                                <p class="text-xs text-purple-600">-15% faster</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recent Activity Preview -->
-                <div class="bg-white border border-gray-200 rounded-xl p-6">
-                    <h4 class="font-semibold text-gray-900 mb-4">Recent Communication Activity</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                <i data-feather="message-square" class="h-4 w-4 text-white"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900">New session feedback from Sarah Johnson</p>
-                                <p class="text-xs text-gray-500">2 hours ago</p>
-                            </div>
-                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">⭐ 5.0</span>
-                        </div>
-                        
-                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                <i data-feather="user-plus" class="h-4 w-4 text-white"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900">Mike Chen started following you</p>
-                                <p class="text-xs text-gray-500">4 hours ago</p>
-                            </div>
-                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">New Follower</span>
-                        </div>
-                        
-                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                                <i data-feather="video" class="h-4 w-4 text-white"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900">Session completed: React Advanced Patterns</p>
-                                <p class="text-xs text-gray-500">6 hours ago</p>
-                            </div>
-                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Completed</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 text-center">
-                        <a href="/dashboard/communication-insights/" 
-                           class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                            View All Activity →
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. Analytics -->
+            <!-- 4. Analytics -->
             <div x-show="activeTab === 'analytics'" class="tab-content p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-6">Performance Analytics</h3>
                 
@@ -966,398 +704,39 @@
                 </div>
             </div>
 
-            <!-- 7. Messages -->
-            <div x-show="activeTab === 'messages'" class="tab-content p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Personal Messages</h3>
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        <i data-feather="plus" class="h-4 w-4 mr-2"></i>
-                        New Message
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96">
-                    <!-- Chat List -->
-                    <div class="bg-white border border-gray-200 rounded-xl p-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-semibold text-gray-900">Conversations</h4>
-                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">7 unread</span>
-                        </div>
-                        
-                        <div class="space-y-2">
-                            <!-- Chat Item -->
-                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
-                                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                    MG
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between">
-                                        <h5 class="text-sm font-medium text-gray-900 truncate">Maria Garcia</h5>
-                                        <span class="text-xs text-gray-500">2m</span>
-                                    </div>
-                                    <p class="text-xs text-gray-600 truncate">Thanks for the great session!</p>
-                                </div>
-                                <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
-                            </div>
-                            
-                            <div class="flex items-center space-x-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                    AK
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between">
-                                        <h5 class="text-sm font-medium text-gray-900 truncate">Anita Kumar</h5>
-                                        <span class="text-xs text-gray-500">1h</span>
-                                    </div>
-                                    <p class="text-xs text-gray-600 truncate">Can we reschedule tomorrow's session?</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Chat Window -->
-                    <div class="lg:col-span-2 bg-white border border-gray-200 rounded-xl flex flex-col">
-                        <!-- Chat Header -->
-                        <div class="flex items-center justify-between p-4 border-b border-gray-200">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                    MG
-                                </div>
-                                <div>
-                                    <h5 class="font-medium text-gray-900">Maria Garcia</h5>
-                                    <p class="text-xs text-green-600">Online</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                                    <i data-feather="video" class="h-4 w-4"></i>
-                                </button>
-                                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                                    <i data-feather="phone" class="h-4 w-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Chat Messages -->
-                        <div class="flex-1 p-4 space-y-4 overflow-y-auto">
-                            <!-- Recent Messages -->
-                            <div class="flex space-x-2">
-                                <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                                    MG
-                                </div>
-                                <div class="flex-1">
-                                    <div class="bg-gray-100 rounded-lg px-3 py-2 max-w-xs">
-                                        <p class="text-sm text-gray-900">Hi! Thanks for the amazing React session today. I finally understand hooks! 🚀</p>
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-1">Just now</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Message Input -->
-                        <div class="p-4 border-t border-gray-200">
-                            <div class="flex space-x-2">
-                                <input type="text" placeholder="Type your message..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
-                                <button class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
-                                    <i data-feather="send" class="h-4 w-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 8. Advanced Profile -->
+            <!-- 5. Profile -->
             <div x-show="activeTab === 'profile'" class="tab-content p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Advanced Profile</h3>
-                    <a href="/profile/advanced/{{ user.id }}/" target="_blank"
-                       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        <i data-feather="external-link" class="h-4 w-4 mr-2"></i>
-                        View Public Profile
-                    </a>
-                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Mentor Profile</h3>
                 
-                <!-- Profile Sub-tabs -->
-                <div class="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-6" x-data="{ profileTab: 'overview' }">
-                    <button @click="profileTab = 'overview'"
-                            :class="profileTab === 'overview' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
-                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
-                        Overview
-                    </button>
-                    <button @click="profileTab = 'social'"
-                            :class="profileTab === 'social' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
-                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
-                        Social Stats
-                    </button>
-                    <button @click="profileTab = 'activity'"
-                            :class="profileTab === 'activity' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
-                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
-                        Activity Feed
-                    </button>
-                    <button @click="profileTab = 'payments'"
-                            :class="profileTab === 'payments' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
-                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
-                        Payment History
-                    </button>
-                    <button @click="profileTab = 'settings'"
-                            :class="profileTab === 'settings' ? 'bg-white shadow text-blue-600' : 'text-gray-600'"
-                            class="px-4 py-2 rounded-md text-sm font-medium transition-all">
-                        Settings
-                    </button>
-                    
-                    <!-- Profile Overview -->
-                    <div x-show="profileTab === 'overview'" class="space-y-6 mt-6">
-                        <!-- Profile Image & Basic Info -->
-                        <div class="bg-white border border-gray-200 rounded-xl p-6">
-                            <div class="flex items-center space-x-6 mb-6">
-                                <div class="relative">
-                                    <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                                        {{ request.user.username|first|upper }}{{ request.user.username|slice:"1:2"|upper }}
-                                    </div>
-                                    <button class="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700">
-                                        <i data-feather="camera" class="h-4 w-4"></i>
-                                    </button>
-                                </div>
-                                <div>
-                                    <h4 class="text-xl font-bold text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h4>
-                                    <p class="text-gray-600">{{ request.user.role|title }} • @{{ request.user.username }}</p>
-                                    <div class="flex items-center space-x-4 mt-2">
-                                        <span class="text-sm text-gray-500">
-                                            <i data-feather="users" class="h-4 w-4 inline mr-1"></i>
-                                            {{ analytics.followers }} followers
-                                        </span>
-                                        <span class="text-sm text-gray-500">
-                                            <i data-feather="eye" class="h-4 w-4 inline mr-1"></i>
-                                            {{ analytics.profileViews }} profile views
-                                        </span>
-                                    </div>
-                                </div>
+                <form @submit.prevent="updateProfile()">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Expertise Areas</label>
+                                <input type="text" x-model="profile.expertise"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                             </div>
-                            
-                            <form @submit.prevent="updateProfile()">
-                                <div class="space-y-4">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Expertise Areas</label>
-                                            <input type="text" x-model="profile.expertise"
-                                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Hourly Rate (₹)</label>
-                                            <input type="number" x-model="profile.hourlyRate"
-                                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Bio</label>
-                                        <textarea x-model="profile.bio" rows="3"
-                                                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Skills & Technologies</label>
-                                        <input type="text" x-model="profile.skills"
-                                               placeholder="React, Python, Data Science, etc."
-                                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                    </div>
-                                    <div class="flex justify-end">
-                                        <button type="submit"
-                                                class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700">
-                                            Save Changes
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    
-                    <!-- Social Stats Tab -->
-                    <div x-show="profileTab === 'social'" class="space-y-6 mt-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                                <div class="text-3xl font-bold text-blue-600" x-text="analytics.followers"></div>
-                                <div class="text-sm text-gray-600 mt-1">Followers</div>
-                                <div class="text-xs text-green-600 mt-1">+12 this week</div>
-                            </div>
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                                <div class="text-3xl font-bold text-purple-600" x-text="analytics.profileViews"></div>
-                                <div class="text-sm text-gray-600 mt-1">Profile Views</div>
-                                <div class="text-xs text-green-600 mt-1">+45 this week</div>
-                            </div>
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                                <div class="text-3xl font-bold text-green-600" x-text="analytics.totalEnrollments"></div>
-                                <div class="text-sm text-gray-600 mt-1">Total Students</div>
-                                <div class="text-xs text-green-600 mt-1">+8 this month</div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Hourly Rate</label>
+                                <input type="number" x-model="profile.hourlyRate"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                             </div>
                         </div>
-                        
-                        <!-- Engagement Metrics -->
-                        <div class="bg-white border border-gray-200 rounded-xl p-6">
-                            <h4 class="font-semibold text-gray-900 mb-4">Engagement Metrics</h4>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-sm text-gray-600">Average Rating</span>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-sm font-medium" x-text="`${analytics.averageRating}/5`"></span>
-                                        <div class="flex text-yellow-400">
-                                            <template x-for="i in 5" :key="i">
-                                                <i :class="i <= Math.floor(analytics.averageRating) ? 'fas fa-star' : 'far fa-star'" class="text-xs"></i>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-sm text-gray-600">Session Completion Rate</span>
-                                    <span class="text-sm font-medium text-green-600" x-text="`${analytics.completionRate}%`"></span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-sm text-gray-600">Response Time</span>
-                                    <span class="text-sm font-medium">< 2 hours</span>
-                                </div>
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Bio</label>
+                            <textarea x-model="profile.bio" rows="4"
+                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
                         </div>
-                    </div>
-                    
-                    <!-- Activity Feed Tab -->
-                    <div x-show="profileTab === 'activity'" class="space-y-4 mt-6">
-                        <div class="bg-white border border-gray-200 rounded-xl p-6">
-                            <h4 class="font-semibold text-gray-900 mb-4">Recent Activity</h4>
-                            <div class="space-y-3">
-                                <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                        <i data-feather="user-plus" class="h-4 w-4 text-white"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm text-gray-900">New follower: Alex Thompson</p>
-                                        <p class="text-xs text-gray-500">2 hours ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                        <i data-feather="video" class="h-4 w-4 text-white"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm text-gray-900">Completed session: React Advanced Patterns</p>
-                                        <p class="text-xs text-gray-500">5 hours ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
-                                    <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                                        <i data-feather="star" class="h-4 w-4 text-white"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-sm text-gray-900">Received 5-star rating from Maria Garcia</p>
-                                        <p class="text-xs text-gray-500">1 day ago</p>
-                                    </div>
-                                </div>
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Skills & Technologies</label>
+                            <input type="text" x-model="profile.skills"
+                                   placeholder="React, Python, Data Science, etc."
+                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
-                    </div>
-                    
-                    <!-- Payment History Tab -->
-                    <div x-show="profileTab === 'payments'" class="space-y-6 mt-6">
-                        <div class="bg-white border border-gray-200 rounded-xl p-6">
-                            <h4 class="font-semibold text-gray-900 mb-4">Earnings & Payment History</h4>
-                            
-                            <!-- Quick Stats -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg">
-                                    <p class="text-sm font-medium text-green-800">Total Earned</p>
-                                    <p class="text-2xl font-bold text-green-900">₹45,670</p>
-                                    <p class="text-xs text-green-600">+₹2,340 this month</p>
-                                </div>
-                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg">
-                                    <p class="text-sm font-medium text-blue-800">Available Balance</p>
-                                    <p class="text-2xl font-bold text-blue-900">₹8,900</p>
-                                    <p class="text-xs text-blue-600">Ready for payout</p>
-                                </div>
-                                <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg">
-                                    <p class="text-sm font-medium text-purple-800">Sessions Completed</p>
-                                    <p class="text-2xl font-bold text-purple-900">67</p>
-                                    <p class="text-xs text-purple-600">+8 this month</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Payment History -->
-                            <div class="space-y-3">
-                                <h5 class="font-medium text-gray-900">Recent Payments</h5>
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                                <i data-feather="check" class="h-4 w-4 text-white"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-sm font-medium text-gray-900">Session Payment</p>
-                                                <p class="text-xs text-gray-500">React Advanced Patterns • Maria Garcia</p>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-sm font-medium text-green-600">+₹650</p>
-                                            <p class="text-xs text-gray-500">2 hours ago</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                                <i data-feather="dollar-sign" class="h-4 w-4 text-white"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-sm font-medium text-gray-900">Payout Completed</p>
-                                                <p class="text-xs text-gray-500">Bank Transfer • XXXX1234</p>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-sm font-medium text-blue-600">₹5,500</p>
-                                            <p class="text-xs text-gray-500">Yesterday</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Settings Tab -->
-                    <div x-show="profileTab === 'settings'" class="space-y-6 mt-6">
-                        <div class="bg-white border border-gray-200 rounded-xl p-6">
-                            <h4 class="font-semibold text-gray-900 mb-4">Privacy Settings</h4>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">Profile Visibility</p>
-                                        <p class="text-xs text-gray-500">Who can see your profile</p>
-                                    </div>
-                                    <select class="border-gray-300 rounded-md text-sm">
-                                        <option>Public</option>
-                                        <option>Followers Only</option>
-                                        <option>Private</option>
-                                    </select>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">Show Online Status</p>
-                                        <p class="text-xs text-gray-500">Let others see when you're online</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked>
-                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">Session History Visible</p>
-                                        <p class="text-xs text-gray-500">Show your completed sessions</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked>
-                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        <div>
+                            <button type="submit"
+                                    class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700">
+                                Save Changes
                             </button>
                         </div>
                     </div>
@@ -1420,11 +799,8 @@ function mentorDashboard() {
         tabs: [
             { id: 'sessions', name: 'My Sessions', icon: 'video', badge: null },
             { id: 'requests', name: 'Requests', icon: 'clock', badge: '5' },
-            { id: 'learners', name: 'Learner Management', icon: 'users', badge: '12' },
             { id: 'earnings', name: 'Earnings', icon: 'dollar-sign', badge: null },
-            { id: 'insights', name: 'Communication Insights', icon: 'bar-chart-2', badge: null },
             { id: 'analytics', name: 'Analytics', icon: 'trending-up', badge: null },
-            { id: 'messages', name: 'Messages', icon: 'message-circle', badge: '7' },
             { id: 'profile', name: 'Profile', icon: 'user', badge: null },
             { id: 'notifications', name: 'Notifications', icon: 'bell', badge: '3' }
         ],

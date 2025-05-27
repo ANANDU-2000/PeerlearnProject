@@ -22,11 +22,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python manage.py runserver 0.0.0.0:5000"
+args = "pip install django djangorestframework channels daphne pillow && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:5000"
 waitForPort = 5000
 
 [deployment]
-run = ["sh", "-c", "python manage.py runserver 0.0.0.0:5000"]
+run = ["sh", "-c", "pip install django djangorestframework channels daphne pillow && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:5000"]
 
 [[ports]]
 localPort = 5000

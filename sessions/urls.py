@@ -21,9 +21,6 @@ urlpatterns = [
     path('api/sessions/<uuid:session_id>/end/', api_views.end_session, name='api_end_session'),
     path('api/sessions/<uuid:session_id>/publish/', api_views.publish_session, name='api_publish_session'),
     path('api/sessions/<uuid:session_id>/feedback/', api_views.submit_feedback, name='api_submit_feedback'),
-    path('api/sessions/<uuid:session_id>/submit-rating/', api_views.submit_rating_simple, name='submit_rating_simple'),
-    path('api/sessions/<uuid:session_id>/complete/', api_views.complete_session, name='api_complete_session'),
-    path('api/sessions/<uuid:session_id>/leave/', api_views.leave_session, name='api_leave_session'),
     
     # Request endpoints
     path('api/requests/create/', api_views.create_session_request, name='api_create_request'),
@@ -35,7 +32,7 @@ urlpatterns = [
     path('api/notifications/read/', api_views.mark_notifications_read, name='mark_notifications_read'),
     
     # Earnings endpoints
-    path('api/earnings/payout/', api_views.earnings_payout, name='api_earnings_payout'),
+    path('api/earnings/payout/', api_views.request_payout, name='api_request_payout'),
     
     # Dashboard data endpoints
     path('api/mentor-dashboard/', api_views.mentor_dashboard_data, name='mentor_dashboard_data'),
@@ -56,10 +53,4 @@ urlpatterns = [
     # WebRTC Room access endpoints
     path('<uuid:session_id>/room/', views.session_room, name='session_room'),
     path('<uuid:session_id>/waiting-room/', views.waiting_room, name='waiting_room'),
-    
-    # Advanced Feedback System endpoints
-    path('api/sessions/<uuid:session_id>/live-feedback/', api_views.live_feedback, name='api_live_feedback'),
-    path('api/sessions/<uuid:session_id>/feedback-messages/', api_views.feedback_messages, name='api_feedback_messages'),
-    path('api/messages/<int:message_id>/mark-read/', api_views.mark_message_read, name='api_mark_message_read'),
-    path('api/mentor-feedback/', api_views.mentor_feedback, name='api_mentor_feedback'),
 ]

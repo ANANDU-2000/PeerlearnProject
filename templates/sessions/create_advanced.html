@@ -37,7 +37,7 @@
 
     <!-- Form -->
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form method="post" action="{% url 'api_create_session' %}" class="space-y-6" enctype="multipart/form-data">
+        <form method="post" class="space-y-6" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -439,21 +439,6 @@ function updateSkillsInput() {
         form.appendChild(hidden);
     }
     document.querySelector('input[name="skills"]').value = selectedSkillsArray.join(', ');
-}
-
-// CRITICAL: Price toggle function - this was missing!
-function togglePricing(radio) {
-    const priceSection = document.getElementById('priceSection');
-    const priceInput = document.getElementById('price');
-    
-    if (radio.value === 'paid') {
-        priceSection.classList.remove('hidden');
-        priceInput.required = true;
-    } else {
-        priceSection.classList.add('hidden');
-        priceInput.required = false;
-        priceInput.value = '';
-    }
 }
 
 function showNotification(message, type) {

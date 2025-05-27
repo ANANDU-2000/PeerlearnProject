@@ -3,58 +3,23 @@
 {% block title %}Learner Dashboard - PeerLearn{% endblock %}
 
 {% block extra_head %}
-<!-- Razorpay Payment Gateway -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
     .learner-bg {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        position: relative;
-        overflow: hidden;
-    }
-    .learner-bg::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="rgba(255,255,255,.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
-        opacity: 0.3;
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
     }
     .session-card {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid rgba(226, 232, 240, 0.8);
-        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
     }
     .session-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
-        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     }
     .tab-content {
         min-height: 400px;
-        background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
     }
     .recommendation-card {
-        background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fefce8 100%);
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-    .glass-effect {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .gradient-border {
-        background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
-        border-radius: 12px;
-        padding: 2px;
-    }
-    .gradient-border-inner {
-        background: white;
-        border-radius: 10px;
-        height: 100%;
+        background: linear-gradient(45deg, #f0f9ff, #e0f2fe);
+        border-left: 4px solid #3b82f6;
     }
     .waiting-animation {
         animation: pulse 2s infinite;
@@ -70,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50" x-data="{ activeTab: 'browse', sessionView: 'upcoming', showRequestModal: false, recTab: 'ai' }">
+<div class="min-h-screen bg-gray-50" x-data="{ activeTab: 'browse', sessionView: 'upcoming', showRequestModal: false, recTab: 'ai' }"
     
     <!-- Learner Header -->
     <div class="learner-bg text-white py-8">
@@ -233,107 +198,58 @@
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                 </div>
                 
-                <!-- Premium Rectangular Session Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="sessionsList">
+                <!-- Premium Horizontal Session Cards -->
+                <div class="space-y-3" id="sessionsList">
                     {% for session in available_sessions %}
-                        <div class="session-card bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200 hover:-translate-y-1">
-                            <!-- Card Header with Gradient -->
-                            <div class="h-32 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 relative overflow-hidden">
-                                <div class="absolute inset-0 bg-black bg-opacity-20"></div>
-                                <div class="absolute top-4 left-4">
-                                    <div class="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white text-lg font-bold">
+                        <div class="session-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                            <div class="flex items-center justify-between">
+                                <!-- Left: Session Info -->
+                                <div class="flex items-center space-x-4 flex-1">
+                                    <!-- Thumbnail -->
+                                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
                                         {{ session.title|first|upper }}
                                     </div>
+                                    
+                                    <!-- Session Details -->
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-1">{{ session.title }}</h4>
+                                        <p class="text-sm text-gray-600 mb-2">{{ session.description|truncatewords:12 }}</p>
+                                        <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                            <span>By {{ session.mentor.first_name }} {{ session.mentor.last_name }}</span>
+                                            <span>•</span>
+                                            <span>{{ session.schedule|date:"M d, H:i" }}</span>
+                                            <span>•</span>
+                                            <span>{{ session.duration }} min</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="absolute top-4 right-4">
+                                
+                                <!-- Right: Price & Actions -->
+                                <div class="flex items-center space-x-3">
+                                    <!-- Price Tag -->
                                     {% if session.price > 0 %}
-                                        <span class="bg-white bg-opacity-95 text-blue-600 px-3 py-1 text-sm font-bold rounded-full shadow-sm">
+                                        <span class="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-semibold rounded-full">
                                             ₹{{ session.price }}
                                         </span>
                                     {% else %}
-                                        <span class="bg-green-500 text-white px-3 py-1 text-sm font-bold rounded-full shadow-sm">
+                                        <span class="bg-green-100 text-green-800 px-3 py-1 text-sm font-semibold rounded-full">
                                             Free
                                         </span>
                                     {% endif %}
-                                </div>
-                                <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent opacity-30"></div>
-                            </div>
-                            
-                            <!-- Card Content -->
-                            <div class="p-6">
-                                <!-- Session Title -->
-                                <h4 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ session.title }}</h4>
-                                
-                                <!-- Session Description -->
-                                <p class="text-sm text-gray-600 mb-4 line-clamp-3">{{ session.description|truncatewords:15 }}</p>
-                                
-                                <!-- Mentor Profile Section -->
-                                <div class="flex items-center space-x-3 mb-4 p-3 bg-blue-50 rounded-xl">
-                                    <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                        {{ session.mentor.first_name|first }}{{ session.mentor.last_name|first }}
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="font-semibold text-gray-900 text-sm">{{ session.mentor.first_name }} {{ session.mentor.last_name }}</div>
-                                        <div class="text-xs text-blue-600">Expert Mentor</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="flex items-center text-yellow-500 text-xs">
-                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                            </svg>
-                                            <span>4.8</span>
-                                        </div>
-                                        <div class="text-xs text-gray-500">12 sessions</div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Session Details -->
-                                <div class="space-y-2 mb-4">
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                                        </svg>
-                                        {{ session.schedule|date:"M d, H:i" }}
-                                    </div>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        {{ session.duration }} minutes
-                                    </div>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                        </svg>
-                                        {{ session.current_participants }}/{{ session.max_participants }} students
-                                    </div>
-                                </div>
-                                
-                                <!-- Action Buttons -->
-                                <div class="space-y-2">
-                                    <button onclick="bookSession('{{ session.id }}', '{{ session.title }}', {{ session.price }})"
-                                            {% if session.is_full %}disabled{% endif %}
-                                            class="w-full {% if session.is_full %}bg-gray-300 cursor-not-allowed{% else %}bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl{% endif %} text-white py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105">
-                                        {% if session.is_full %}
-                                            <span class="flex items-center justify-center">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                                </svg>
-                                                Session Full
-                                            </span>
-                                        {% else %}
-                                            <span class="flex items-center justify-center">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                                </svg>
-                                                Book Now
-                                            </span>
-                                        {% endif %}
-                                    </button>
+                                    
+                                    <!-- Action Buttons -->
                                     <a href="{% url 'session_detail' session.id %}"
-                                       class="w-full bg-white border-2 border-blue-200 text-blue-600 py-2 rounded-xl font-medium hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 text-center block">
-                                        View Details
+                                       class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                                        Details
                                     </a>
+                                    <form method="post" action="{% url 'book_session' session.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                {% if session.is_full %}disabled{% endif %}
+                                                class="{% if session.is_full %}bg-gray-300 cursor-not-allowed{% else %}bg-blue-600 hover:bg-blue-700{% endif %} text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                            {% if session.is_full %}Full{% else %}Book Now{% endif %}
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -567,31 +483,39 @@
                 </div>
             </div>
 
-            <!-- 4. AI Recommendations & Trending -->
-            <div x-show="activeTab === 'recommendations'" class="p-6">
-                <!-- Recommendation Subtabs -->
-                <div class="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-6">
-                    <button @click="recTab = 'ai'" 
-                            :class="recTab === 'ai' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                            class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
-                        <i data-feather="zap" class="h-4 w-4 mr-1 inline"></i>AI Recommendations
-                    </button>
-                    <button @click="recTab = 'trending'" 
-                            :class="recTab === 'trending' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                            class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
-                        <i data-feather="trending-up" class="h-4 w-4 mr-1 inline"></i>Trending
-                    </button>
-                </div>
-                    
-                <!-- AI Sessions Subtab -->
-                <div x-show="recTab === 'ai'">
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <i data-feather="cpu" class="h-5 w-5 mr-2 text-purple-600"></i>
-                            AI-Powered Recommendations
-                        </h3>
-                        <p class="text-gray-600 text-sm">Personalized sessions based on your learning profile</p>
+            <!-- 4. Advanced AI Recommendations with Subtabs -->
+            <div x-show="activeTab === 'recommendations'" class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <!-- Recommendation Subtabs -->
+                    <div class="p-4 border-b border-gray-200">
+                        <div class="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                            <button @click="recTab = 'ai'" 
+                                    :class="recTab === 'ai' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
+                                <i data-feather="zap" class="h-4 w-4 mr-1 inline"></i>AI Sessions
+                            </button>
+                            <button @click="recTab = 'trending'" 
+                                    :class="recTab === 'trending' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
+                                <i data-feather="trending-up" class="h-4 w-4 mr-1 inline"></i>Trending
+                            </button>
+                            <button @click="recTab = 'toprated'" 
+                                    :class="recTab === 'toprated' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all">
+                                <i data-feather="star" class="h-4 w-4 mr-1 inline"></i>Top Rated
+                            </button>
+                        </div>
                     </div>
+                    
+                    <!-- AI Sessions Subtab -->
+                    <div x-show="recTab === 'ai'" class="p-6">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                <i data-feather="cpu" class="h-5 w-5 mr-2 text-purple-600"></i>
+                                AI-Powered Recommendations
+                            </h3>
+                            <p class="text-gray-600 text-sm">Personalized sessions based on your learning profile</p>
+                        </div>
                         
                         <div class="space-y-3">
                             {% for session in recommended_sessions %}
@@ -618,8 +542,10 @@
                                         {% else %}
                                             <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Free</span>
                                         {% endif %}
-                                        <button onclick="bookSession('{{ session.id }}', '{{ session.title }}', {{ session.price }})" 
-                                                class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium">Book</button>
+                                        <form method="post" action="{% url 'book_session' session.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium">Book</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -647,8 +573,10 @@
                                         {% else %}
                                             <span class="bg-green-100 text-green-800 px-2 py-1 text-xs font-medium rounded-full">Free</span>
                                         {% endif %}
-                                        <button onclick="bookSession('{{ session.id }}', '{{ session.title }}', {{ session.price }})" 
-                                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium">Book</button>
+                                        <form method="post" action="{% url 'book_session' session.id %}" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium">Book</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -658,15 +586,15 @@
                         </div>
                     </div>
                     
-                <!-- Trending Subtab -->
-                <div x-show="recTab === 'trending'">
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <i data-feather="trending-up" class="h-5 w-5 mr-2 text-orange-600"></i>
-                            Trending This Week
-                        </h3>
-                        <p class="text-gray-600 text-sm">Most popular sessions recently</p>
-                    </div>
+                    <!-- Trending Subtab -->
+                    <div x-show="recTab === 'trending'" class="p-6">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                <i data-feather="trending-up" class="h-5 w-5 mr-2 text-orange-600"></i>
+                                Trending This Week
+                            </h3>
+                            <p class="text-gray-600 text-sm">Most popular sessions recently</p>
+                        </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {% for session in available_sessions|slice:":6" %}
@@ -680,16 +608,51 @@
                                 <p class="text-xs text-gray-600 mb-3">{{ session.description|truncatewords:10 }}</p>
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs text-gray-500">{{ session.mentor.first_name }}</span>
-                                    <button onclick="bookSession('{{ session.id }}', '{{ session.title }}', {{ session.price }})" 
-                                            class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium">
-                                        Book
-                                    </button>
+                                    <form method="post" action="{% url 'book_session' session.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium">
+                                            Book
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                     </div>
                     
+                    <!-- Top Rated Subtab -->
+                    <div x-show="recTab === 'toprated'" class="p-6">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                <i data-feather="star" class="h-5 w-5 mr-2 text-yellow-600"></i>
+                                Highest Rated Sessions
+                            </h3>
+                            <p class="text-gray-600 text-sm">Best sessions according to learner feedback</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {% for session in available_sessions|slice:":6" %}
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h4 class="font-medium text-gray-900 text-sm">{{ session.title }}</h4>
+                                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">
+                                        ⭐ 4.8
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-600 mb-3">{{ session.description|truncatewords:10 }}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-gray-500">{{ session.mentor.first_name }}</span>
+                                    <form method="post" action="{% url 'book_session' session.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs font-medium">
+                                            Book
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1031,139 +994,6 @@ function markReady(sessionId) {
 // Join Early Room Function
 function joinEarlyRoom(sessionId) {
     window.location.href = `/sessions/${sessionId}/room/?early=true`;
-}
-
-// Book Session with Razorpay Payment
-async function bookSession(sessionId, sessionTitle, sessionPrice) {
-    try {
-        // For free sessions, book directly
-        if (sessionPrice === 0) {
-            const response = await fetch(`/api/sessions/${sessionId}/book/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                }
-            });
-            
-            if (response.ok) {
-                showSuccessMessage('Session booked successfully!');
-                location.reload();
-            } else {
-                const error = await response.json();
-                showErrorMessage(error.message || 'Failed to book session');
-            }
-            return;
-        }
-        
-        // For paid sessions, initiate Razorpay payment
-        const paymentResponse = await fetch('/api/learner/create-payment/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({
-                session_id: sessionId
-            })
-        });
-        
-        const paymentData = await paymentResponse.json();
-        
-        if (paymentData.success) {
-            // Initialize Razorpay payment
-            const options = {
-                key: paymentData.key,
-                amount: paymentData.amount * 100,
-                currency: paymentData.currency,
-                order_id: paymentData.order_id,
-                name: paymentData.name,
-                description: paymentData.description,
-                prefill: paymentData.prefill,
-                theme: paymentData.theme,
-                handler: function(response) {
-                    verifyPayment(response, sessionId);
-                },
-                modal: {
-                    ondismiss: function() {
-                        showErrorMessage('Payment cancelled');
-                    }
-                }
-            };
-            
-            const rzp = new Razorpay(options);
-            rzp.open();
-        } else {
-            showErrorMessage(paymentData.error || 'Failed to initiate payment');
-        }
-    } catch (error) {
-        console.error('Booking error:', error);
-        showErrorMessage('Failed to book session. Please try again.');
-    }
-}
-
-// Verify Payment and Complete Booking
-async function verifyPayment(response, sessionId) {
-    try {
-        const verifyResponse = await fetch('/api/learner/verify-payment/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                session_id: sessionId
-            })
-        });
-        
-        const verifyData = await verifyResponse.json();
-        
-        if (verifyData.success) {
-            showSuccessMessage('Payment successful! Session booked.');
-            // Redirect to success page or reload dashboard
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
-        } else {
-            showErrorMessage(verifyData.error || 'Payment verification failed');
-        }
-    } catch (error) {
-        console.error('Payment verification error:', error);
-        showErrorMessage('Payment verification failed. Please contact support.');
-    }
-}
-
-// Helper functions
-function getCsrfToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-}
-
-function showSuccessMessage(message) {
-    // Create success notification
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
-}
-
-function showErrorMessage(message) {
-    // Create error notification
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
 }
 
 // Countdown Timer Function

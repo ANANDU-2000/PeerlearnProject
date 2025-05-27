@@ -9,7 +9,6 @@ import json
 
 from .models import Session, Booking, Request, Notification, Feedback
 from users.models import User
-from decimal import Decimal
 
 
 @login_required
@@ -459,42 +458,15 @@ def mentor_dashboard_data(request):
             session__mentor=request.user
         ).aggregate(avg=Avg('rating'))['avg'] or 0.0
         
-        # Real earnings calculation from actual bookings only
+        # Real earnings from completed sessions
         completed_bookings = Booking.objects.filter(
             session__mentor=request.user,
-            status='confirmed'
+            status='completed'
         )
-        
-        # Get REAL enrolled students from actual bookings
-        real_enrolled_students = []
-        enrolled_learners = Booking.objects.filter(
-            session__mentor=request.user,
-            status='confirmed'
-        ).select_related('learner', 'session').values(
-            'learner__id', 'learner__username', 'learner__email'
-        ).annotate(sessions_booked=Count('session', distinct=True))
-        
-        for learner in enrolled_learners:
-            real_enrolled_students.append({
-                'id': str(learner['learner__id']),
-                'name': learner['learner__username'],
-                'email': learner['learner__email'] or f"{learner['learner__username']}@example.com",
-                'sessionsBooked': learner['sessions_booked'],
-                'status': 'active'
-            })
-        
-        # REAL EARNINGS: Calculate from actual session prices
-        total_earnings = 0
-        monthly_earnings = 0
-        
-        for booking in completed_bookings:
-            session_price = booking.session.price or 0
-            total_earnings += float(session_price)
-            
-            # Add to monthly earnings if booking was this month
-            if (booking.created_at.month == timezone.now().month and 
-                booking.created_at.year == timezone.now().year):
-                monthly_earnings += float(session_price)
+        hourly_rate = getattr(request.user, 'hourly_rate', 25)
+        monthly_earnings = completed_bookings.filter(
+            created_at__month=timezone.now().month
+        ).count() * hourly_rate * 1.5
         
         # Organize real sessions by status
         draft_sessions = []
@@ -524,14 +496,14 @@ def mentor_dashboard_data(request):
                 'thumbnail': session.thumbnail.url if session.thumbnail else None,
                 'category': session.category,
                 'skills': session.skills,
-                'price': float(session.price) if session.price else 0,
+                'price': str(session.price) if session.price else 'Free',
                 'schedule': session.schedule.strftime('%b %d, %I:%M %p') if session.schedule else '',
                 'duration': session.duration,
                 'maxParticipants': session.max_participants,
                 'participants': bookings_count,
                 'current_bookings': bookings_count,
                 'status': session.status,
-                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}' if bookings_count > 0 else 'No bookings yet',
+                'bookings_text': f'Booked: {bookings_count}/{session.max_participants}',
                 'timeToStart': time_to_start,
                 'mentorReady': False,
                 'learnersReady': bookings_count > 0,
@@ -559,34 +531,23 @@ def mentor_dashboard_data(request):
                 'status': req.status
             })
         
-        # Simple calculation without complex imports
-        available_balance = int(total_earnings * 0.8)
-        pending_earnings = 0
-
         return JsonResponse({
             'success': True,
             'total_students': total_students,
             'sessions_this_month': sessions_this_month,
             'average_rating': round(avg_rating, 1),
             'monthly_earnings': int(monthly_earnings),
-            'available_balance': available_balance,
-            'total_earnings': int(total_earnings),
-            'pending_earnings': pending_earnings,
-            'enrolled_students': real_enrolled_students,
-            'withdrawal_history': [],
-            'messages': [],
             'sessions': {
                 'draft': draft_sessions,
                 'scheduled': scheduled_sessions,
                 'past': past_sessions
             },
-            'scheduled_sessions': scheduled_sessions,
+            'scheduled_sessions': scheduled_sessions,  # Add this for booked sessions loading
             'requests': pending_requests,
-            'real_time_updates': [],
             'earnings': {
-                'available': available_balance,
-                'pending': pending_earnings,
-                'total': int(total_earnings)
+                'available': int(monthly_earnings * 0.8),
+                'pending': 0,
+                'total': int(monthly_earnings)
             }
         })
         
@@ -719,16 +680,13 @@ def create_session_api(request):
         session_type = request.POST.get('session_type', 'free')
         price = None
         
-        # Check for price from both session_type logic and direct price input
-        price_value = request.POST.get('price')
-        if price_value and price_value.strip():
-            try:
-                price = float(price_value)
-                session_type = 'paid'  # Auto-set to paid if price is entered
-            except ValueError:
-                return JsonResponse({'error': 'Invalid price format'}, status=400)
-        elif session_type == 'paid' and not price_value:
-            return JsonResponse({'error': 'Price is required for paid sessions'}, status=400)
+        if session_type == 'paid':
+            price_value = request.POST.get('price')
+            if price_value:
+                try:
+                    price = float(price_value)
+                except ValueError:
+                    return JsonResponse({'error': 'Invalid price format'}, status=400)
         
         # Create session in database
         session = Session.objects.create(
@@ -886,419 +844,3 @@ def send_session_reminders(request, session_id):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
-
-@login_required
-@require_http_methods(["GET"])
-def get_communication_insights(request):
-    """Get real communication insights data from database"""
-    try:
-        from datetime import timedelta
-        from django.db.models import Count, Avg, Q
-        
-        days = int(request.GET.get('days', 30))
-        start_date = timezone.now() - timedelta(days=days)
-        user = request.user
-        
-        # Total interactions from sessions, bookings, and feedback
-        if user.role == 'mentor':
-            sessions_count = Session.objects.filter(mentor=user, created_at__gte=start_date).count()
-            bookings_count = Booking.objects.filter(session__mentor=user, created_at__gte=start_date).count()
-            feedback_count = Feedback.objects.filter(session__mentor=user, created_at__gte=start_date).count()
-        else:
-            sessions_count = Session.objects.filter(bookings__learner=user, created_at__gte=start_date).distinct().count()
-            bookings_count = Booking.objects.filter(learner=user, created_at__gte=start_date).count()
-            feedback_count = Feedback.objects.filter(user=user, created_at__gte=start_date).count()
-        
-        total_interactions = sessions_count + bookings_count + feedback_count
-        
-        # Calculate completion rate from real data
-        if user.role == 'mentor':
-            total_sessions = Session.objects.filter(mentor=user, created_at__gte=start_date).count()
-            completed_sessions = Session.objects.filter(mentor=user, created_at__gte=start_date, status='completed').count()
-        else:
-            total_sessions = Booking.objects.filter(learner=user, created_at__gte=start_date).count()
-            completed_sessions = Booking.objects.filter(learner=user, created_at__gte=start_date, session__status='completed').count()
-        
-        completion_rate = round((completed_sessions / total_sessions) * 100, 1) if total_sessions > 0 else 0
-        
-        # Calculate satisfaction score from real feedback
-        if user.role == 'mentor':
-            avg_rating = Feedback.objects.filter(session__mentor=user, created_at__gte=start_date).aggregate(avg=Avg('rating'))['avg'] or 0
-        else:
-            avg_rating = Feedback.objects.filter(user=user, created_at__gte=start_date).aggregate(avg=Avg('rating'))['avg'] or 0
-        
-        satisfaction_score = round(avg_rating, 1)
-        
-        # Get recent activities from actual database
-        recent_activities = []
-        recent_sessions = Session.objects.filter(
-            Q(mentor=user) | Q(bookings__learner=user),
-            created_at__gte=start_date
-        ).distinct().order_by('-created_at')[:10]
-        
-        for session in recent_sessions:
-            participants_count = session.bookings.filter(status='confirmed').count()
-            recent_activities.append({
-                'id': f'session_{session.id}',
-                'title': f'Session: {session.title}',
-                'description': f'Duration: {session.duration} minutes',
-                'time': session.created_at.strftime('%H:%M'),
-                'type': 'session',
-                'participants': f'{participants_count} participants'
-            })
-        
-        # Get top mentors based on real performance data
-        top_mentors = []
-        mentors = User.objects.filter(role='mentor').annotate(
-            session_count=Count('mentor_sessions', filter=Q(mentor_sessions__created_at__gte=start_date)),
-            avg_rating=Avg('mentor_sessions__feedback__rating', filter=Q(mentor_sessions__feedback__created_at__gte=start_date))
-        ).filter(session_count__gt=0).order_by('-avg_rating', '-session_count')[:5]
-        
-        for mentor in mentors:
-            top_mentors.append({
-                'id': str(mentor.id),
-                'name': mentor.get_full_name() or mentor.username,
-                'sessions': mentor.session_count,
-                'rating': round(mentor.avg_rating or 0, 1),
-                'responseTime': 25 + (mentor.id % 20)
-            })
-        
-        # Calculate engagement metrics from real data
-        days_active = (timezone.now() - start_date).days or 1
-        message_frequency = min(round((sessions_count / days_active) * 20), 100)
-        response_quality = round((avg_rating / 5) * 100, 1) if avg_rating else 0
-        
-        # Calculate follow-up rate based on repeat bookings
-        if user.role == 'mentor':
-            unique_learners = Booking.objects.filter(session__mentor=user, created_at__gte=start_date).values('learner').distinct().count()
-            total_bookings = Booking.objects.filter(session__mentor=user, created_at__gte=start_date).count()
-        else:
-            unique_sessions = Booking.objects.filter(learner=user, created_at__gte=start_date).values('session').distinct().count()
-            total_bookings = Booking.objects.filter(learner=user, created_at__gte=start_date).count()
-            unique_learners = unique_sessions
-        
-        follow_up_rate = round(((total_bookings - unique_learners) / unique_learners) * 100, 1) if unique_learners > 0 else 0
-        overall_engagement = round((message_frequency + response_quality + follow_up_rate) / 3, 1)
-        
-        # Generate chart data for the last 7 days from real data
-        chart_labels = []
-        chart_values = []
-        
-        for i in range(7):
-            date = timezone.now().date() - timedelta(days=i)
-            chart_labels.insert(0, date.strftime('%a'))
-            
-            day_sessions = Session.objects.filter(
-                Q(mentor=user) | Q(bookings__learner=user),
-                created_at__date=date
-            ).distinct().count()
-            chart_values.insert(0, day_sessions)
-        
-        return JsonResponse({
-            'metrics': {
-                'totalInteractions': total_interactions,
-                'interactionGrowth': 12.5,
-                'avgResponseTime': '32min',
-                'responseImprovement': 8.3,
-                'completionRate': completion_rate,
-                'completionGrowth': 5.2,
-                'satisfactionScore': satisfaction_score,
-                'satisfactionGrowth': 3.1,
-                'engagementScore': overall_engagement,
-                'messageFrequency': message_frequency,
-                'responseQuality': response_quality,
-                'followUpRate': follow_up_rate
-            },
-            'recent_activities': recent_activities,
-            'top_mentors': top_mentors,
-            'peak_hours': [
-                {'time': '10AM', 'activity': 35, 'percentage': 28.5},
-                {'time': '2PM', 'activity': 40, 'percentage': 32.1},
-                {'time': '6PM', 'activity': 30, 'percentage': 24.3},
-                {'time': '8PM', 'activity': 25, 'percentage': 20.1}
-            ],
-            'communication_preferences': [
-                {'type': 'Video Sessions', 'percentage': 65},
-                {'type': 'Text Chat', 'percentage': 25},
-                {'type': 'Voice Calls', 'percentage': 10}
-            ],
-            'chart_data': {
-                'labels': chart_labels,
-                'values': chart_values
-            }
-        })
-        
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
-
-@login_required
-@require_http_methods(["POST"])
-def export_insights_report(request):
-    """Export communication insights report"""
-    try:
-        data = json.loads(request.body)
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Report generated successfully',
-            'download_url': '/media/reports/communication-insights.pdf'
-        })
-        
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
-
-# Advanced Feedback System API Views
-@require_http_methods(["POST"])
-@login_required
-def live_feedback(request, session_id):
-    """Handle real-time feedback during WebRTC sessions"""
-    try:
-        session = Session.objects.get(id=session_id)
-        data = json.loads(request.body)
-        
-        # Create feedback record in database
-        feedback = Feedback.objects.create(
-            session=session,
-            user=request.user,
-            comment=data.get('message', ''),
-            rating=data.get('rating', 0)
-        )
-        
-        # Send real-time notification to mentor if this is from learner
-        if request.user.role == 'learner' and session.mentor != request.user:
-            Notification.objects.create(
-                user=session.mentor,
-                title="New Live Feedback",
-                message=f"{request.user.get_full_name()}: {data.get('message', 'Quick action')}",
-                notification_type='live_feedback'
-            )
-        
-        return JsonResponse({
-            'status': 'success',
-            'feedback_id': feedback.id,
-            'message': 'Feedback sent successfully'
-        })
-        
-    except Session.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Session not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-@require_http_methods(["GET"])
-@login_required  
-def feedback_messages(request, session_id):
-    """Get feedback messages for session inbox"""
-    try:
-        session = Session.objects.get(id=session_id)
-        
-        # Get feedback messages for this session
-        messages = Feedback.objects.filter(session=session).order_by('-created_at')
-        
-        message_data = []
-        for msg in messages:
-            message_data.append({
-                'id': msg.id,
-                'sender_name': msg.user.get_full_name(),
-                'sender_id': msg.user.id,
-                'message': msg.comment,
-                'rating': msg.rating,
-                'timestamp': msg.created_at.isoformat(),
-                'unread': True
-            })
-        
-        return JsonResponse({
-            'status': 'success',
-            'messages': message_data
-        })
-        
-    except Session.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Session not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-@require_http_methods(["POST"])
-@login_required
-def mark_message_read(request, message_id):
-    """Mark feedback message as read"""
-    try:
-        feedback = Feedback.objects.get(id=message_id)
-        
-        return JsonResponse({
-            'status': 'success',
-            'message': 'Message marked as read'
-        })
-        
-    except Feedback.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Message not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-@require_http_methods(["GET"])
-@login_required
-def mentor_feedback(request):
-    """Get feedback data for mentor dashboard"""
-    try:
-        if request.user.role != 'mentor':
-            return JsonResponse({'status': 'error', 'message': 'Access denied'}, status=403)
-        
-        # Get all feedback for mentor's sessions
-        mentor_sessions = Session.objects.filter(mentor=request.user)
-        feedback = Feedback.objects.filter(session__in=mentor_sessions).order_by('-created_at')
-        
-        # Calculate stats
-        total_feedback = feedback.count()
-        avg_rating = feedback.aggregate(avg_rating=models.Avg('rating'))['avg_rating'] or 0
-        
-        # Format feedback data
-        feedback_data = []
-        for f in feedback:
-            feedback_data.append({
-                'id': f.id,
-                'session_title': f.session.title,
-                'student_name': f.user.get_full_name(),
-                'rating': f.rating,
-                'comment': f.comment,
-                'created_at': f.created_at.isoformat()
-            })
-        
-        return JsonResponse({
-            'status': 'success',
-            'stats': {
-                'total_feedback': total_feedback,
-                'average_rating': round(avg_rating, 1)
-            },
-            'feedback': feedback_data
-        })
-        
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@csrf_exempt  
-@require_http_methods(["POST"])
-def submit_rating_simple(request, session_id):
-    """Working rating submission endpoint for real feedback data"""
-    try:
-        session = Session.objects.get(id=session_id)
-        data = json.loads(request.body)
-        
-        rating = int(data.get('rating', 5))
-        comment = data.get('comment', '')
-        
-        feedback = Feedback.objects.create(
-            session=session,
-            user=request.user,
-            rating=rating,
-            comment=comment
-        )
-        
-        return JsonResponse({
-            'success': True, 
-            'message': 'Rating submitted successfully!'
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False, 
-            'message': f'Error: {str(e)}'
-        }, status=400)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def complete_session(request, session_id):
-    """Mark session as completed and update real data"""
-    try:
-        session = Session.objects.get(id=session_id)
-        data = json.loads(request.body)
-        
-        # Update session status to completed
-        session.status = 'completed'
-        session.save()
-        
-        # Update booking status if exists
-        try:
-            booking = Booking.objects.get(session=session)
-            booking.status = 'completed'
-            booking.save()
-        except Booking.DoesNotExist:
-            pass
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Session completed successfully'
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Error: {str(e)}'
-        }, status=400)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def leave_session(request, session_id):
-    """Handle learner leaving session"""
-    try:
-        session = Session.objects.get(id=session_id)
-        
-        # Update user activity for participation tracking
-        from users.models import UserActivity
-        UserActivity.objects.create(
-            user=request.user,
-            activity_type='session_participation',
-            details=f'Participated in session: {session.title}'
-        )
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Left session successfully'
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Error: {str(e)}'
-        }, status=400)
-
-@login_required
-@require_http_methods(["POST"])
-def earnings_payout(request):
-    """Handle earnings payout requests with real database data"""
-    try:
-        if request.user.role != 'mentor':
-            return JsonResponse({'error': 'Only mentors can request payouts'}, status=403)
-        
-        data = json.loads(request.body)
-        amount = Decimal(str(data.get('amount', 0)))
-        
-        # Calculate real earnings from completed sessions
-        completed_sessions = Session.objects.filter(
-            mentor=request.user,
-            status='completed'
-        )
-        
-        total_earnings = Decimal('0')
-        for session in completed_sessions:
-            confirmed_bookings = Booking.objects.filter(
-                session=session,
-                status='completed'
-            ).count()
-            session_earning = Decimal(str(session.price)) * confirmed_bookings
-            total_earnings += session_earning
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'Payout request of ₹{amount} submitted successfully',
-            'total_available': float(total_earnings),
-            'requested_amount': float(amount)
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'error': f'Error processing payout: {str(e)}'
-        }, status=500)
