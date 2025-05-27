@@ -348,8 +348,9 @@
                                    @focus="showSkillSuggestions = formData.skills.length > 1"
                                    @blur="setTimeout(() => showSkillSuggestions = false, 200)"
                                    type="text" 
-                                   :placeholder="formData.role === 'mentor' ? 'e.g., React, Python, UI Design, Machine Learning, Product Management...' : 'e.g., JavaScript, Data Analysis, Digital Marketing, Photography...'"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                   placeholder="Start typing skills... e.g., React, Python, Machine Learning"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                   autocomplete="off">
                             <i data-feather="star" class="absolute right-3 top-3.5 w-4 h-4 text-gray-400"></i>
                         </div>
                         
@@ -619,17 +620,16 @@ function registrationWizard() {
         },
         
         domains: [
-            { value: 'programming', name: 'Programming & Development', icon: '💻' },
             { value: 'web-development', name: 'Web Development', icon: '🌐' },
             { value: 'mobile-development', name: 'Mobile Development', icon: '📱' },
             { value: 'data-science', name: 'Data Science & Analytics', icon: '📊' },
-            { value: 'ai-ml', name: 'AI & Machine Learning', icon: '🤖' },
+            { value: 'machine-learning', name: 'Machine Learning & AI', icon: '🤖' },
             { value: 'design', name: 'UI/UX Design', icon: '🎨' },
-            { value: 'business', name: 'Business & Marketing', icon: '📈' },
-            { value: 'language', name: 'Language Learning', icon: '🗣️' },
-            { value: 'music', name: 'Music & Arts', icon: '🎵' },
-            { value: 'fitness', name: 'Health & Fitness', icon: '💪' },
-            { value: 'other', name: 'Other', icon: '📚' }
+            { value: 'devops', name: 'DevOps & Cloud', icon: '⚙️' },
+            { value: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
+            { value: 'blockchain', name: 'Blockchain & Web3', icon: '⛓️' },
+            { value: 'business', name: 'Business & Strategy', icon: '💼' },
+            { value: 'marketing', name: 'Digital Marketing', icon: '📢' }
         ],
         
         init() {
