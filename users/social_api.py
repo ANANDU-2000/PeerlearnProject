@@ -14,7 +14,7 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 
-from .follow_models import Follow, PersonalMessage, ProfileView, UserActivity, UserBadge, UserSocialStats
+from .models import Follow, PersonalMessage, UserActivity, UserSocialStats
 from sessions.models import Session, Booking, Feedback
 
 User = get_user_model()

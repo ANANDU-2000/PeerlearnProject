@@ -478,7 +478,8 @@ def communication_insights_view(request):
 @login_required
 def advanced_profile_view(request, user_id):
     """Advanced Instagram/Facebook-like profile view"""
-    from .follow_models import Follow, UserActivity, UserBadge, UserSocialStats
+    from django.shortcuts import get_object_or_404
+    from .models import Follow, UserActivity, UserSocialStats
     from sessions.models import Session, Feedback
     
     profile_user = get_object_or_404(User, id=user_id)

@@ -29,6 +29,82 @@ class User(AbstractUser):
     
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+# Advanced Social Features
+class Follow(models.Model):
+    """Follow relationship between users (learners following mentors)"""
+    follower = models.ForeignKey('User', on_delete=models.CASCADE, related_name='following')
+    following = models.ForeignKey('User', on_delete=models.CASCADE, related_name='followers')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('follower', 'following')
+    
+    def __str__(self):
+        return f"{self.follower.username} follows {self.following.username}"
+
+class PersonalMessage(models.Model):
+    """Personal chat messages between users"""
+    sender = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey('User', on_delete=models.CASCADE, related_name='received_messages')
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Message from {self.sender.username} to {self.recipient.username}"
+
+class UserActivity(models.Model):
+    """Track all user activities for profile activity feed"""
+    ACTIVITY_TYPES = [
+        ('session_created', 'Created a session'),
+        ('session_completed', 'Completed a session'),
+        ('feedback_given', 'Gave feedback'),
+        ('feedback_received', 'Received feedback'),
+        ('profile_updated', 'Updated profile'),
+        ('new_follower', 'Got a new follower'),
+        ('started_following', 'Started following someone'),
+        ('session_booked', 'Booked a session'),
+        ('achievement_earned', 'Earned an achievement'),
+    ]
+    
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='activities')
+    activity_type = models.CharField(max_length=50, choices=ACTIVITY_TYPES)
+    description = models.TextField()
+    related_user = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name='related_activities')
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username}: {self.description}"
+
+class UserSocialStats(models.Model):
+    """Social statistics for each user"""
+    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='social_stats')
+    followers_count = models.IntegerField(default=0)
+    following_count = models.IntegerField(default=0)
+    profile_views_count = models.IntegerField(default=0)
+    total_sessions = models.IntegerField(default=0)
+    total_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    average_rating = models.FloatField(default=0.0)
+    response_time_hours = models.FloatField(default=24.0)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Social stats for {self.user.username}"
+    
+    def update_stats(self):
+        """Update all social statistics"""
+        self.followers_count = self.user.followers.count()
+        self.following_count = self.user.following.count()
+        # Update session and earnings stats if needed
+        self.save()
     
     @property
     def is_mentor(self):

@@ -4,8 +4,11 @@ Instagram/Facebook-like social interactions between mentors and learners
 """
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.conf import settings
+
+User = get_user_model()
 
 class Follow(models.Model):
     """Follow relationship between users (learners following mentors)"""

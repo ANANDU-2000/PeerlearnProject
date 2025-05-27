@@ -22,6 +22,9 @@ urlpatterns = [
     # Communication Insights API  
     path('api/communication/insights/', api_views.get_communication_insights, name='communication_insights_api'),
     path('api/communication/export-report/', api_views.export_insights_report, name='export_communication_report'),
+    
+    # Advanced Social Features - Profile, Chat, Follow System
+    path('api/social/', include('users.social_urls')),
     path('recommendations/', include('recommendations.urls')),
 ]
 
