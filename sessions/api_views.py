@@ -471,10 +471,22 @@ def mentor_dashboard_data(request):
         # Organize real sessions by status
         draft_sessions = []
         scheduled_sessions = []
+        booked_sessions = []  # NEW: Add booked sessions
         past_sessions = []
         
         for session in mentor_sessions:
             bookings_count = session.bookings.filter(status='confirmed').count()
+            # Get booked learners data
+            booked_learners = []
+            for booking in session.bookings.filter(status='confirmed'):
+                booked_learners.append({
+                    'id': booking.learner.id,
+                    'name': booking.learner.get_full_name() or booking.learner.username,
+                    'bookedDate': booking.created_at.strftime('%b %d, %Y'),
+                    'isReady': getattr(booking, 'ready_status', False),
+                    'status': booking.status
+                })
+            
             # Calculate time to start for session readiness
             time_to_start = 999
             session_status = session.status
@@ -502,11 +514,15 @@ def mentor_dashboard_data(request):
                 'maxParticipants': session.max_participants,
                 'participants': bookings_count,
                 'current_bookings': bookings_count,
+                'bookedCount': bookings_count,  # FIXED: Add bookedCount for Start Session button
+                'bookedLearners': booked_learners,  # FIXED: Add booked learners data
                 'status': session.status,
                 'bookings_text': f'Booked: {bookings_count}/{session.max_participants}',
                 'timeToStart': time_to_start,
                 'mentorReady': False,
                 'learnersReady': bookings_count > 0,
+                'readyLearners': sum(1 for learner in booked_learners if learner['isReady']),
+                'expectedEarnings': bookings_count * 500,  # INR 500 per booking
                 'publishing': False
             }
             
@@ -514,6 +530,9 @@ def mentor_dashboard_data(request):
                 draft_sessions.append(session_data)
             elif session_status == 'scheduled' and time_to_start > -60:
                 scheduled_sessions.append(session_data)
+                # FIXED: Add sessions with bookings to booked_sessions
+                if bookings_count > 0:
+                    booked_sessions.append(session_data)
             else:
                 # Move to past sessions if completed or session time has passed
                 session_data['status'] = 'completed'
@@ -540,9 +559,11 @@ def mentor_dashboard_data(request):
             'sessions': {
                 'draft': draft_sessions,
                 'scheduled': scheduled_sessions,
+                'booked': booked_sessions,  # FIXED: Add booked sessions
                 'past': past_sessions
             },
-            'scheduled_sessions': scheduled_sessions,  # Add this for booked sessions loading
+            'scheduled_sessions': scheduled_sessions,
+            'booked_sessions': booked_sessions,  # FIXED: Add this for booked sessions tab
             'requests': pending_requests,
             'earnings': {
                 'available': int(monthly_earnings * 0.8),

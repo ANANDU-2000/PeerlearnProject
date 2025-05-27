@@ -487,11 +487,11 @@
                                         ⏰ Mark Ready
                                     </button>
                                     
-                                    <!-- Start Session -->
-                                    <button x-show="session.timeToStart <= 5 && session.mentorReady && session.readyLearners > 0"
+                                    <!-- Start Session - FIXED: Always show when learners are booked -->
+                                    <button x-show="session.bookedCount > 0"
                                             @click="startSession(session.id)"
-                                            class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors animate-pulse">
-                                            🚀 Start Session
+                                            class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+                                            🟢 Start Session
                                     </button>
                                     
                                     <!-- Join Early -->
@@ -927,8 +927,8 @@ function mentorDashboard() {
         
         async loadBookedSessions() {
             try {
-                // Load sessions with enrolled learners and their ready status
-                const response = await fetch('/api/sessions/mentor-data/', {
+                // FIXED: Use correct API endpoint for mentor dashboard data
+                const response = await fetch('/api/sessions/mentor-dashboard-data/', {
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCSRFToken()
@@ -936,21 +936,15 @@ function mentorDashboard() {
                 });
                 
                 const data = await response.json();
-                if (data.success) {
-                    // Process sessions with enrolled learners
-                    this.bookedSessions = data.scheduled_sessions.filter(session => 
-                        session.current_participants > 0
-                    ).map(session => ({
-                        ...session,
-                        bookedLearners: [], // Will be loaded separately
-                        bookedCount: session.current_participants,
-                        expectedEarnings: session.price * session.current_participants
-                    }));
-                    
+                if (data.success && data.booked_sessions) {
+                    // FIXED: Use the correct booked_sessions data from API
+                    this.bookedSessions = data.booked_sessions;
                     this.bookedSessionsCount = this.bookedSessions.length;
                     
-                    // Load individual learner details for each session
-                    await this.loadLearnerDetails();
+                    console.log('✅ Booked sessions loaded:', this.bookedSessions.length);
+                    console.log('📋 Sessions data:', this.bookedSessions);
+                } else {
+                    console.log('❌ No booked sessions found or API error');
                 }
             } catch (error) {
                 console.error('Error loading booked sessions:', error);
