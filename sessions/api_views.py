@@ -715,13 +715,16 @@ def create_session_api(request):
         session_type = request.POST.get('session_type', 'free')
         price = None
         
-        if session_type == 'paid':
-            price_value = request.POST.get('price')
-            if price_value:
-                try:
-                    price = float(price_value)
-                except ValueError:
-                    return JsonResponse({'error': 'Invalid price format'}, status=400)
+        # Check for price from both session_type logic and direct price input
+        price_value = request.POST.get('price')
+        if price_value and price_value.strip():
+            try:
+                price = float(price_value)
+                session_type = 'paid'  # Auto-set to paid if price is entered
+            except ValueError:
+                return JsonResponse({'error': 'Invalid price format'}, status=400)
+        elif session_type == 'paid' and not price_value:
+            return JsonResponse({'error': 'Price is required for paid sessions'}, status=400)
         
         # Create session in database
         session = Session.objects.create(
