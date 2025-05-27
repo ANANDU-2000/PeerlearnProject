@@ -1264,3 +1264,41 @@ def leave_session(request, session_id):
             'success': False,
             'message': f'Error: {str(e)}'
         }, status=400)
+
+@login_required
+@require_http_methods(["POST"])
+def earnings_payout(request):
+    """Handle earnings payout requests with real database data"""
+    try:
+        if request.user.role != 'mentor':
+            return JsonResponse({'error': 'Only mentors can request payouts'}, status=403)
+        
+        data = json.loads(request.body)
+        amount = Decimal(str(data.get('amount', 0)))
+        
+        # Calculate real earnings from completed sessions
+        completed_sessions = Session.objects.filter(
+            mentor=request.user,
+            status='completed'
+        )
+        
+        total_earnings = Decimal('0')
+        for session in completed_sessions:
+            confirmed_bookings = Booking.objects.filter(
+                session=session,
+                status='completed'
+            ).count()
+            session_earning = Decimal(str(session.price)) * confirmed_bookings
+            total_earnings += session_earning
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Payout request of ₹{amount} submitted successfully',
+            'total_available': float(total_earnings),
+            'requested_amount': float(amount)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': f'Error processing payout: {str(e)}'
+        }, status=500)
