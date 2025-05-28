@@ -47,6 +47,44 @@
             <!-- Navigation Menu -->
             <nav class="mt-8">
                 <div class="px-4 space-y-2">
+                    <!-- Django Admin Link -->
+                    <a href="/admin/" target="_blank" class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+                        <i class="fas fa-database w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3 font-medium">Django Admin</span>
+                        <i x-show="sidebarOpen" class="fas fa-external-link-alt ml-auto text-xs"></i>
+                    </a>
+                    
+                    <!-- Manual Controls -->
+                    <a @click="activeTab = 'manual-controls'" 
+                       :class="activeTab === 'manual-controls' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors">
+                        <i class="fas fa-tools w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3 font-medium">Manual Controls</span>
+                    </a>
+                    
+                    <!-- Model Management -->
+                    <a @click="activeTab = 'models'" 
+                       :class="activeTab === 'models' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors">
+                        <i class="fas fa-cubes w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3 font-medium">Models & Data</span>
+                    </a>
+                    
+                    <!-- Session Creator -->
+                    <a @click="activeTab = 'session-creator'" 
+                       :class="activeTab === 'session-creator' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors">
+                        <i class="fas fa-plus-circle w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3 font-medium">Create Session</span>
+                    </a>
+                    
+                    <!-- History & Logs -->
+                    <a @click="activeTab = 'history'" 
+                       :class="activeTab === 'history' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'"
+                       class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors">
+                        <i class="fas fa-history w-5"></i>
+                        <span x-show="sidebarOpen" class="ml-3 font-medium">History & Logs</span>
+                    </a>
                     <!-- Dashboard -->
                     <a @click="activeTab = 'dashboard'" 
                        :class="activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'"

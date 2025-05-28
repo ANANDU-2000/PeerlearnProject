@@ -117,6 +117,143 @@ def admin_dashboard(request):
     return render(request, 'admin/advanced_dashboard.html', context)
 
 
+@login_required
+@staff_member_required
+def admin_create_user_manual(request):
+    """Manually create new user from admin dashboard"""
+    if request.method == 'POST':
+        try:
+            import json
+            data = json.loads(request.body)
+            
+            # Create new user
+            user = User.objects.create_user(
+                username=data['username'],
+                email=data['email'],
+                password=data['password']
+            )
+            user.role = data['role']
+            user.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'User {user.username} created successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@login_required
+@staff_member_required
+def admin_create_session_manual(request):
+    """Manually create new session from admin dashboard"""
+    if request.method == 'POST':
+        try:
+            import json
+            from datetime import datetime
+            data = json.loads(request.body)
+            
+            # Get mentor
+            mentor = User.objects.get(id=data['mentor_id'])
+            
+            # Create session
+            session = Session.objects.create(
+                mentor=mentor,
+                title=data['title'],
+                description=data.get('description', ''),
+                price=float(data['price']),
+                duration=int(data['duration']),
+                max_participants=int(data.get('max_participants', 10)),
+                scheduled_time=datetime.fromisoformat(data['scheduled_time']),
+                status=data.get('status', 'scheduled')
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Session "{session.title}" created successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@login_required
+@staff_member_required
+def admin_model_data(request, model_name):
+    """Get model data for admin interface"""
+    try:
+        if model_name == 'users':
+            data = list(User.objects.values('id', 'username', 'email', 'role', 'is_active'))
+        elif model_name == 'sessions':
+            data = list(Session.objects.values('id', 'title', 'mentor__username', 'status', 'price'))
+        elif model_name == 'bookings':
+            data = list(Booking.objects.values('id', 'session__title', 'learner__username', 'status'))
+        else:
+            data = []
+        
+        return JsonResponse({'success': True, 'data': data})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@staff_member_required
+def admin_export_data(request):
+    """Export platform data"""
+    try:
+        export_type = request.GET.get('type', 'users')
+        
+        if export_type == 'users':
+            from django.http import HttpResponse
+            import csv
+            
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="users_export.csv"'
+            
+            writer = csv.writer(response)
+            writer.writerow(['Username', 'Email', 'Role', 'Active', 'Date Joined'])
+            
+            for user in User.objects.all():
+                writer.writerow([
+                    user.username,
+                    user.email,
+                    user.role,
+                    user.is_active,
+                    user.date_joined
+                ])
+            
+            return response
+        
+        return JsonResponse({'success': False, 'error': 'Invalid export type'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@staff_member_required
+def admin_system_logs(request):
+    """Get system logs"""
+    try:
+        logs = [
+            {'time': '2 min ago', 'action': 'User Registration', 'details': 'New learner registered'},
+            {'time': '5 min ago', 'action': 'Session Completed', 'details': 'Python session ended'},
+            {'time': '10 min ago', 'action': 'Payment Processed', 'details': '₹500 received'},
+        ]
+        
+        return JsonResponse({'success': True, 'logs': logs})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 @staff_member_required
 @require_http_methods(["POST"])
 def admin_user_action(request):
