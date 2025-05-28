@@ -1,0 +1,327 @@
+════════════════════════════════════════════════════════════════════════════════
+                    PEERLEARN - DETAILED DFD WITH PROPER SHAPES
+                      University Standard Documentation
+════════════════════════════════════════════════════════════════════════════════
+
+LEGEND - DFD SYMBOL MEANINGS
+═══════════════════════════
+
+[Entity]       = External Entity (Rectangle)
+(Process)      = Process (Circle/Oval)  
+||Data Store|| = Data Store (Open Rectangle)
+────▶         = Data Flow (Arrow with label)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+LEVEL 0 - CONTEXT DIAGRAM (SYSTEM OVERVIEW)
+═══════════════════════════════════════════
+
+                    Registration Data
+[LEARNER] ──────────────────────────────────────────────▶
+                                                          │
+                    Session Booking                       │
+[LEARNER] ──────────────────────────────────────────────▶│
+                                                          │
+                    Login Credentials                     │
+[LEARNER] ──────────────────────────────────────────────▶│
+                                                          ▼
+                    Session Creation               ┌─────────────┐
+[MENTOR] ───────────────────────────────────────▶  │             │
+                                                   │  PEERLEARN  │
+                    Video Communication            │   SYSTEM    │
+[MENTOR] ◀─────────────────────────────────────────│             │
+                                                   │   (0.0)     │
+                    User Management                └─────────────┘
+[ADMIN] ────────────────────────────────────────▶        │
+                                                          │
+                    Payment Processing                    │
+[RAZORPAY] ◀──────────────────────────────────────────────│
+                                                          │
+                    Email Notifications                   │
+[EMAIL SERVICE] ◀─────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+LEVEL 1 - MAIN FUNCTIONAL DECOMPOSITION
+═══════════════════════════════════════
+
+[LEARNER] ──Registration Info──▶ ┌─────────────┐ ──User Data──▶ ||D1: USERS||
+                                 │   USER      │
+[MENTOR] ───Login Attempt────▶   │ MANAGEMENT  │ ◀─Profile Data─ ||D1: USERS||
+                                 │   (1.0)     │
+[ADMIN] ────Admin Access─────▶   └─────────────┘
+                                        │ User Authentication
+                                        ▼
+[LEARNER] ──Session Search───▶ ┌─────────────┐ ──Session Info─▶ ||D2: SESSIONS||
+                                │  SESSION    │
+[MENTOR] ───Session Create───▶  │ MANAGEMENT  │ ◀─Booking Data── ||D3: BOOKINGS||
+                                │   (2.0)     │
+                                └─────────────┘
+                                        │ Session Details
+                                        ▼
+[LEARNER] ──Payment Info─────▶ ┌─────────────┐ ──Transaction──▶ ||D4: PAYMENTS||
+                                │  PAYMENT    │
+[RAZORPAY] ◀─Gateway Request────│ PROCESSING  │ ◀─Payment Status─ ||D4: PAYMENTS||
+                                │   (3.0)     │
+                                └─────────────┘
+                                        │ Payment Confirmation
+                                        ▼
+[MENTOR] ◀──Video Stream────────┌─────────────┐ ──Room Data────▶ ||D5: WEBRTC||
+                                │   WEBRTC    │
+[LEARNER] ◀─Video Stream────────│ COMMUNICATION│ ◀─Chat Messages─ ||D6: MESSAGES||
+                                │   (4.0)     │
+                                └─────────────┘
+                                        │ Session Activity
+                                        ▼
+[EMAIL SERVICE] ◀─Email Data────┌─────────────┐ ──Notification─▶ ||D7: NOTIFICATIONS||
+                                │NOTIFICATION │
+[SMS SERVICE] ◀──SMS Data───────│   SYSTEM    │ ◀─Alert Config──── ||D1: USERS||
+                                │   (5.0)     │
+                                └─────────────┘
+                                        │ System Analytics
+                                        ▼
+[ADMIN] ◀──Analytics Data───────┌─────────────┐ ──Metrics Data─▶ ||D8: ANALYTICS||
+                                │  REPORTING  │
+                                │  & METRICS  │ ◀─Usage Stats───── ||D2: SESSIONS||
+                                │   (6.0)     │
+                                └─────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+LEVEL 2 - DETAILED PROCESS DECOMPOSITION
+════════════════════════════════════════
+
+PROCESS 1.0 - USER MANAGEMENT DETAILED BREAKDOWN
+─────────────────────────────────────────────────
+
+[LEARNER] ──Registration Form──▶ ┌─────────────┐ ──Validation──▶ ┌─────────────┐
+                                 │  COLLECT    │                 │  VALIDATE   │
+[MENTOR] ───Registration Form──▶ │  USER DATA  │ ──Email Check─▶ │ USER INPUT  │
+                                 │   (1.1)     │                 │   (1.2)     │
+                                 └─────────────┘                 └─────────────┘
+                                        │                               │
+                                        ▼ Raw Data                     ▼ Valid Data
+                                ||D1: TEMP_USERS||              ┌─────────────┐
+                                        │                       │   CREATE    │
+                                        ▼ User Info             │ USER PROFILE│──▶ ||D1: USERS||
+[EMAIL] ◀─Verification Email────┌─────────────┐ ◀─Valid Data────│   (1.3)     │
+                                │   SEND      │                 └─────────────┘
+                                │VERIFICATION │                        │
+                                │   (1.4)     │                        ▼ User Created
+                                └─────────────┘                ┌─────────────┐
+                                                               │  ASSIGN     │
+                                                               │   ROLE      │──▶ ||D1: USERS||
+                                                               │   (1.5)     │
+                                                               └─────────────┘
+
+[USER] ──Login Credentials──▶ ┌─────────────┐ ──Auth Query──▶ ||D1: USERS||
+                              │ AUTHENTICATE│
+                              │    USER     │ ◀─User Data────── ||D1: USERS||
+                              │   (1.6)     │
+                              └─────────────┘
+                                     │ Auth Token
+                                     ▼
+                              ┌─────────────┐ ──JWT Token──▶ [USER DASHBOARD]
+                              │  GENERATE   │
+                              │    JWT      │
+                              │   (1.7)     │
+                              └─────────────┘
+
+PROCESS 2.0 - SESSION MANAGEMENT DETAILED BREAKDOWN
+──────────────────────────────────────────────────
+
+[MENTOR] ──Session Details──▶ ┌─────────────┐ ──Session Data─▶ ┌─────────────┐
+                              │   CREATE    │                  │  VALIDATE   │
+                              │  SESSION    │ ──Schedule───▶   │  SCHEDULE   │
+                              │   (2.1)     │                  │   (2.2)     │
+                              └─────────────┘                  └─────────────┘
+                                     │                                │
+                                     ▼ Session Info                  ▼ Valid Schedule
+                              ||D2: SESSIONS||                ┌─────────────┐
+                                     │                        │  GENERATE   │
+                                     ▼ Available Sessions     │ MEETING URL │──▶ ||D2: SESSIONS||
+[LEARNER] ──Search Query──▶   ┌─────────────┐ ◀─Session List──│   (2.3)     │
+                              │   BROWSE    │                 └─────────────┘
+                              │  SESSIONS   │
+                              │   (2.4)     │                 ┌─────────────┐
+                              └─────────────┘                 │   SEND      │
+                                     │                        │ NOTIFICATIONS│◀─Session Created
+                                     ▼ Session Selection      │   (2.5)     │
+                              ┌─────────────┐                 └─────────────┘
+                              │    BOOK     │ ──Booking──▶ ||D3: BOOKINGS||         │
+                              │  SESSION    │                                       ▼
+                              │   (2.6)     │                              [EMAIL SERVICE]
+                              └─────────────┘
+                                     │ Payment Required
+                                     ▼
+                              ┌─────────────┐ ──Payment Info─▶ (3.0 PAYMENT)
+                              │  INITIATE   │
+                              │  PAYMENT    │
+                              │   (2.7)     │
+                              └─────────────┘
+
+PROCESS 3.0 - PAYMENT PROCESSING DETAILED BREAKDOWN
+───────────────────────────────────────────────────
+
+[LEARNER] ──Payment Details─▶ ┌─────────────┐ ──Order Data──▶ [RAZORPAY]
+                              │   CREATE    │
+                              │ RAZORPAY    │ ◀─Order ID─────── [RAZORPAY]
+                              │   ORDER     │
+                              │   (3.1)     │
+                              └─────────────┘
+                                     │ Order Details
+                                     ▼
+                              ┌─────────────┐ ──Payment UI──▶ [LEARNER]
+                              │  DISPLAY    │
+                              │ PAYMENT UI  │ ◀─Payment Input─ [LEARNER]
+                              │   (3.2)     │
+                              └─────────────┘
+                                     │ Payment Data
+                                     ▼
+[RAZORPAY] ──Gateway Response─▶ ┌─────────────┐ ──Verification─▶ ┌─────────────┐
+                                │  PROCESS    │                  │   VERIFY    │
+                                │  PAYMENT    │ ──Payment Info─▶ │  SIGNATURE  │
+                                │   (3.3)     │                  │   (3.4)     │
+                                └─────────────┘                  └─────────────┘
+                                       │                                │
+                                       ▼ Transaction Record             ▼ Verified Payment
+                                ||D4: PAYMENTS||                ┌─────────────┐
+                                       │                        │   UPDATE    │
+                                       ▼ Payment Status         │  BOOKING    │──▶ ||D3: BOOKINGS||
+                                ┌─────────────┐ ◀─Success/Fail──│   STATUS    │
+                                │   SEND      │                 │   (3.5)     │
+                                │ CONFIRMATION│                 └─────────────┘
+                                │   (3.6)     │                        │
+                                └─────────────┘                        ▼ Booking Confirmed
+                                       │                        ┌─────────────┐
+                                       ▼ Confirmation           │   ENABLE    │
+                                [EMAIL SERVICE]                 │ SESSION     │──▶ ||D2: SESSIONS||
+                                                               │  ACCESS     │
+                                                               │   (3.7)     │
+                                                               └─────────────┘
+
+PROCESS 4.0 - WEBRTC COMMUNICATION DETAILED BREAKDOWN
+─────────────────────────────────────────────────────
+
+[MENTOR] ──Start Session──▶ ┌─────────────┐ ──Room ID──▶ ┌─────────────┐
+                            │   CREATE    │              │  INITIALIZE │
+[LEARNER] ─Join Session──▶  │ VIDEO ROOM  │ ──ICE Servers│   WEBRTC    │──▶ ||D5: WEBRTC||
+                            │   (4.1)     │              │ CONNECTION  │
+                            └─────────────┘              │   (4.2)     │
+                                   │                     └─────────────┘
+                                   ▼ Room Created                │
+                            ┌─────────────┐                     ▼ Connection Data
+                            │   SEND      │              ┌─────────────┐
+                            │ROOM INVITES │              │  ESTABLISH  │
+                            │   (4.3)     │              │ PEER-TO-PEER│◀─Signal Data─ [PARTICIPANTS]
+                            └─────────────┘              │   (4.4)     │
+                                   │                     └─────────────┘
+                                   ▼ Invitations                │
+                            [EMAIL/SMS]                        ▼ Live Connection
+                                                        ┌─────────────┐
+[PARTICIPANTS] ──Chat Msgs─▶ ┌─────────────┐          │   STREAM    │
+                             │   HANDLE    │          │ AUDIO/VIDEO │◀─Media Data─ [PARTICIPANTS]
+                             │    CHAT     │──Msgs──▶ │   (4.5)     │
+                             │   (4.6)     │          └─────────────┘
+                             └─────────────┘                 │
+                                    │                        ▼ Session Data
+                                    ▼ Chat History    ┌─────────────┐
+                             ||D6: MESSAGES||         │   RECORD    │
+                                                      │  SESSION    │──▶ ||D7: SESSION_LOGS||
+                                                      │ ANALYTICS   │
+                                                      │   (4.7)     │
+                                                      └─────────────┘
+
+DATA STORE SPECIFICATIONS
+═══════════════════════
+
+||D1: USERS||
+├── User Profiles & Authentication
+├── Role Assignments (Mentor/Learner/Admin)
+├── Profile Images & Documents
+└── Password Reset Tokens
+
+||D2: SESSIONS||
+├── Session Details & Schedules
+├── Meeting URLs & Room IDs
+├── Session Status & Metadata
+└── Mentor-Session Relationships
+
+||D3: BOOKINGS||
+├── Learner Session Bookings
+├── Payment References
+├── Booking Status & Timestamps
+└── Seat Allocation Data
+
+||D4: PAYMENTS||
+├── Razorpay Transaction Records
+├── Payment Status & Amounts
+├── Gateway Response Data
+└── Revenue Tracking
+
+||D5: WEBRTC||
+├── Video Room Configurations
+├── ICE Server Settings
+├── Connection State Data
+└── Peer Connection Logs
+
+||D6: MESSAGES||
+├── Real-time Chat Messages
+├── File Sharing Records
+├── Message Timestamps
+└── Moderation Logs
+
+||D7: NOTIFICATIONS||
+├── Email/SMS Queue
+├── Push Notification Data
+├── Delivery Status
+└── User Preferences
+
+||D8: ANALYTICS||
+├── Platform Usage Statistics
+├── Revenue Reports
+├── User Engagement Metrics
+└── Performance Data
+
+PROCESS HIERARCHY SUMMARY
+═══════════════════════
+
+Level 0: Complete System (0.0)
+Level 1: Major Functions (1.0 - 6.0)
+Level 2: Detailed Processes (X.1 - X.N)
+
+1.0 USER MANAGEMENT
+├── 1.1 Collect User Data
+├── 1.2 Validate User Input
+├── 1.3 Create User Profile
+├── 1.4 Send Verification
+├── 1.5 Assign Role
+├── 1.6 Authenticate User
+└── 1.7 Generate JWT
+
+2.0 SESSION MANAGEMENT
+├── 2.1 Create Session
+├── 2.2 Validate Schedule
+├── 2.3 Generate Meeting URL
+├── 2.4 Browse Sessions
+├── 2.5 Send Notifications
+├── 2.6 Book Session
+└── 2.7 Initiate Payment
+
+3.0 PAYMENT PROCESSING
+├── 3.1 Create Razorpay Order
+├── 3.2 Display Payment UI
+├── 3.3 Process Payment
+├── 3.4 Verify Signature
+├── 3.5 Update Booking Status
+├── 3.6 Send Confirmation
+└── 3.7 Enable Session Access
+
+4.0 WEBRTC COMMUNICATION
+├── 4.1 Create Video Room
+├── 4.2 Initialize WebRTC
+├── 4.3 Send Room Invites
+├── 4.4 Establish Peer-to-Peer
+├── 4.5 Stream Audio/Video
+├── 4.6 Handle Chat
+└── 4.7 Record Session Analytics
