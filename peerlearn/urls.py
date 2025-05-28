@@ -24,6 +24,9 @@ urlpatterns = [
     # Password Reset System
     path('auth/', include('users.password_urls')),
     
+    # User Feedback System
+    path('', include('users.feedback_urls')),
+    
     # LIVE VIDEO DEMO - DIRECT ACCESS (NO LOGIN NEEDED)
     path('demo/video/', TemplateView.as_view(template_name='demo_video_room.html'), name='demo_video_room'),
 ]

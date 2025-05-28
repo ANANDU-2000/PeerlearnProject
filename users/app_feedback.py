@@ -4,9 +4,11 @@ Handles user ratings, comments, and admin replies with email notifications
 """
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+
+User = get_user_model()
 
 class AppFeedback(models.Model):
     """Model for storing user feedback about the PeerLearn app"""
