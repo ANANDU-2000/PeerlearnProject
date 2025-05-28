@@ -48,6 +48,23 @@ def anandu_portfolio(request):
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
     
+    def form_valid(self, form):
+        """Override to redirect admin users to enhanced dashboard"""
+        response = super().form_valid(form)
+        user = self.request.user
+        
+        # Check if user is admin/staff and redirect to enhanced dashboard
+        if user.is_staff or user.is_superuser:
+            return redirect('/admin-dashboard/dashboard/')
+        
+        # Regular users go to their role-based dashboards
+        if user.role == 'mentor':
+            return redirect('/dashboard/mentor/')
+        elif user.role == 'learner':
+            return redirect('/dashboard/learner/')
+        
+        return response
+    
     def get_success_url(self):
         user = self.request.user
         
