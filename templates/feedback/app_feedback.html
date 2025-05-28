@@ -264,22 +264,34 @@
                         return;
                     }
 
+                    if (!this.isLoggedIn && !this.email) {
+                        alert('Please provide your email address.');
+                        return;
+                    }
+
                     this.loading = true;
 
                     try {
-                        const formData = new FormData();
-                        formData.append('rating', this.rating);
-                        formData.append('category', this.category);
-                        formData.append('title', this.title);
-                        formData.append('message', this.message);
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        
+                        const payload = {
+                            rating: this.rating,
+                            comment: this.message,
+                            category: this.category,
+                            title: this.title
+                        };
+
                         if (!this.isLoggedIn) {
-                            formData.append('email', this.email);
+                            payload.email = this.email;
                         }
-                        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
                         const response = await fetch('/feedback/submit/', {
                             method: 'POST',
-                            body: formData
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify(payload)
                         });
 
                         const result = await response.json();
@@ -289,7 +301,7 @@
                             // Create celebration effect
                             this.createCelebrationEffect();
                         } else {
-                            alert(result.message || 'Failed to submit feedback. Please try again.');
+                            alert(result.error || result.message || 'Failed to submit feedback. Please try again.');
                         }
                     } catch (error) {
                         console.error('Error submitting feedback:', error);

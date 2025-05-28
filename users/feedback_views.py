@@ -21,16 +21,18 @@ def app_feedback_page(request):
     """Display the feedback form page"""
     return render(request, 'feedback/app_feedback.html')
 
+@csrf_exempt
 @require_http_methods(["POST"])
 def submit_feedback(request):
     """Handle feedback submission via AJAX"""
     try:
-        # Get form data
-        rating = int(request.POST.get('rating', 0))
-        category = request.POST.get('category', 'general')
-        title = request.POST.get('title', '').strip()
-        message = request.POST.get('message', '').strip()
-        email = request.POST.get('email', '').strip()
+        # Parse JSON data
+        data = json.loads(request.body)
+        rating = int(data.get('rating', 0))
+        category = data.get('category', 'general')
+        title = data.get('title', '').strip()
+        message = data.get('comment', '').strip()  # Frontend sends 'comment', not 'message'
+        email = data.get('email', '').strip()
         
         # Validate required fields
         if not rating or rating < 1 or rating > 5:
