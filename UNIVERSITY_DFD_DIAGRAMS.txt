@@ -1,0 +1,162 @@
+════════════════════════════════════════════════════════════════════════════════
+                    PEERLEARN - DATA FLOW DIAGRAMS (DFD)
+                      University Standard Documentation
+════════════════════════════════════════════════════════════════════════════════
+
+LEVEL 0 - CONTEXT DIAGRAM
+═════════════════════════
+
+External Entities:
+┌─────────────┐                                               ┌─────────────┐
+│   LEARNER   │────── Login/Register ─────────────────────────▶│    ADMIN    │
+│   (Student) │◀───── Session Booking ──────┐                 │  (Platform  │
+└─────────────┘                              │                 │  Manager)   │
+                                             ▼                 └─────────────┘
+                                     ┌──────────────┐                   │
+┌─────────────┐                      │              │                   │
+│   MENTOR    │◀──── Session Mgmt ───│  PEERLEARN   │◀─── Management ───┘
+│ (Educator)  │────▶ Video Calls ────│   PLATFORM   │
+└─────────────┘                      │              │
+                                     └──────────────┘
+                                             │
+┌─────────────┐                              │                 ┌─────────────┐
+│  PAYMENT    │◀──── Payment Processing ────┘────────────────▶│    EMAIL    │
+│  GATEWAY    │                                                │   SERVICE   │
+│ (Razorpay)  │                                                │             │
+└─────────────┘                                                └─────────────┘
+
+LEVEL 1 - MAIN PROCESSES
+═══════════════════════
+
+                        ┌─────────────────────────────────────────┐
+                        │              USER DATA STORE            │
+                        │  D1: Users, Profiles, Authentication   │
+                        └─────────────────────────────────────────┘
+                                         ▲        │
+                                         │        ▼
+┌─────────┐    User Details    ┌─────────────────────┐    Session Info    ┌─────────┐
+│ LEARNER │────────────────────▶│  1.0 USER MGMT     │◀───────────────────│ MENTOR  │
+│         │◀────Profile────────│  Authentication     │────Credentials─────▶│         │
+└─────────┘                    │  Registration       │                    └─────────┘
+     │                         └─────────────────────┘                         │
+     │                                     │                                   │
+     │ Booking Request                     │ User Data                         │ Session Creation
+     ▼                                     ▼                                   ▼
+┌─────────────────────┐           ┌─────────────────────┐           ┌─────────────────────┐
+│  2.0 SESSION MGMT   │           │     SESSION DB      │           │  3.0 PAYMENT MGMT   │
+│  Create/Book/Join   │◀──────────│  D2: Sessions,      │──────────▶│  Razorpay Gateway   │
+│  Schedule Sessions  │           │  Bookings, History  │           │  Transaction Mgmt   │
+└─────────────────────┘           └─────────────────────┘           └─────────────────────┘
+         │                                 │                                   │
+         │ Video Call                      │ Feedback Data                     │ Payment Status
+         ▼                                 ▼                                   ▼
+┌─────────────────────┐           ┌─────────────────────┐           ┌─────────────────────┐
+│  4.0 VIDEO COMM     │           │  5.0 FEEDBACK SYS   │           │  6.0 NOTIFICATION   │
+│  WebRTC Integration │           │  Rating & Reviews   │           │  Email/SMS Alerts   │
+│  Real-time Streams  │           │  Quality Assessment │           │  Real-time Updates  │
+└─────────────────────┘           └─────────────────────┘           └─────────────────────┘
+
+LEVEL 2 - DETAILED PROCESSES
+═══════════════════════════
+
+2.1 USER MANAGEMENT SUBSYSTEM
+─────────────────────────────
+
+┌─────────┐     Registration     ┌─────────────────┐     Validation     ┌─────────────┐
+│  USER   │─────────────────────▶│  2.1.1 REGISTER │───────────────────▶│  VALIDATE   │
+│ INPUT   │                      │  Data Collection │                   │  PROFILE    │
+└─────────┘                      └─────────────────┘                   └─────────────┘
+     │                                    │                                     │
+     │ Login Attempt                      │ User Data                          │ Valid Profile
+     ▼                                    ▼                                     ▼
+┌─────────────────┐                ┌─────────────┐                      ┌─────────────┐
+│  2.1.2 LOGIN    │                │   USER DB   │                      │  2.1.3 ROLE │
+│  Authentication │◀───────────────│ D1: Profiles│─────────────────────▶│  ASSIGNMENT │
+│  JWT Generation │                │    Creds    │                      │ Mentor/Learn│
+└─────────────────┘                └─────────────┘                      └─────────────┘
+
+2.2 SESSION MANAGEMENT SUBSYSTEM
+────────────────────────────────
+
+┌─────────┐   Create Session    ┌──────────────────┐   Session Data   ┌──────────────┐
+│ MENTOR  │────────────────────▶│  2.2.1 SESSION  │─────────────────▶│   SESSION    │
+│ REQUEST │                     │  CREATION        │                  │   DATABASE   │
+└─────────┘                     └──────────────────┘                  │ D2: Sessions │
+                                         │                            └──────────────┘
+                                         │ Available Sessions                  │
+                                         ▼                                     │
+┌─────────┐   Browse Sessions   ┌──────────────────┐                          │
+│ LEARNER │────────────────────▶│  2.2.2 SESSION  │◀─────────────────────────┘
+│ REQUEST │                     │  DISCOVERY       │
+└─────────┘                     └──────────────────┘
+     │                                   │
+     │ Book Session                      │ Available List
+     ▼                                   ▼
+┌──────────────────┐             ┌──────────────────┐
+│  2.2.3 BOOKING   │             │  2.2.4 SCHEDULE  │
+│  Payment Process │             │  Calendar Mgmt   │
+│  Seat Allocation │             │  Time Management │
+└──────────────────┘             └──────────────────┘
+
+2.3 REAL-TIME COMMUNICATION SUBSYSTEM
+─────────────────────────────────────
+
+┌─────────┐   Join Room Request   ┌──────────────────┐   WebRTC Setup   ┌──────────────┐
+│ MENTOR/ │──────────────────────▶│  2.3.1 ROOM MGMT│─────────────────▶│   WebRTC     │
+│ LEARNER │                       │  Session Rooms   │                  │   SERVER     │
+└─────────┘                       └──────────────────┘                  └──────────────┘
+     │                                     │                                     │
+     │ Media Stream                        │ Room Data                          │ Peer Connection
+     ▼                                     ▼                                     ▼
+┌──────────────────┐              ┌──────────────┐                      ┌──────────────┐
+│  2.3.2 VIDEO     │              │   ROOM DB    │                      │  2.3.3 CHAT  │
+│  Audio/Video     │◀─────────────│ D3: Rooms,   │─────────────────────▶│  Real-time   │
+│  Transmission    │              │ Participants │                      │  Messaging   │
+└──────────────────┘              └──────────────┘                      └──────────────┘
+
+DATA STORES SPECIFICATION
+═══════════════════════
+
+D1: USER DATABASE
+├── Users Table (User profiles, credentials)
+├── Authentication Tokens (JWT, Reset tokens)
+├── Role Assignments (Mentor/Learner/Admin)
+└── Profile Images & Documents
+
+D2: SESSION DATABASE
+├── Sessions Table (Session details, schedules)
+├── Bookings Table (Learner bookings, payments)
+├── Feedback Table (Ratings, reviews)
+└── Session History (Completed sessions)
+
+D3: COMMUNICATION DATABASE
+├── Rooms Table (Video session rooms)
+├── Messages Table (Chat history)
+├── Notifications Table (Real-time alerts)
+└── WebRTC Logs (Connection data)
+
+D4: PAYMENT DATABASE
+├── Transactions Table (Payment records)
+├── Razorpay Data (Gateway responses)
+├── Revenue Tracking (Platform earnings)
+└── Refund Records (Payment reversals)
+
+SYSTEM INTERFACES
+═══════════════
+
+EXTERNAL SYSTEMS:
+1. Razorpay Payment Gateway (API Integration)
+2. Email Service Provider (SMTP/SendGrid)
+3. SMS Service (Twilio API)
+4. WebRTC STUN/TURN Servers
+5. Cloud Storage (Media files)
+6. Redis Cache Server
+7. PostgreSQL Database
+
+INTERNAL INTERFACES:
+1. Django REST API Endpoints
+2. WebSocket Connections (Real-time)
+3. Background Task Queue (Celery)
+4. Machine Learning Engine (Recommendations)
+5. Admin Dashboard API
+6. Mobile App API Gateway

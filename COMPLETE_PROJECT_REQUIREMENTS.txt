@@ -1,0 +1,66 @@
+# PeerLearn - Complete Project Requirements Documentation
+# University Standard Documentation
+
+## Core Dependencies (Production-Ready)
+
+### Framework & Backend
+Django==5.2.1                  # Core web framework
+djangorestframework==3.16.0    # REST API framework
+channels==4.2.2                # WebSocket support
+daphne==4.2.0                  # ASGI server
+redis==5.0.1                   # Cache & session storage
+
+### Database & Storage
+psycopg2-binary==2.9.9         # PostgreSQL adapter
+Pillow==11.2.1                 # Image processing
+django-storages==1.14.2        # Cloud storage support
+
+### Payment Systems
+razorpay==1.4.2                # Indian payment gateway
+stripe==8.5.0                  # International payments
+
+### Security & Authentication
+cryptography==45.0.2           # Encryption utilities
+PyJWT==2.8.0                   # JWT tokens
+django-cors-headers==4.3.1     # CORS handling
+
+### Communication & Notifications
+sendgrid==6.11.0               # Email service
+twilio==8.11.1                 # SMS notifications
+requests==2.31.0               # HTTP requests
+
+### Machine Learning & AI
+scikit-learn==1.4.0            # ML algorithms
+numpy==1.26.3                  # Numerical computing
+pandas==2.2.0                  # Data manipulation
+
+### Real-time Features
+aiortc==1.6.0                  # WebRTC implementation
+opencv-python==4.9.0.80        # Video processing
+
+### Development & Testing
+pytest==7.4.4                  # Testing framework
+coverage==7.4.0                # Code coverage
+black==23.12.1                 # Code formatter
+
+### Production Deployment
+gunicorn==21.2.0               # WSGI server
+whitenoise==6.6.0              # Static files
+sentry-sdk==1.39.2             # Error monitoring
+
+### Background Processing
+celery==5.3.4                  # Task queue
+django-celery-beat==2.5.0      # Scheduled tasks
+
+## Current Implementation Status
+✓ User Authentication & Registration System
+✓ Role-based Access Control (Mentor/Learner/Admin)
+✓ Session Creation & Management
+✓ Real-time WebRTC Video Communication
+✓ Payment Integration (Razorpay)
+✓ Advanced Admin Dashboard
+✓ Machine Learning Recommendation Engine
+✓ Forgot Password System with Database Integration
+✓ WebSocket Real-time Notifications
+✓ Comprehensive API Endpoints
+✓ Mobile-responsive UI Design

@@ -1,0 +1,195 @@
+════════════════════════════════════════════════════════════════════════════════
+                    PEERLEARN - ENTITY RELATIONSHIP DIAGRAM (ERD)
+                      University Standard Database Design
+════════════════════════════════════════════════════════════════════════════════
+
+PRIMARY ENTITIES AND RELATIONSHIPS
+══════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              USER ENTITY                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (UUID)                    │ Attributes:                             │
+│ username (VARCHAR 150) UNIQUE    │ • first_name (VARCHAR 150)             │
+│ email (EMAIL) UNIQUE              │ • last_name (VARCHAR 150)              │
+│ password (VARCHAR 128)            │ • date_joined (DATETIME)               │
+│ role (ENUM: mentor/learner)       │ • last_login (DATETIME)                │
+│ bio (TEXT)                        │ • is_active (BOOLEAN)                  │
+│ skills (VARCHAR 500)              │ • is_staff (BOOLEAN)                   │
+│ interests (VARCHAR 500)           │ • is_superuser (BOOLEAN)               │
+│ domain (VARCHAR 100)              │ • profile_image (IMAGE)                │
+│ expertise (VARCHAR 100)           │ • password_reset_token (VARCHAR 100)   │
+│ career_goals (TEXT)               │ • password_reset_expires (DATETIME)    │
+│ created_at (DATETIME)             │ • updated_at (DATETIME)                │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                          ┌───────────┴───────────┐
+                          │                       │
+                          ▼                       ▼
+┌─────────────────────────────────────┐  ┌─────────────────────────────────────┐
+│             SESSION ENTITY          │  │           NOTIFICATION ENTITY       │
+├─────────────────────────────────────┤  ├─────────────────────────────────────┤
+│ PK: id (UUID)                       │  │ PK: id (UUID)                       │
+│ FK: mentor_id → User.id             │  │ FK: user_id → User.id               │
+│ title (VARCHAR 200)                 │  │ message (TEXT)                      │
+│ description (TEXT)                  │  │ notification_type (VARCHAR 50)     │
+│ duration (INTEGER) minutes          │  │ is_read (BOOLEAN)                   │
+│ price (DECIMAL 10,2) INR            │  │ created_at (DATETIME)               │
+│ max_participants (INTEGER)          │  │ data (JSON)                         │
+│ scheduled_time (DATETIME)           │  └─────────────────────────────────────┘
+│ status (ENUM: scheduled/active/     │
+│        completed/cancelled)         │
+│ meeting_url (URL)                   │
+│ created_at (DATETIME)               │
+│ updated_at (DATETIME)               │
+└─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           BOOKING ENTITY                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (UUID)                     │ Attributes:                             │
+│ FK: session_id → Session.id       │ • booking_status (ENUM: pending/        │
+│ FK: learner_id → User.id          │   confirmed/cancelled/completed)        │
+│ booking_date (DATETIME)           │ • payment_id (VARCHAR 100)             │
+│ payment_status (ENUM: pending/    │ • razorpay_order_id (VARCHAR 100)      │
+│                paid/failed/       │ • razorpay_payment_id (VARCHAR 100)    │
+│                refunded)          │ • razorpay_signature (VARCHAR 500)     │
+│ amount (DECIMAL 10,2) INR         │ • created_at (DATETIME)                │
+│ is_ready (BOOLEAN)                │ • updated_at (DATETIME)                │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           FEEDBACK ENTITY                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK: id (UUID)                     │ Attributes:                             │
+│ FK: session_id → Session.id       │ • mentor_rating (INTEGER 1-5)          │
+│ FK: learner_id → User.id          │ • session_rating (INTEGER 1-5)         │
+│ content_quality (INTEGER 1-5)     │ • platform_rating (INTEGER 1-5)        │
+│ communication (INTEGER 1-5)       │ • would_recommend (BOOLEAN)            │
+│ helpfulness (INTEGER 1-5)         │ • improvement_suggestions (TEXT)       │
+│ comments (TEXT)                   │ • created_at (DATETIME)                │
+│ overall_experience (INTEGER 1-5)  │ • is_public (BOOLEAN)                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+RELATIONSHIP SPECIFICATIONS
+═════════════════════════
+
+USER-SESSION RELATIONSHIP (1:N)
+├── One User (Mentor) can create Multiple Sessions
+├── Relationship Type: One-to-Many
+├── Foreign Key: session.mentor_id → user.id
+├── Constraints: CASCADE on DELETE, RESTRICT on UPDATE
+└── Business Rule: Only users with role='mentor' can create sessions
+
+USER-BOOKING RELATIONSHIP (1:N)
+├── One User (Learner) can have Multiple Bookings
+├── Relationship Type: One-to-Many
+├── Foreign Key: booking.learner_id → user.id
+├── Constraints: CASCADE on DELETE, SET NULL on UPDATE
+└── Business Rule: Only users with role='learner' can book sessions
+
+SESSION-BOOKING RELATIONSHIP (1:N)
+├── One Session can have Multiple Bookings
+├── Relationship Type: One-to-Many
+├── Foreign Key: booking.session_id → session.id
+├── Constraints: CASCADE on DELETE, RESTRICT on UPDATE
+└── Business Rule: Bookings limited by session.max_participants
+
+BOOKING-FEEDBACK RELATIONSHIP (1:1)
+├── One Booking can have One Feedback
+├── Relationship Type: One-to-One
+├── Foreign Keys: feedback.session_id, feedback.learner_id
+├── Constraints: CASCADE on DELETE, RESTRICT on UPDATE
+└── Business Rule: Feedback only after session completion
+
+ADDITIONAL ENTITIES
+═================
+
+┌─────────────────────────────────────┐  ┌─────────────────────────────────────┐
+│          REQUEST ENTITY             │  │       POPULARITY_METRIC ENTITY     │
+├─────────────────────────────────────┤  ├─────────────────────────────────────┤
+│ PK: id (UUID)                       │  │ PK: id (UUID)                       │
+│ FK: learner_id → User.id            │  │ FK: session_id → Session.id (1:1)   │
+│ FK: mentor_id → User.id             │  │ view_count (INTEGER)                │
+│ subject (VARCHAR 200)               │  │ booking_count (INTEGER)             │
+│ message (TEXT)                      │  │ completion_rate (FLOAT)             │
+│ request_type (VARCHAR 50)           │  │ rating_average (FLOAT)              │
+│ status (ENUM: pending/accepted/     │  │ created_at (DATETIME)               │
+│        declined)                    │  │ updated_at (DATETIME)               │
+│ created_at (DATETIME)               │  └─────────────────────────────────────┘
+│ response_message (TEXT)             │
+└─────────────────────────────────────┘
+
+DATABASE CONSTRAINTS AND INDEXES
+═══════════════════════════════
+
+PRIMARY KEYS:
+├── All entities use UUID primary keys for security
+├── UUIDs prevent enumeration attacks
+└── Global uniqueness across distributed systems
+
+UNIQUE CONSTRAINTS:
+├── user.username (Case-insensitive)
+├── user.email (Case-insensitive)
+├── booking(session_id, learner_id) - Prevents duplicate bookings
+└── popularity_metric.session_id (One-to-One relationship)
+
+FOREIGN KEY CONSTRAINTS:
+├── ON DELETE CASCADE: booking → session, feedback → booking
+├── ON DELETE SET NULL: notification → user
+├── ON UPDATE RESTRICT: All foreign keys
+└── DEFERRABLE: payment-related constraints
+
+INDEXES FOR PERFORMANCE:
+├── user.email (Login optimization)
+├── user.role (Role-based queries)
+├── session.mentor_id (Mentor sessions)
+├── session.scheduled_time (Time-based queries)
+├── booking.learner_id (User bookings)
+├── booking.payment_status (Payment queries)
+├── feedback.session_id (Session feedback)
+└── notification(user_id, is_read) (Notification queries)
+
+DATA INTEGRITY RULES
+═══════════════════
+
+BUSINESS CONSTRAINTS:
+├── Users can only book sessions with future scheduled_time
+├── Session.max_participants >= current booking count
+├── Feedback can only be created after session completion
+├── Payment amount must match session price
+├── Mentor cannot book their own sessions
+└── Session duration must be between 15-480 minutes
+
+VALIDATION RULES:
+├── Email format validation with regex
+├── Password strength requirements (8+ chars, mixed case)
+├── Rating values between 1-5
+├── Price values positive decimals
+├── Status enums restricted to defined values
+└── File upload size limits for profile images
+
+SECURITY MEASURES:
+├── Password hashing using Django's PBKDF2
+├── JWT token expiration (24 hours)
+├── Rate limiting on authentication endpoints
+├── SQL injection prevention through ORM
+├── XSS protection with template escaping
+└── CSRF token validation on forms
+
+NORMALIZATION LEVEL
+═════════════════
+
+DATABASE NORMAL FORM: 3NF (Third Normal Form)
+├── 1NF: All attributes contain atomic values
+├── 2NF: No partial dependencies on composite keys
+├── 3NF: No transitive dependencies
+└── BCNF: All determinants are candidate keys
+
+DENORMALIZATION DECISIONS:
+├── User.skills stored as comma-separated (search optimization)
+├── Notification.data as JSON (flexibility)
+├── Calculated fields cached in popularity_metric
+└── Session statistics pre-computed for dashboard
