@@ -1,24 +1,34 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security settings
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-change-in-production')
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = ['*']
+# ----------------------------
+# 1. SECURITY / SECRET_KEY / DEBUG
+# ----------------------------
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise Exception("DJANGO SECRET_KEY environment variable not set. Aborting.")
 
-# Application definition
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+
+# ALLOWED_HOSTS must come from an env var; default to localhost for local dev
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost 127.0.0.1').split(' ')
+
+# ----------------------------
+# 2. APPLICATION DEFINITION
+# ----------------------------
 INSTALLED_APPS = [
-    'daphne',  # Must be first for ASGI
+    # 'daphne',   # Remove or comment out if you do NOT need Channels in production
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',
+    # 'channels', # Remove if you’re not using WebSockets in production
     'rest_framework',
     'users',
     'sessions',
@@ -27,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -53,29 +64,34 @@ TEMPLATES = [
     },
 ]
 
-# ASGI application
-ASGI_APPLICATION = 'peerlearn.asgi.application'
+# If you removed Channels, comment out these two lines:
+# ASGI_APPLICATION = 'peerlearn.asgi.application'
 WSGI_APPLICATION = 'peerlearn.wsgi.application'
 
-# Database
+# ----------------------------
+# 3. DATABASE (Postgres via dj_database_url)
+# ----------------------------
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR}/db.sqlite3",
+        conn_max_age=600,
+        ssl_require=False
+    )
 }
 
-# Channel Layers (using in-memory for development)
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    }
-}
+# If you truly need Channels in prod, configure channel layers here (e.g. Redis).
+# Otherwise, comment it out:
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels.layers.InMemoryChannelLayer',
+#     }
+# }
 
-# Custom User Model
+# ----------------------------
+# 4. AUTHENTICATION
+# ----------------------------
 AUTH_USER_MODEL = 'users.User'
 
-# REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -85,7 +101,9 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Password validation
+# ----------------------------
+# 5. PASSWORD VALIDATION
+# ----------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -101,44 +119,53 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# ----------------------------
+# 6. INTERNATIONALIZATION
+# ----------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# ----------------------------
+# 7. STATIC FILES (WhiteNoise)
+# ----------------------------
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Let WhiteNoise compress and cache‐bust static files:
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Media files
+# ----------------------------
+# 8. MEDIA FILES
+# ----------------------------
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+# Note: On Render’s free tier, MEDIA_ROOT is ephemeral. Uploaded files will not persist across deploys.
 
-# Default primary key field type
+# ----------------------------
+# 9. DEFAULT PRIMARY KEY FIELD TYPE
+# ----------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CSRF trusted origins for Replit
+# ----------------------------
+# 10. CSRF TRUSTED ORIGINS (Adjust locally / remove if not on Replit)
+# ----------------------------
+# You can leave these for local dev or Replit if needed, but Render will ignore them:
 CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
     'https://*.replit.dev',
     'https://*.replit.app',
     'https://*.replit.co',
 ]
-
-# Login/logout redirects
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
-# CSRF settings for proper form handling
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    'https://*.replit.app',
-    'https://*.replit.dev',
-]
-
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
+
+# ----------------------------
+# 11. LOGIN / LOGOUT REDIRECTS
+# ----------------------------
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
