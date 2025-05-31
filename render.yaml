@@ -14,14 +14,15 @@ services:
     startCommand: |
       gunicorn peerlearn.wsgi:application
     envVars:
-      - key: SECRET_KEY
-        value: "sTdTsNC1uCWR0mF2nHaloYRBNJZwlYYlN77s7cQSiAZ2MYMgSniKmU-rzAd9WJGUu0E"
-      - key: DEBUG
-        value: "False"
-      - key: ALLOWED_HOSTS
-        value: "peerlearn-app.onrender.com"
-      - key: SENDGRID_API_KEY
-        value: "SG.xxxxxxxxYourActualSendGridAPIKey"
-      - key: DEFAULT_FROM_EMAIL
-        value: "no-reply@yourdomain.com"
-      # DATABASE_URL will be auto‑injected by Render
+    - key: SECRET_KEY
+      value: "your‑secret‑key"
+    - key: DEBUG
+      value: "False"
+    - key: ALLOWED_HOSTS
+      value: "peerlearn-app.onrender.com peerlearnproject.onrender.com"
+    - key: SENDGRID_API_KEY
+      value: "SG.xxxx"
+    - key: DEFAULT_FROM_EMAIL
+      value: "no-reply@yourdomain.com"
+    # DATABASE_URL will be auto‑injected
+
