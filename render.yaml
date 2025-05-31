@@ -1,0 +1,27 @@
+# render.yaml
+services:
+  - type: web
+    name: peerlearn-app       # Choose a unique name for your service
+    env: python
+    region: oregon            # Or choose whichever region you prefer
+    plan: free
+    repo: https://github.com/ANANDU-2000/PeerlearnProject
+    branch: main
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py migrate --noinput
+      python manage.py collectstatic --noinput
+    startCommand: |
+      gunicorn peerlearn.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        # Replace <YOUR_GENERATED_SECRET_KEY> with a long, random string.
+        value: "sTdTsNC1uCWR0mF2nHaloYRBNJZwlYYlN77s7cQSiAZ2MYMgSniKmU-rzAd9WJGUu0E"
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        # Replace with your actual Render domain, e.g.:
+        # value: "peerlearn-app.onrender.com"
+        value: "peerlearn-app.onrender.com"
+      # Render will auto‐inject DATABASE_URL once you create & link a Postgres database.
