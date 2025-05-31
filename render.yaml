@@ -15,14 +15,15 @@ services:
       gunicorn peerlearn.wsgi:application
     envVars:
     - key: SECRET_KEY
-      value: "your‑secret‑key"
+      value: "sTdTsNC1uCWR0mF2nHaloYRBNJZwlYYlN77s7cQSiAZ2MYMgSniKmU-rzAd9WJGUu0E"
     - key: DEBUG
       value: "False"
     - key: ALLOWED_HOSTS
       value: "peerlearn-app.onrender.com peerlearnproject.onrender.com"
     - key: SENDGRID_API_KEY
-      value: "SG.xxxx"
+      value: "SG.RL1WCPJ3KJ8QKQWK1HJRQ395"
     - key: DEFAULT_FROM_EMAIL
       value: "no-reply@yourdomain.com"
-    # DATABASE_URL will be auto‑injected
+    # DATABASE_URL will be auto‑injected by Render
+
 
