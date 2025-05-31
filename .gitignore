@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtualenv
+venv/
+venv/*
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Media uploads (if you don’t want to check them in)
+media/
+staticfiles/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.user
+*.userosscache
+*.sln
+*.sw?
