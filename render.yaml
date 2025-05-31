@@ -19,11 +19,12 @@ services:
     - key: DEBUG
       value: "False"
     - key: ALLOWED_HOSTS
-      value: "peerlearn-app.onrender.com peerlearnproject.onrender.com"
+      value: "peerlearnproject.onrender.com"
     - key: SENDGRID_API_KEY
       value: "SG.RL1WCPJ3KJ8QKQWK1HJRQ395"
     - key: DEFAULT_FROM_EMAIL
       value: "no-reply@yourdomain.com"
     # DATABASE_URL will be auto‑injected by Render
+
 
 
