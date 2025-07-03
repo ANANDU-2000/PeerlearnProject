@@ -70,7 +70,7 @@ def recommendations_page(request):
         'popular_sessions': popular_sessions,
         'all_sessions': all_sessions,
         'user_skills': request.user.skills or '',
-        'user_expertise': request.user.expertise or ''
+        'user_interests': request.user.interests or ''
     }
     
     return render(request, 'recommendations/recommendations_page.html', context)

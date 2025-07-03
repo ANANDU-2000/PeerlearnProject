@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 WebRTC Test Lab - PeerLearn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .test-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+        .video-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #fbbf24;
+            color: #92400e;
+        }
+        .status-connected { background: #10b981; color: white; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🧪 WebRTC Test Lab</h1>
+            <p class="text-gray-600 text-lg">Professional WebRTC testing for PeerLearn</p>
+            
+            <!-- Camera Conflict Warning -->
+            <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg max-w-2xl mx-auto">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+                    </div>
+                    <div class="ml-3 text-left">
+                        <h4 class="text-lg font-medium text-yellow-800">📹 Camera Conflict Issue</h4>
+                        <p class="text-yellow-700 text-sm mt-1">
+                            <strong>Same laptop + Two tabs = Only one camera access!</strong><br>
+                            This causes "connecting" status on both sides. Use solutions below for proper testing.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Options -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="test-card bg-white rounded-xl p-6 shadow-lg">
+                <h3 class="text-xl font-semibold mb-4">📱 Same Device Test</h3>
+                <p class="text-gray-600 mb-4">Test WebRTC on same laptop (camera conflict handled)</p>
+                <button onclick="startSameDeviceTest()" class="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600">
+                    Start Test
+                </button>
+            </div>
+            
+            <div class="test-card bg-white rounded-xl p-6 shadow-lg">
+                <h3 class="text-xl font-semibold mb-4">🌐 Two Device Test</h3>
+                <p class="text-gray-600 mb-4">Recommended: Use phone + laptop</p>
+                <button onclick="showInstructions()" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">
+                    Get Instructions
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div id="testArea" class="hidden bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-semibold mb-4">🔴 Live Test Session</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="video-container bg-gray-900">
+                    <video id="localVideo" autoplay muted playsinline class="w-full h-64 object-cover"></video>
+                    <div class="status-badge">You</div>
+                </div>
+                
+                <div class="video-container bg-gray-900">
+                    <video id="remoteVideo" autoplay playsinline class="w-full h-64 object-cover"></video>
+                    <div class="status-badge">Remote</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div id="cameraIcon" class="text-2xl mb-2">📹</div>
+                    <div class="text-sm">Camera</div>
+                    <div id="cameraStatus" class="text-xs text-gray-500">Testing...</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div id="micIcon" class="text-2xl mb-2">🎤</div>
+                    <div class="text-sm">Microphone</div>
+                    <div id="micStatus" class="text-xs text-gray-500">Testing...</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div id="connectionIcon" class="text-2xl mb-2">🔗</div>
+                    <div class="text-sm">Connection</div>
+                    <div id="connectionStatus" class="text-xs text-gray-500">Starting...</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div id="networkIcon" class="text-2xl mb-2">📡</div>
+                    <div class="text-sm">Network</div>
+                    <div id="networkStatus" class="text-xs text-gray-500">Testing...</div>
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-4">
+                <button onclick="toggleCamera()" class="bg-blue-500 text-white px-4 py-2 rounded-lg">
+                    Toggle Camera
+                </button>
+                <button onclick="toggleMic()" class="bg-green-500 text-white px-4 py-2 rounded-lg">
+                    Toggle Mic
+                </button>
+                <button onclick="endTest()" class="bg-red-500 text-white px-4 py-2 rounded-lg">
+                    End Test
+                </button>
+            </div>
+        </div>
+
+        <!-- Instructions Modal -->
+        <div id="instructionsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-xl p-8 max-w-lg mx-4">
+                <h3 class="text-xl font-bold mb-4">📱 Two Device Testing</h3>
+                <div class="space-y-3 text-gray-600 mb-6">
+                    <p><strong>Step 1:</strong> Get your IP: <code id="deviceIP" class="bg-gray-100 px-2 py-1 rounded">Loading...</code></p>
+                    <p><strong>Step 2:</strong> On second device, open: <code>http://[IP]:8000</code></p>
+                    <p><strong>Step 3:</strong> Login and join same session</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="closeInstructions()" class="px-4 py-2 border rounded-lg">Close</button>
+                    <button onclick="goToSession()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Go to Session</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="/dashboard/learner/" class="inline-flex items-center px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let localStream = null;
+        let testActive = false;
+
+        document.addEventListener('DOMContentLoaded', getDeviceIP);
+
+        async function getDeviceIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                document.getElementById('deviceIP').textContent = data.ip;
+            } catch (error) {
+                document.getElementById('deviceIP').textContent = 'YOUR_IP';
+            }
+        }
+
+        async function startSameDeviceTest() {
+            document.getElementById('testArea').classList.remove('hidden');
+            testActive = true;
+
+            try {
+                updateStatus('camera', '🔄', 'Starting...');
+                
+                // Try to get media with fallback strategies
+                const strategies = [
+                    { video: { width: 640, height: 480 }, audio: true },
+                    { video: true, audio: true },
+                    { video: true, audio: false }
+                ];
+
+                for (let strategy of strategies) {
+                    try {
+                        localStream = await navigator.mediaDevices.getUserMedia(strategy);
+                        break;
+                    } catch (e) {
+                        console.warn('Strategy failed:', e.message);
+                    }
+                }
+
+                if (localStream) {
+                    document.getElementById('localVideo').srcObject = localStream;
+                    
+                    const hasVideo = localStream.getVideoTracks().length > 0;
+                    const hasAudio = localStream.getAudioTracks().length > 0;
+                    
+                    updateStatus('camera', hasVideo ? '✅' : '❌', hasVideo ? 'Active' : 'None');
+                    updateStatus('mic', hasAudio ? '✅' : '❌', hasAudio ? 'Active' : 'None');
+                    updateStatus('connection', '✅', 'Simulated');
+                    updateStatus('network', '✅', 'Local Test');
+
+                    // Simulate remote video
+                    setTimeout(simulateRemoteVideo, 2000);
+                    
+                } else {
+                    throw new Error('No media available');
+                }
+
+            } catch (error) {
+                console.error('Test failed:', error);
+                handleError(error);
+            }
+        }
+
+        function simulateRemoteVideo() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const localVideo = document.getElementById('localVideo');
+            const remoteVideo = document.getElementById('remoteVideo');
+            
+            canvas.width = 640;
+            canvas.height = 480;
+
+            function drawFrame() {
+                if (localVideo.videoWidth > 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Mirror the local video
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(localVideo, -canvas.width, 0, canvas.width, canvas.height);
+                    ctx.restore();
+                    
+                    // Add overlay
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.7)';
+                    ctx.fillRect(10, 10, 180, 30);
+                    ctx.fillStyle = 'white';
+                    ctx.font = '14px Arial';
+                    ctx.fillText('REMOTE SIMULATION', 20, 30);
+                }
+                
+                if (testActive) {
+                    requestAnimationFrame(drawFrame);
+                }
+            }
+
+            const stream = canvas.captureStream(30);
+            remoteVideo.srcObject = stream;
+            drawFrame();
+        }
+
+        function updateStatus(type, icon, status) {
+            document.getElementById(`${type}Icon`).textContent = icon;
+            document.getElementById(`${type}Status`).textContent = status;
+        }
+
+        function handleError(error) {
+            if (error.name === 'NotAllowedError') {
+                updateStatus('camera', '🔒', 'Permission denied');
+                alert('❌ Camera/microphone permission denied. Please allow access and try again.');
+            } else if (error.name === 'NotReadableError') {
+                updateStatus('camera', '⚠️', 'Device busy');
+                alert('❌ Camera is being used by another application. Close other video apps and try again.');
+            } else {
+                updateStatus('camera', '❌', 'Failed');
+                alert(`❌ Test failed: ${error.message}`);
+            }
+        }
+
+        function toggleCamera() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    updateStatus('camera', videoTrack.enabled ? '✅' : '⏸️', 
+                                videoTrack.enabled ? 'Active' : 'Paused');
+                }
+            }
+        }
+
+        function toggleMic() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    updateStatus('mic', audioTrack.enabled ? '✅' : '⏸️', 
+                                audioTrack.enabled ? 'Active' : 'Muted');
+                }
+            }
+        }
+
+        function endTest() {
+            testActive = false;
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            document.getElementById('testArea').classList.add('hidden');
+            document.getElementById('localVideo').srcObject = null;
+            document.getElementById('remoteVideo').srcObject = null;
+        }
+
+        function showInstructions() {
+            document.getElementById('instructionsModal').classList.remove('hidden');
+        }
+
+        function closeInstructions() {
+            document.getElementById('instructionsModal').classList.add('hidden');
+        }
+
+        function goToSession() {
+            window.location.href = '/dashboard/learner/';
+        }
+
+        window.addEventListener('beforeunload', endTest);
+    </script>
+</body>
+</html> 

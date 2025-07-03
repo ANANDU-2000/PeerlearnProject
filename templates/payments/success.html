@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Successful - PeerLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Success Header -->
+        <div class="text-center">
+            <div class="mx-auto h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-900">
+                Payment Successful!
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Your booking has been confirmed
+            </p>
+        </div>
+
+        <!-- Booking Details Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center space-x-4 mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                    ✓
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ session.title }}</h3>
+                    <p class="text-sm text-gray-600">with {{ session.mentor.get_full_name }}</p>
+                    <p class="text-sm text-gray-500">{{ session.schedule|date:"M d, Y - g:i A" }}</p>
+                </div>
+            </div>
+
+            <!-- Booking Information -->
+            <div class="border-t border-gray-200 pt-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Booking ID</span>
+                    <span class="font-medium text-sm">{{ booking.id|slice:":8" }}...</span>
+                </div>
+                            <div class="flex justify-between items-center">
+                <span class="text-gray-600">Amount Paid</span>
+                <span class="font-bold text-green-600">{% if session.price %}₹{{ session.price }}{% else %}FREE{% endif %}</span>
+            </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Status</span>
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                        Confirmed
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <a href="{% url 'learner_dashboard' %}" 
+               class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                Go to My Sessions
+            </a>
+            <a href="{% url 'session_detail' session.id %}" 
+               class="w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                View Session Details
+            </a>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        What's Next?
+                    </h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>You'll receive a confirmation email shortly</li>
+                            <li>Join the session 5 minutes before it starts</li>
+                            <li>Access the session from your dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

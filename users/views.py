@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
@@ -9,10 +9,11 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 import json
-from .forms import UserRegistrationForm, UserProfileForm
+from .forms import UserRegistrationForm, UserProfileForm, ProfileForm
 from .models import User
 from sessions.models import Session, Booking, Request
 from recommendations.recommendation_engine import get_recommendations_for_user, get_mentor_recommendations_for_user
+from django.db.models import Count, Avg, Q, Sum
 
 def landing_page(request):
     """Coursera-style landing page with ONLY future sessions and real mentors"""
@@ -157,7 +158,6 @@ def register_steps_view(request):
                 skills=skills,
                 interests=expertise,  # Using domains as interests
                 domain=expertise,
-                expertise=experience,
                 bio=bio,
                 career_goals=''  # Not collected in wizard
             )
@@ -204,156 +204,281 @@ def admin_dashboard_redirect(request):
 
 @login_required
 def profile_view(request):
+    user = request.user
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=request.user)
+        form = ProfileForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('profile')
+            messages.success(request, 'Your profile was successfully updated!')
+            return redirect('profile_view')
+        else:
+            messages.error(request, 'Please correct the error below.')
     else:
-        form = UserProfileForm(instance=request.user)
-    
-    # Calculate profile statistics based on user role
-    if request.user.is_mentor:
-        from sessions.models import Session
-        completed_sessions_count = Session.objects.filter(
-            mentor=request.user, 
-            status='completed'
-        ).count()
-        confirmed_bookings_count = 0
-    else:
-        from sessions.models import Booking
-        completed_sessions_count = 0
-        confirmed_bookings_count = Booking.objects.filter(
-            learner=request.user, 
-            status='confirmed'
-        ).count()
-    
+        form = ProfileForm(instance=user)
+
     context = {
+        'user': user,
         'form': form,
-        'completed_sessions_count': completed_sessions_count,
-        'confirmed_bookings_count': confirmed_bookings_count,
     }
-    
-    return render(request, 'profile.html', context)
+    return render(request, 'profile/advanced.html', context)
+
+@login_required
+def advanced_profile_view(request):
+    """Advanced profile view with comprehensive features"""
+    user = request.user
+    context = {
+        'user': user,
+    }
+    return render(request, 'profile/advanced.html', context)
 
 @login_required
 def mentor_dashboard(request):
-    if request.user.role != 'mentor':
-        messages.error(request, 'Access denied. Mentor role required.')
+    """Enhanced mentor dashboard with real-time data and advanced features"""
+    user = request.user
+    
+    # Check if user profile is complete
+    if not user.is_mentor:
         return redirect('learner_dashboard')
     
-    # Get mentor's sessions
-    from sessions.models import Session, Booking, Request
-    from django.db.models import Count, Avg, Q
-    from django.utils import timezone
+    # Check if profile is complete (basic check)
+    profile_complete = bool(user.first_name and user.last_name and user.bio)
+    if not profile_complete:
+        messages.warning(request, 'Please complete your profile before accessing the dashboard.')
+        return redirect('profile_view')
     
-    # Sessions data
-    mentor_sessions = Session.objects.filter(mentor=request.user).order_by('-schedule')
+    now = timezone.now()
     
-    # Requests data
+    # Get all sessions for this mentor
+    all_sessions = Session.objects.filter(mentor=user).order_by('-created_at')
+    
+    # Get draft sessions
+    draft_sessions = all_sessions.filter(status='draft')
+    
+    # Get upcoming sessions
+    upcoming_sessions = all_sessions.filter(
+        schedule__gte=now,
+        status='scheduled'
+    ).select_related('learner').order_by('schedule')
+    
+    # Get past sessions for history
+    past_sessions = all_sessions.filter(
+        schedule__lt=now
+    ).select_related('learner').order_by('-schedule')[:5]
+    
+    # Get pending requests
     pending_requests = Request.objects.filter(
-        status='pending',
-        domain__in=request.user.expertise or []
-    ).order_by('-created_at')
+        mentor=user,
+        status='pending'
+    ).select_related('learner').order_by('-created_at')
     
-    # Analytics data
-    total_sessions = mentor_sessions.count()
-    total_students = Booking.objects.filter(
-        session__mentor=request.user,
-        status='confirmed'
-    ).values('learner').distinct().count()
+    # Get session statistics
+    total_sessions = all_sessions.count()
+    completed_sessions = all_sessions.filter(status='completed').count()
+    upcoming_count = upcoming_sessions.count()
+    draft_count = draft_sessions.count()
     
-    avg_rating = mentor_sessions.filter(
-        feedback__isnull=False
-    ).aggregate(avg_rating=Avg('feedback__rating'))['avg_rating'] or 0
-    
-    # Earnings calculation (placeholder - implement with payment system)
-    total_earnings = 0
-    for session in mentor_sessions.filter(status='completed'):
-        total_earnings += (session.bookings.filter(status='confirmed').count() * 50)  # Example rate
+    # Get earnings data
+    total_earnings = all_sessions.filter(
+        status='completed'
+    ).aggregate(total=Sum('price'))['total'] or 0
     
     context = {
-        'mentor_sessions': mentor_sessions[:10],  # Recent sessions
-        'pending_requests': pending_requests[:5],
+        'user': user,
+        'all_sessions': all_sessions,
+        'draft_sessions': draft_sessions,
+        'upcoming_sessions': upcoming_sessions,
+        'past_sessions': past_sessions,
+        'pending_requests': pending_requests,
         'total_sessions': total_sessions,
-        'total_students': total_students,
-        'avg_rating': round(avg_rating, 1),
+        'completed_sessions': completed_sessions,
+        'upcoming_count': upcoming_count,
+        'draft_count': draft_count,
         'total_earnings': total_earnings,
-        'upcoming_sessions': mentor_sessions.filter(
-            schedule__gte=timezone.now(),
-            status='scheduled'
-        ).count()
     }
     
     return render(request, 'dashboard/mentor_complete.html', context)
 
 @login_required
 def learner_dashboard(request):
-    if request.user.role != 'learner':
-        messages.error(request, 'Access denied. Learner role required.')
+    """Enhanced learner dashboard with real-time data and advanced features"""
+    user = request.user
+    
+    # Check if user profile is complete
+    if not user.is_learner:
         return redirect('mentor_dashboard')
     
-    # Get learner's data
-    from sessions.models import Session, Booking, Request, Feedback
-    from recommendations.models import PopularityMetric
-    from django.db.models import Q
-    from django.utils import timezone
+    # Check if profile is complete (basic check)
+    profile_complete = bool(user.first_name and user.last_name and user.bio)
+    if not profile_complete:
+        messages.warning(request, 'Please complete your profile before accessing the dashboard.')
+        return redirect('profile_view')
     
-    # Available sessions - Only FUTURE sessions with proper scheduling
+    now = timezone.now()
+    
+    # Get upcoming sessions through bookings
+    upcoming_sessions = Session.objects.filter(
+        bookings__learner=user,
+        status='scheduled'
+    ).select_related('mentor').order_by('schedule')
+    
+    # Get past sessions for history
+    past_sessions = Session.objects.filter(
+        bookings__learner=user,
+        status='completed'
+    ).select_related('mentor').order_by('-schedule')[:5]
+    
+    # Get pending requests
+    pending_requests = Request.objects.filter(
+        learner=user,
+        status='pending'
+    ).select_related('mentor').order_by('-created_at')
+    
+    # Get available sessions
     available_sessions = Session.objects.filter(
-        status='scheduled',
-        schedule__gt=timezone.now()  # Only future sessions
+        status='scheduled'
     ).exclude(
-        bookings__learner=request.user,
+        bookings__learner=user,
         bookings__status='confirmed'
-    ).order_by('schedule')[:10]
+    ).select_related('mentor').order_by('schedule')
     
-    # User's bookings
-    user_bookings = Booking.objects.filter(
-        learner=request.user,
-        status='confirmed'
-    ).select_related('session').order_by('-session__schedule')
+    # Get available mentors - FIXED: Show ALL active mentors, don't exclude previous ones
+    available_mentors = User.objects.filter(
+        role='mentor',
+        is_active=True,
+        first_name__isnull=False,
+        last_name__isnull=False
+    ).exclude(
+        first_name='',
+        last_name=''
+    ).order_by('-date_joined')  # Show newest mentors first
     
-    # User's requests
-    user_requests = Request.objects.filter(
-        learner=request.user
-    ).order_by('-created_at')
+    # Get recommended mentors based on skills and expertise
+    user_skills = [skill.strip().lower() for skill in (user.skills or '').split(',') if skill.strip()]
+    user_interests = [interest.strip().lower() for interest in (user.interests or '').split(',') if interest.strip()]
     
-    # Get personalized recommendations using advanced ML engine
-    try:
-        recommended_sessions = get_recommendations_for_user(request.user)
-        recommended_mentors = get_mentor_recommendations_for_user(request.user)
-    except Exception as e:
-        # Fallback to available sessions if recommendation engine fails
-        recommended_sessions = Session.objects.filter(
-            status='scheduled',
-            schedule__gte=timezone.now()
-        ).exclude(
-            bookings__learner=request.user,
+    recommended_mentors = User.objects.filter(
+        role='mentor',
+        is_active=True,
+        first_name__isnull=False,
+        last_name__isnull=False
+    ).exclude(
+        first_name='',
+        last_name=''
+    )
+    
+    # Filter recommended mentors by user's domain and interests
+    if user.domain:
+        recommended_mentors = recommended_mentors.filter(
+            Q(skills__icontains=user.domain) |
+            Q(interests__icontains=user.domain) |
+            Q(domain__icontains=user.domain)
+        )
+    if user.interests:
+        for interest in user_interests:
+            if interest:
+                recommended_mentors = recommended_mentors.filter(
+                    Q(skills__icontains=interest) |
+                    Q(interests__icontains=interest)
+                )
+    
+    recommended_mentors = recommended_mentors.distinct()[:6]
+    
+    # ENHANCED: Get ALL pending requests - both sent and received
+    pending_requests = Request.objects.filter(
+        Q(learner=user) | Q(mentor=user),
+        status='pending'
+    ).select_related('learner', 'mentor').order_by('-created_at')
+    
+    # Get accepted/responded requests for acknowledgments
+    responded_requests = Request.objects.filter(
+        learner=user,
+        status__in=['accepted', 'declined']
+    ).select_related('mentor').order_by('-updated_at')[:10]
+    
+    # FIXED: Add Recommendations Data for Subtabs
+    # Get AI-recommended sessions based on user's interests and domain
+    ai_recommended_sessions = Session.objects.filter(
+        status='scheduled'
+    ).exclude(
+        bookings__learner=user,
+        bookings__status='confirmed'
+    ).select_related('mentor')
+    
+    # Filter by user interests and domain if available
+    if user.domain:
+        ai_recommended_sessions = ai_recommended_sessions.filter(
+            Q(title__icontains=user.domain) |
+            Q(description__icontains=user.domain) |
+            Q(category__icontains=user.domain)
+        )
+    if user.interests:
+        interest_keywords = [interest.strip() for interest in user.interests.split(',')]
+        for keyword in interest_keywords:
+            if keyword:
+                ai_recommended_sessions = ai_recommended_sessions.filter(
+                    Q(title__icontains=keyword) |
+                    Q(description__icontains=keyword) |
+                    Q(skills__icontains=keyword)
+                )
+    
+    ai_recommended_sessions = ai_recommended_sessions.order_by('-created_at')[:8]
+    
+    # Get popular sessions (most bookings)
+    popular_sessions = Session.objects.filter(
+        status='scheduled'
+    ).exclude(
+        bookings__learner=user,
+        bookings__status='confirmed'
+    ).select_related('mentor').annotate(
+        booking_count=Count('bookings')
+    ).order_by('-booking_count')[:8]
+    
+    # Get new sessions (recently created)
+    new_sessions = Session.objects.filter(
+        status='scheduled'
+    ).exclude(
+        bookings__learner=user,
+        bookings__status='confirmed'
+    ).select_related('mentor').order_by('-created_at')[:8]
+    
+    # Get session statistics
+    total_sessions = Session.objects.filter(bookings__learner=user).count()
+    completed_sessions = Session.objects.filter(
+        bookings__learner=user,
+        status='completed'
+    ).count()
+    upcoming_count = upcoming_sessions.count()
+    
+    # Calculate stats
+    stats = {
+        'attended_sessions': completed_sessions,
+        'total_hours': sum(session.duration for session in past_sessions) // 60,
+        'unique_mentors': Session.objects.filter(
+            bookings__learner=user,
             bookings__status='confirmed'
-        ).select_related('mentor')[:6]
-        recommended_mentors = []
-    
-    # Learning stats
-    attended_sessions = Feedback.objects.filter(user=request.user).count()
-    total_hours = sum([
-        booking.session.duration for booking in user_bookings 
-        if booking.session.status == 'completed'
-    ]) // 60  # Convert to hours
-    unique_mentors = user_bookings.values('session__mentor').distinct().count()
+        ).values('mentor').distinct().count()
+    }
     
     context = {
+        'user': user,
+        'upcoming_sessions': upcoming_sessions,
+        'past_sessions': past_sessions,
+        'pending_requests': pending_requests,
         'available_sessions': available_sessions,
-        'user_bookings': user_bookings[:5],
-        'user_requests': user_requests[:5],
-        'recommended_sessions': recommended_sessions[:6],
-        'recommended_mentors': recommended_mentors[:6] if recommended_mentors else [],
-        'stats': {
-            'attended_sessions': attended_sessions,
-            'total_hours': total_hours,
-            'unique_mentors': unique_mentors
-        }
+        'available_mentors': available_mentors,
+        'recommended_mentors': recommended_mentors,
+        'responded_requests': responded_requests,
+        # FIXED: Added recommendations data for subtabs
+        'recommended_sessions': ai_recommended_sessions,
+        'popular_sessions': popular_sessions,
+        'new_sessions': new_sessions,
+        'total_sessions': total_sessions,
+        'completed_sessions': completed_sessions,
+        'upcoming_count': upcoming_count,
+        'stats': stats,
+        'user_bookings': upcoming_sessions,  # For the template's booking count
+        'user_requests': pending_requests,   # For the template's request count
+        'now': now,  # For time comparisons in template
     }
     
     return render(request, 'dashboard/learner_complete.html', context)
@@ -494,3 +619,31 @@ def admin_dashboard(request):
     }
     
     return render(request, 'dashboard/admin_complete.html', context)
+
+def mentor_profile_view(request, mentor_id):
+    """Public mentor profile view"""
+    mentor = get_object_or_404(User, id=mentor_id, role='mentor')
+    
+    # Get mentor's sessions for display
+    mentor_sessions = Session.objects.filter(
+        mentor=mentor,
+        status='scheduled'
+    ).order_by('schedule')[:5]
+    
+    # Get mentor's completed sessions count
+    completed_sessions = Session.objects.filter(
+        mentor=mentor,
+        status='completed'
+    ).count()
+    
+    # Calculate average rating (placeholder for now)
+    average_rating = 4.8
+    
+    context = {
+        'mentor': mentor,
+        'mentor_sessions': mentor_sessions,
+        'completed_sessions': completed_sessions,
+        'average_rating': average_rating,
+    }
+    
+    return render(request, 'mentors/profile.html', context)

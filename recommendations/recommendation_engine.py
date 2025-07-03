@@ -19,7 +19,7 @@ class RecommendationEngine:
     def __init__(self, user):
         self.user = user
         self.user_skills = self.parse_skills(user.skills or '')
-        self.user_interests = self.parse_skills(user.expertise or '')
+        self.user_interests = self.parse_skills(user.interests or '')
         
     def parse_skills(self, skills_data):
         """Parse skills from various formats"""
@@ -105,8 +105,8 @@ class RecommendationEngine:
                     score += 2.0
                     reasons.append(f"Matches your interest in {skill}")
             
-            # Mentor expertise match
-            mentor_skills = self.parse_skills(session.mentor.expertise or [])
+            # Mentor skills match
+            mentor_skills = self.parse_skills(session.mentor.skills or [])
             for user_skill in all_skills:
                 for mentor_skill in mentor_skills:
                     if user_skill in mentor_skill or mentor_skill in user_skill:
@@ -123,15 +123,15 @@ class RecommendationEngine:
         """Find sessions liked by similar users"""
         recommendations = []
         
-        # Find users with similar skills/interests
+                # Find users with similar skills/interests
         similar_users = User.objects.filter(
             role='learner',
-            expertise__isnull=False
+            interests__isnull=False
         ).exclude(id=self.user.id)
-        
+
         user_similarities = []
         for other_user in similar_users:
-            other_skills = self.parse_skills(other_user.expertise or [])
+            other_skills = self.parse_skills(other_user.interests or [])
             similarity = self.calculate_skill_similarity(self.user_skills, other_skills)
             
             if similarity > 0.3:  # 30% similarity threshold
@@ -240,7 +240,7 @@ class RecommendationEngine:
             reasons = []
             
             # Check skill match
-            mentor_skills = self.parse_skills(mentor.expertise or [])
+            mentor_skills = self.parse_skills(mentor.skills or [])
             for user_skill in self.user_skills + self.user_interests:
                 for mentor_skill in mentor_skills:
                     if user_skill in mentor_skill or mentor_skill in user_skill:

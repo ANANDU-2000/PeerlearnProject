@@ -22,12 +22,16 @@
     activeTab: 'overview',
     timeUntilSession: '',
     enrolledLearners: [],
+    sessionStatus: '{{ session.status }}',
     init() {
+        console.log('Alpine.js init: User ID:', '{{ user.id }}', 'Is Authenticated:', '{{ user.is_authenticated }}', 'Session Mentor ID:', '{{ session.mentor.id }}');
         this.updateTimer();
         setInterval(() => this.updateTimer(), 1000);
         {% if user == session.mentor %}
             this.loadEnrolledLearners();
             setInterval(() => this.loadEnrolledLearners(), 30000);
+        {% else %}
+            setInterval(() => this.pollSessionStatus(), 5000);
         {% endif %}
     },
     updateTimer() {
@@ -68,6 +72,11 @@
         } catch (error) {
             console.error('Error loading enrolled learners:', error);
         }
+    },
+    async pollSessionStatus() {
+        // Disable status polling for now to prevent 404 errors
+        // This can be implemented later when the API endpoint is ready
+        console.log('Session status polling disabled');
     },
     showLearnerNotifications(learners) {
         const readyLearners = learners.filter(l => l.isReady);
@@ -168,10 +177,12 @@
                         {% if user != session.mentor %}
                             <!-- Learner View -->
                             <div class="space-y-3" x-data="{ isReady: false, inWaitingRoom: false }">
-                                {% if session.status == 'live' %}
+                                 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                
+                                {% if session.status == 'live' or sessionStatus == 'live' %}
                                     <button onclick="joinLiveSession()" 
                                             class="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg animate-pulse">
-                                        🔴 Join Live Session
+                                        🎯 Join Live Session
                                     </button>
                                 {% elif session.status == 'scheduled' %}
                                     {% if user_booking %}
@@ -193,22 +204,23 @@
                                             </div>
                                         </div>
                                         
-                                        <button onclick="joinEarlyRoom()" 
-                                                @click="inWaitingRoom = true"
-                                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg">
-                                            🚀 Join Early (Waiting Room)
-                                        </button>
+                                 <button onclick="joinEarlyRoom()" 
+                                            @click="inWaitingRoom = true"
+                                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg">
+                                        🚀 Join Early (Waiting Room)
+                                    </button>
                                         <button onclick="markReady()" 
                                                 @click="isReady = !isReady"
                                                 :class="isReady ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-500 hover:bg-orange-600'"
                                                 class="w-full text-white py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-lg">
                                             <span x-text="isReady ? '✅ Ready for Session' : '✋ Mark as Ready'"></span>
                                         </button>
+                                        
                                     {% else %}
-                                        <button onclick="bookSession()" 
-                                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
-                                            📚 Enroll Now
-                                        </button>
+                                       <button onclick="bookSession()" 
+                                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                                        📚 Enroll Now
+                                    </button>
                                     {% endif %}
                                 {% endif %}
                             </div>
@@ -438,41 +450,50 @@ function sessionDetail() {
 }
 
 function bookSession() {
-    fetch(`/api/sessions/{{ session.id }}/book/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert(data.error || 'Failed to book session');
-        }
-    });
+    console.log('Book session button clicked!');
+    console.log('Session ID:', '{{ session.id }}');
+    console.log('User authenticated:', '{{ user.is_authenticated }}');
+    console.log('User role:', '{{ user.role }}');
+    
+    // For both free and paid sessions, redirect to the booking URL
+    // The backend will handle free sessions directly and redirect paid sessions to payment
+    const bookingUrl = `/sessions/{{ session.id }}/book/`;
+    console.log('Redirecting to:', bookingUrl);
+    
+    window.location.href = bookingUrl;
 }
 
 function joinLiveSession() {
-    window.location.href = `/sessions/{{ session.id }}/join/`;
+    window.location.href = `/sessions/{{ session.id }}/room/`;
 }
 
 function joinEarlyRoom() {
-    // Join the waiting room for WebRTC connection
-    fetch(`/api/sessions/{{ session.id }}/join-waiting-room/`, {
+    const sessionId = '{{ session.id }}';
+    const url = `/sessions/api/sessions/${sessionId}/join-waiting-room/`;  // Added 'sessions/' prefix
+    
+    console.log('Calling URL:', url);
+    
+    fetch(url, {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
-            window.location.href = `/sessions/{{ session.id }}/waiting-room/`;
+            window.location.href = data.redirect_url;
         } else {
-            alert(data.error || 'Failed to join waiting room');
+            alert(data.error);
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error');
     });
 }
 
@@ -482,8 +503,15 @@ function joinWaitingRoom() {
 }
 
 function markReady() {
-    // Mark learner as ready and notify mentor in real-time
-    fetch(`/api/sessions/{{ session.id }}/ready/`, {
+    // Dynamically get session ID from multiple sources
+    const sessionId = getSessionId();
+    
+    if (!sessionId) {
+        showNotification('Session ID not found', 'error');
+        return;
+    }
+    
+    fetch(`/api/sessions/${sessionId}/mark-ready/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -492,41 +520,60 @@ function markReady() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Real-time notification to mentor
-            notifyMentorLearnerReady();
-            showNotification('✅ Marked as ready! Mentor has been notified.', 'success');
+            // The unified function returns user_type so we can show appropriate message
+            const userType = data.user_type || 'user';
+            const message = userType === 'mentor' 
+                ? '✅ Marked as ready! Learners have been notified.' 
+                : '✅ Marked as ready! Mentor has been notified.';
+            
+            showNotification(message, 'success');
+            
+            // If you have Alpine.js reactive data, update it
+            if (window.Alpine && this.isReady !== undefined) {
+                this.isReady = true;
+            }
         } else {
             showNotification(data.error || 'Failed to mark as ready', 'error');
         }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        showNotification('Network error occurred', 'error');
     });
 }
 
+function getSessionId() {
+    // Try multiple ways to get session ID dynamically
+    return document.querySelector('[data-session-id]')?.dataset.sessionId ||
+           document.querySelector('#session-id')?.value ||
+           window.sessionId ||
+           window.location.pathname.match(/sessions\/([a-f0-9-]+)/)?.[1] ||
+           document.querySelector('meta[name="session-id"]')?.content ||
+           new URLSearchParams(window.location.search).get('session_id');
+}
+
 function startSession() {
-    if (confirm('Start this session now? This will notify all enrolled learners and open the live room.')) {
-        fetch(`/api/sessions/{{ session.id }}/start/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('🚀 Session started! Redirecting to live room...', 'success');
-                // Redirect to WebRTC room
-                setTimeout(() => {
-                    window.location.href = `/sessions/{{ session.id }}/room/`;
-                }, 1500);
-            } else {
-                showNotification(data.error || 'Failed to start session', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error starting session:', error);
-            showNotification('Error starting session', 'error');
-        });
-    }
+    const sessionId = '{{ session.id }}';
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    console.log('CSRF Token:', csrfToken);
+    fetch(`/api/sessions/${sessionId}/start/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.error || 'Failed to start session');
+        }
+    })
+    .catch(error => {
+        console.error('Error starting session:', error);
+        alert('Network error during session start.');
+    });
 }
 
 // Show enrolled learners with real-time updates
@@ -605,9 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setInterval(loadEnrolledLearners, 30000);
     {% endif %}
 });
-    }
-}
-
+    
 function notifyMentorLearnerReady() {
     // Real-time WebSocket notification to mentor when learner marks ready
     if (window.sessionSocket) {
@@ -646,5 +691,41 @@ function showNotification(message, type) {
         setTimeout(() => notification.remove(), 300);
     }, 4000);
 }
+
+function showLiveSessionNotification() {
+    // Directly join the session if the tab is active, otherwise show a clickable notification.
+    if (!document.hidden) { 
+        joinLiveSession();
+    } else {
+        showNotification('🚀 Your session is now LIVE! Click to join.', 'success', () => {
+            joinLiveSession();
+        });
+    }
+}
+
+// FIXED: Remove problematic status polling that causes 404 errors
+// Instead use WebSocket or direct status checks when needed
+
+function updateSessionStatus() {
+    // Only update status when actually needed, not continuously
+    if (sessionData.status === 'live') {
+        // Update UI to show live session
+        const statusBadge = document.querySelector('.session-status-badge');
+        if (statusBadge) {
+            statusBadge.textContent = '🔴 LIVE';
+            statusBadge.className = 'session-status-badge bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium';
+        }
+        
+        // Show join button if user is booked
+        const joinButton = document.querySelector('.join-session-btn');
+        if (joinButton && userBooking) {
+            joinButton.style.display = 'block';
+            joinButton.textContent = '🎯 Join Live Session';
+        }
+    }
+}
+
+// Call status update once on load, not repeatedly
+updateSessionStatus();
 </script>
 {% endblock %}

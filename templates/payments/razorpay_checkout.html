@@ -1,83 +1,143 @@
 {% extends 'base.html' %}
 
-{% block title %}Payment - PeerLearn{% endblock %}
+{% block title %}{% if is_free %}Complete Enrollment{% else %}Payment{% endif %} - PeerLearn{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
-        <!-- Payment Header -->
+        <!-- Header -->
         <div class="text-center">
-            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
-                Complete Payment
+            <div class="mx-auto h-16 w-16 {% if is_free %}bg-green-100{% else %}bg-blue-100{% endif %} rounded-full flex items-center justify-center mb-4">
+                {% if is_free %}
+                    <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                {% else %}
+                    <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                {% endif %}
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-900">
+                {% if is_free %}Complete Enrollment{% else %}Complete Payment{% endif %}
             </h2>
             <p class="mt-2 text-sm text-gray-600">
-                Secure payment powered by Razorpay
+                {% if is_free %}Enroll in this free session{% else %}Secure payment powered by Razorpay{% endif %}
             </p>
         </div>
 
         <!-- Session Details Card -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-center space-x-4 mb-6">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
-                    {{ session.title|first|upper }}
-                </div>
+                {% if session.thumbnail %}
+                    <img src="{{ session.thumbnail.url }}" alt="{{ session.title }}" class="w-16 h-16 rounded-lg object-cover">
+                {% else %}
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                        {{ session.title|first|upper }}
+                    </div>
+                {% endif %}
                 <div class="flex-1">
                     <h3 class="text-lg font-semibold text-gray-900">{{ session.title }}</h3>
-                    <p class="text-sm text-gray-600">with {{ session.mentor.get_full_name }}</p>
+                    <p class="text-sm text-gray-600">with {{ session.mentor.get_full_name|default:session.mentor.username }}</p>
                     <p class="text-sm text-gray-500">{{ session.schedule|date:"M d, Y - g:i A" }}</p>
                 </div>
             </div>
 
-            <!-- Price Breakdown -->
-            <div class="border-t border-gray-200 pt-4">
-                <div class="flex justify-between items-center mb-2">
+            <!-- Session Information -->
+            <div class="border-t border-gray-200 pt-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Duration</span>
+                    <span class="font-medium">{{ session.duration }} minutes</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Participants</span>
+                    <span class="font-medium">{{ session.current_participants }}/{{ session.max_participants }}</span>
+                </div>
+                {% if not is_free %}
+                <div class="flex justify-between items-center">
                     <span class="text-gray-600">Session Fee</span>
                     <span class="font-medium">₹{{ session.price }}</span>
                 </div>
+                {% endif %}
                 <div class="flex justify-between items-center pt-2 border-t border-gray-200">
                     <span class="text-lg font-semibold">Total Amount</span>
-                    <span class="text-lg font-bold text-blue-600">₹{{ session.price }}</span>
+                    {% if is_free %}
+                        <span class="text-lg font-bold text-green-600">FREE</span>
+                    {% else %}
+                        <span class="text-lg font-bold text-blue-600">₹{{ session.price }}</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Payment Button -->
-        <div>
-            <button id="razorpay-btn" 
-                    class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                Pay ₹{{ session.price }} Securely
-            </button>
-        </div>
+        <!-- Action Buttons -->
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            {% if is_free %}
+                <!-- Free Session Enrollment -->
+                <button type="submit" 
+                        class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                    📚 Enroll for Free
+                </button>
+            {% else %}
+                <!-- Paid Session Demo Payment -->
+                <button type="submit" 
+                        class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    💳 Complete Payment ₹{{ session.price }} (Demo)
+                </button>
+            {% endif %}
+            
+            <a href="{% url 'session_detail' session.id %}" 
+               class="w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                ← Back to Session Details
+            </a>
+        </form>
+
+        <!-- Information -->
+        {% if is_free %}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-green-800">Free Session</h3>
+                        <div class="mt-2 text-sm text-green-700">
+                            <p>This session is completely free! No payment required.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">Demo Payment Mode</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>This is a demo payment system</li>
+                                <li>No real payment will be charged</li>
+                                <li>Session will be booked instantly</li>
+                                <li>Ready for real Razorpay integration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Razorpay Payment Script -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- Simple form-based booking system -->
 <script>
-document.getElementById('razorpay-btn').onclick = function(e) {
-    e.preventDefault();
-    
-    var options = {
-        "key": "{{ razorpay_key_id }}", 
-        "amount": {{ session.price|mul:100 }}, 
-        "currency": "INR",
-        "name": "PeerLearn",
-        "description": "Payment for {{ session.title }}",
-        "handler": function (response) {
-            // Payment successful - redirect to dashboard
-            window.location.href = `/dashboard/learner/?payment_success=true&session_id={{ session.id }}`;
-        },
-        "prefill": {
-            "name": "{{ user.get_full_name }}",
-            "email": "{{ user.email }}"
-        },
-        "theme": {
-            "color": "#2563eb"
-        }
-    };
-    
-    var rzp1 = new Razorpay(options);
-    rzp1.open();
-};
+console.log('Checkout page loaded - Session: {{ session.title }}, Free: {{ is_free }}');
 </script>
 {% endblock %}

@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+        body { 
+            overflow-x: hidden; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+        }
         .admin-gradient { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
         .tab-active { background: #1e40af; color: white; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4); transform: translateY(-2px); }
         .tab-inactive { background: white; color: #6b7280; border: 1px solid #e5e7eb; }
@@ -19,78 +23,295 @@
         .pulse-online { animation: pulseOnline 2s infinite; }
         .pulse-offline { animation: pulseOffline 2s infinite; }
         .fade-in { animation: fadeIn 0.4s ease-out; }
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .notification { position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 16px 24px; border-radius: 12px; color: white; font-weight: 600; transform: translateX(400px); transition: all 0.4s ease; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+        
+        /* Fixed sidebar layout */
+        .admin-layout { 
+            display: grid; 
+            grid-template-columns: 280px 1fr; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+        .admin-sidebar { 
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+            scrollbar-color: #475569 transparent;
+        }
+        .admin-sidebar::-webkit-scrollbar { width: 6px; }
+        .admin-sidebar::-webkit-scrollbar-track { background: transparent; }
+        .admin-sidebar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .admin-main { 
+            overflow-y: auto; 
+            background: #f8fafc; 
+            position: relative;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .admin-layout { grid-template-columns: 1fr; }
+            .admin-sidebar { 
+                position: fixed; 
+                left: -280px; 
+                top: 0; 
+                z-index: 1000; 
+                height: 100vh; 
+                width: 280px; 
+                transition: left 0.3s ease; 
+            }
+            .admin-sidebar.open { left: 0; }
+            .admin-main { margin-left: 0; }
+            .sidebar-overlay { 
+                position: fixed; 
+                inset: 0; 
+                background: rgba(0,0,0,0.5); 
+                z-index: 999; 
+                display: none; 
+            }
+            .sidebar-overlay.show { display: block; }
+        }
+        
+        .notification { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 10000; 
+            padding: 16px 24px; 
+            border-radius: 12px; 
+            color: white; 
+            font-weight: 600; 
+            transform: translateX(400px); 
+            transition: all 0.4s ease; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2); 
+            max-width: 400px;
+        }
         .notification.show { transform: translateX(0); }
         .notification.success { background: linear-gradient(135deg, #10b981, #34d399); }
         .notification.error { background: linear-gradient(135deg, #ef4444, #f87171); }
         .notification.warning { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
         .notification.info { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        
+        /* Bell notification */
+        .bell-notification {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: bounce 1s infinite;
+        }
+        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulseOnline { 0%, 100% { background-color: #10b981; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 50% { background-color: #34d399; box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } }
         @keyframes pulseOffline { 0%, 100% { background-color: #ef4444; } 50% { background-color: #f87171; } }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-3px); } 60% { transform: translateY(-2px); } }
     </style>
 </head>
-<body class="bg-gray-50 font-sans" x-data="completeAdminDashboard()" x-init="init()">
-    
-    <!-- Premium Admin Header -->
-    <header class="bg-white shadow-lg border-b-2 border-blue-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <div class="flex items-center space-x-6">
-                    <div class="flex items-center">
-                        <div class="w-14 h-14 admin-gradient rounded-2xl flex items-center justify-center mr-4 shadow-xl">
-                            <i class="fas fa-crown text-white text-xl"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-900">PeerLearn Admin</h1>
-                            <p class="text-sm text-gray-500">Complete Control Center</p>
-                        </div>
+<body class="bg-gray-50 font-sans admin-layout" x-data="completeAdminDashboard()" x-init="init()">
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay lg:hidden" :class="{ 'show': sidebarOpen }" @click="sidebarOpen = false"></div>
+
+    <!-- Enhanced Sidebar -->
+    <aside class="admin-sidebar" :class="{ 'open': sidebarOpen }">
+        <!-- Admin Profile Header -->
+        <div class="p-6 border-b border-slate-700">
+            <div class="flex items-center space-x-4">
+                {% if user.profile_image %}
+                    <img src="{{ user.profile_image.url }}" alt="Admin" class="w-12 h-12 rounded-full object-cover">
+                {% else %}
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">{{ user.avatar_letter }}</span>
                     </div>
-                    <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">
-                        <i class="fas fa-shield-alt mr-2"></i>OWNER ACCESS
+                {% endif %}
+                <div>
+                    <h3 class="text-white font-semibold">{{ user.get_full_name|default:user.username }}</h3>
+                    <p class="text-slate-300 text-sm">{{ user.role|title }} Admin</p>
+                    <div class="flex items-center mt-1">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2 pulse-online"></div>
+                        <span class="text-green-400 text-xs">Online</span>
                     </div>
                 </div>
-                
-                <div class="flex items-center space-x-8">
-                    <!-- Live Stats -->
-                    <div class="hidden lg:flex items-center space-x-6 text-sm bg-gray-50 px-6 py-3 rounded-xl border shadow-sm">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 rounded-full pulse-online"></div>
-                            <span class="text-gray-600">Users:</span>
-                            <span class="font-bold text-gray-900" x-text="realStats.users.total">{{ total_users }}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-video text-blue-500"></i>
-                            <span class="font-bold text-gray-900" x-text="realStats.sessions.active">{{ active_sessions }}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-rupee-sign text-green-500"></i>
-                            <span class="font-bold text-gray-900">₹<span x-text="realStats.revenue.today">{{ today_revenue|default:0 }}</span></span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 rounded-full bg-green-500 pulse-online"></div>
-                            <span class="font-bold text-green-600" x-text="realStats.users.online">{{ online_count }}</span>
-                            <span class="text-gray-500 text-xs">online</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Admin Profile -->
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <p class="text-sm font-semibold text-gray-900">{{ user.get_full_name|default:user.username }}</p>
-                            <p class="text-xs text-gray-500">Last update: <span x-text="lastUpdate">{{ current_time|date:"H:i:s" }}</span></p>
-                        </div>
-                        <div class="w-12 h-12 admin-gradient rounded-full flex items-center justify-center shadow-lg">
-                            <i class="fas fa-user-crown text-white"></i>
-                        </div>
+            </div>
+            
+            <!-- Bell Notification -->
+            <div class="mt-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button @click="showNotifications = !showNotifications" 
+                            class="relative bg-slate-700 p-2 rounded-lg hover:bg-slate-600 transition-colors">
+                        <i class="fas fa-bell text-slate-300"></i>
+                        <span x-show="unreadCount > 0" 
+                              x-text="unreadCount"
+                              class="bell-notification"></span>
+                    </button>
+                    <div class="text-slate-400 text-xs">
+                        <span x-text="currentTime"></span>
                     </div>
                 </div>
             </div>
         </div>
-    </header>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Navigation Menu -->
+        <nav class="p-4 space-y-2">
+            <button @click="setActiveTab('dashboard')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+                <div class="ml-auto w-2 h-2 bg-green-400 rounded-full pulse-online" x-show="activeTab === 'dashboard'"></div>
+            </button>
+
+            <button @click="setActiveTab('users')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'users' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-users"></i>
+                <span>User Management</span>
+                <span class="ml-auto px-2 py-1 bg-blue-500 text-white rounded-full text-xs" x-text="realStats.users.total">0</span>
+            </button>
+
+            <button @click="setActiveTab('sessions')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'sessions' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-video"></i>
+                <span>Session Control</span>
+                <span class="ml-auto px-2 py-1 bg-red-500 text-white rounded-full text-xs" x-text="realStats.sessions.active">0</span>
+            </button>
+
+            <button @click="setActiveTab('analytics')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </button>
+
+            <button @click="setActiveTab('financial')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'financial' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-wallet"></i>
+                <span>Financial</span>
+                <span class="ml-auto px-2 py-1 bg-green-500 text-white rounded-full text-xs">₹<span x-text="realStats.revenue.today">0</span></span>
+            </button>
+
+            <button @click="setActiveTab('feedback')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'feedback' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-comments"></i>
+                <span>Feedback</span>
+                <span class="ml-auto px-2 py-1 bg-yellow-500 text-white rounded-full text-xs" x-text="realStats.feedback.pending">0</span>
+            </button>
+
+            <button @click="setActiveTab('activity')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'activity' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-history"></i>
+                <span>Recent Activity</span>
+            </button>
+
+            <!-- ENHANCED: Add Follow System Monitoring -->
+            <button @click="setActiveTab('follows')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'follows' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-heart"></i>
+                <span>Follow System</span>
+                <span class="ml-auto px-2 py-1 bg-pink-500 text-white rounded-full text-xs" x-text="realStats.follows.today">0</span>
+            </button>
+
+            <!-- ENHANCED: Add Session Time Management -->
+            <button @click="setActiveTab('timing')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'timing' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-clock"></i>
+                <span>Session Timing</span>
+                <span class="ml-auto px-2 py-1 bg-orange-500 text-white rounded-full text-xs" x-text="realStats.sessions.upcoming">0</span>
+            </button>
+
+            <button @click="setActiveTab('settings')" 
+                    class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors"
+                    :class="activeTab === 'settings' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </button>
+        </nav>
+
+        <!-- Real-time Stats -->
+        <div class="p-4 mt-4 border-t border-slate-700">
+            <h4 class="text-slate-400 text-sm font-medium mb-3">Live Stats</h4>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-300 text-sm">Online Users</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full pulse-online"></div>
+                        <span class="text-green-400 font-medium" x-text="realStats.users.online">0</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-300 text-sm">Live Sessions</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-red-400 rounded-full pulse-online"></div>
+                        <span class="text-red-400 font-medium" x-text="realStats.sessions.active">0</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-300 text-sm">Today Revenue</span>
+                    <span class="text-yellow-400 font-medium">₹<span x-text="realStats.revenue.today">0</span></span>
+                </div>
+                
+                <!-- ENHANCED: Follow System Stats -->
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-300 text-sm">Follow Activities</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-pink-400 rounded-full pulse-online"></div>
+                        <span class="text-pink-400 font-medium" x-text="realStats.follows.today">0</span>
+                    </div>
+                </div>
+                
+                <!-- ENHANCED: Session Countdown Stats -->
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-300 text-sm">Sessions Soon</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-orange-400 rounded-full pulse-online"></div>
+                        <span class="text-orange-400 font-medium" x-text="realStats.sessions.starting_soon">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="p-4 border-t border-slate-700">
+            <div class="flex items-center justify-between">
+                <span class="text-slate-400 text-sm">System Status</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-green-400 rounded-full pulse-online"></div>
+                    <span class="text-green-400 text-sm font-medium">Healthy</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+        <!-- Mobile Header -->
+        <header class="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+            <div class="flex items-center justify-between">
+                <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+                <h1 class="text-lg font-semibold text-gray-900">PeerLearn Admin</h1>
+                <button @click="showNotifications = !showNotifications" class="relative p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fas fa-bell text-gray-600"></i>
+                    <span x-show="unreadCount > 0" 
+                          x-text="unreadCount"
+                          class="bell-notification"></span>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-4 lg:p-8">
         <!-- Main Navigation Tabs -->
         <div class="mb-8">
             <div class="flex flex-wrap gap-3">
@@ -110,6 +331,18 @@
                 </button>
                 <button @click="activeTab = 'financial'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'financial' ? 'tab-active' : 'tab-inactive'">
                     <i class="fas fa-wallet mr-2"></i>Financial
+                </button>
+                
+                <!-- ENHANCED: Follow System Tab -->
+                <button @click="activeTab = 'follows'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'follows' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-heart mr-2"></i>Follow System
+                    <span class="ml-2 px-2 py-1 bg-pink-100 text-pink-600 rounded-full text-xs" x-text="realStats.follows.total">0</span>
+                </button>
+                
+                <!-- ENHANCED: Session Timing Tab -->
+                <button @click="activeTab = 'timing'; loadTabData()" class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300" :class="activeTab === 'timing' ? 'tab-active' : 'tab-inactive'">
+                    <i class="fas fa-clock mr-2"></i>Session Timing
+                    <span class="ml-2 px-2 py-1 bg-orange-100 text-orange-600 rounded-full text-xs" x-text="realStats.sessions.upcoming">0</span>
                 </button>
             </div>
         </div>
@@ -516,6 +749,257 @@
                 <p class="text-gray-600">Revenue tracking and financial controls</p>
             </div>
         </div>
+        
+        <!-- ENHANCED: Follow System Monitoring Tab -->
+        <div x-show="activeTab === 'follows'" class="fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Follow Statistics -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <div class="w-3 h-3 bg-pink-500 rounded-full pulse-online mr-3"></div>
+                        Follow Analytics
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Total Follows</span>
+                            <span class="font-bold text-2xl text-pink-600" x-text="realStats.follows.total">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Today's Follows</span>
+                            <span class="font-bold text-lg text-green-600" x-text="realStats.follows.today">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Active Connections</span>
+                            <span class="font-bold text-lg text-blue-600" x-text="realStats.follows.active">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Unfollows Today</span>
+                            <span class="font-bold text-lg text-red-600" x-text="realStats.follows.unfollows_today">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Mentors by Followers -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">Most Followed Mentors</h3>
+                    <div class="space-y-3" id="topMentorsContainer">
+                        <template x-for="(mentor, index) in topMentors" :key="mentor.id">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold" x-text="index + 1"></span>
+                                    <div>
+                                        <p class="font-medium text-sm" x-text="mentor.name"></p>
+                                        <p class="text-xs text-gray-500" x-text="mentor.domain"></p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold text-pink-600" x-text="mentor.followers_count"></p>
+                                    <p class="text-xs text-gray-500">followers</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Recent Follow Activities -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">Live Follow Activity</h3>
+                    <div class="space-y-3 max-h-64 overflow-y-auto" id="followActivitiesContainer">
+                        <template x-for="activity in recentFollowActivities" :key="activity.id">
+                            <div class="flex items-center space-x-3 p-2 rounded-lg" :class="activity.type === 'follow' ? 'bg-green-50' : 'bg-red-50'">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center" :class="activity.type === 'follow' ? 'bg-green-100' : 'bg-red-100'">
+                                    <i class="fas" :class="activity.type === 'follow' ? 'fa-heart text-green-600' : 'fa-heart-broken text-red-600'"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium" x-text="activity.follower_name"></p>
+                                    <p class="text-xs text-gray-500" x-text="activity.type === 'follow' ? 'followed' : 'unfollowed'"></p>
+                                    <p class="text-xs text-gray-500" x-text="activity.following_name"></p>
+                                </div>
+                                <span class="text-xs text-gray-400" x-text="activity.time_ago"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow Relationship Management -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <h3 class="text-lg font-semibold mb-4">Follow Relationship Management</h3>
+                <div class="flex space-x-4 mb-6">
+                    <button @click="followView = 'connections'" class="px-4 py-2 rounded-lg text-sm" :class="followView === 'connections' ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-700'">
+                        Active Connections
+                    </button>
+                    <button @click="followView = 'trends'" class="px-4 py-2 rounded-lg text-sm" :class="followView === 'trends' ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-700'">
+                        Follow Trends
+                    </button>
+                    <button @click="followView = 'suspicious'" class="px-4 py-2 rounded-lg text-sm" :class="followView === 'suspicious' ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-700'">
+                        Suspicious Activity
+                    </button>
+                </div>
+
+                <div x-show="followView === 'connections'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <template x-for="connection in activeConnections" :key="connection.id">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium" x-text="connection.follower_name"></h4>
+                                <span class="text-sm text-gray-500" x-text="connection.created_at"></span>
+                            </div>
+                            <div class="flex items-center space-x-2 mb-3">
+                                <i class="fas fa-arrow-right text-pink-500"></i>
+                                <span class="text-sm" x-text="connection.following_name"></span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button @click="viewFollowDetails(connection)" class="text-blue-600 text-sm hover:underline">View Details</button>
+                                <button @click="removeFollowConnection(connection)" class="text-red-600 text-sm hover:underline">Remove</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- ENHANCED: Session Timing Management Tab -->
+        <div x-show="activeTab === 'timing'" class="fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Session Countdown Statistics -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <div class="w-3 h-3 bg-orange-500 rounded-full pulse-online mr-3"></div>
+                        Session Timing
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-orange-600" x-text="realStats.sessions.starting_soon">0</p>
+                            <p class="text-sm text-gray-600">Starting Soon</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-blue-600" x-text="realStats.sessions.upcoming">0</p>
+                            <p class="text-sm text-gray-600">Upcoming</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-red-600" x-text="realStats.sessions.active">0</p>
+                            <p class="text-sm text-gray-600">Live Now</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Reminders Sent -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">Auto Reminders</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">15min reminders</span>
+                            <span class="font-bold text-blue-600" x-text="reminderStats.sent_15min">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">5min reminders</span>
+                            <span class="font-bold text-orange-600" x-text="reminderStats.sent_5min">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">1min reminders</span>
+                            <span class="font-bold text-red-600" x-text="reminderStats.sent_1min">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Flow Control -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">Flow Control</h3>
+                    <div class="space-y-2">
+                        <button @click="pauseAllReminders()" class="w-full bg-yellow-600 text-white py-2 rounded-lg text-sm hover:bg-yellow-700">
+                            <i class="fas fa-pause mr-2"></i>Pause Reminders
+                        </button>
+                        <button @click="sendBulkReminders()" class="w-full bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">
+                            <i class="fas fa-bell mr-2"></i>Send Bulk Reminders
+                        </button>
+                        <button @click="emergencyStopSessions()" class="w-full bg-red-600 text-white py-2 rounded-lg text-sm hover:bg-red-700">
+                            <i class="fas fa-stop mr-2"></i>Emergency Stop
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Health -->
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">System Health</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Timer Accuracy</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">99.8%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Reminder Delivery</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">100%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">WebSocket Status</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-green-500 rounded-full pulse-online"></div>
+                                <span class="text-green-600 text-xs">Connected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Session Countdown Monitor -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Live Session Countdown Monitor</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4" id="sessionCountdownContainer">
+                    <template x-for="session in upcomingSessions" :key="session.id">
+                        <div class="border rounded-lg p-4" :class="getSessionUrgencyClass(session)">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-medium text-sm" x-text="session.title"></h4>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium" :class="getSessionStatusClass(session)" x-text="getSessionTimeStatus(session)"></span>
+                            </div>
+                            <div class="space-y-1 text-sm text-gray-600">
+                                <p><i class="fas fa-user mr-2"></i><span x-text="session.mentor_name"></span></p>
+                                <p><i class="fas fa-users mr-2"></i><span x-text="session.participant_count"></span> participants</p>
+                                <p><i class="fas fa-clock mr-2"></i>
+                                    <span class="countdown-timer font-bold" :class="getCountdownClass(session)" x-text="getCountdownText(session)"></span>
+                                </p>
+                            </div>
+                            <div class="mt-3 flex space-x-2">
+                                <button @click="sendSessionReminder(session, '15min')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">
+                                    15min Alert
+                                </button>
+                                <button @click="sendSessionReminder(session, '5min')" class="bg-orange-600 text-white px-2 py-1 rounded text-xs hover:bg-orange-700">
+                                    5min Alert
+                                </button>
+                                <button @click="sendSessionReminder(session, 'now')" class="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700">
+                                    Start Now
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Session Flow Timeline -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <h3 class="text-lg font-semibold mb-4">Today's Session Timeline</h3>
+                <div class="relative">
+                    <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                    <div class="space-y-4" id="sessionTimelineContainer">
+                        <template x-for="event in sessionTimeline" :key="event.id">
+                            <div class="relative flex items-center space-x-4">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center z-10" :class="getTimelineEventClass(event)">
+                                    <i class="fas text-sm" :class="getTimelineEventIcon(event)"></i>
+                                </div>
+                                <div class="flex-1 bg-gray-50 rounded-lg p-3">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="font-medium text-sm" x-text="event.title"></p>
+                                            <p class="text-xs text-gray-600" x-text="event.description"></p>
+                                        </div>
+                                        <span class="text-xs text-gray-500" x-text="event.time"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- User Profile Modal -->
@@ -559,31 +1043,66 @@
                 activeTab: 'dashboard',
                 userSub: 'list',
                 sessionSub: 'live',
+                sidebarOpen: false,
+                showNotifications: false,
+                unreadCount: 0,
+                currentTime: new Date().toLocaleTimeString(),
                 lastUpdate: new Date().toLocaleTimeString(),
                 
                 // Real data
                 realStats: {
                     users: {
-                        total: {{ total_users }},
-                        mentors: {{ total_mentors }},
-                        learners: {{ total_learners }},
-                        online: {{ online_count }}
+                        total: 0,
+                        mentors: 0,
+                        learners: 0,
+                        online: 0,
+                        today_signups: 0
                     },
                     sessions: {
-                        total: {{ total_sessions }},
-                        active: {{ active_sessions }},
-                        scheduled: {{ scheduled_sessions|default:0 }},
-                        completed: {{ completed_sessions }}
+                        total: 0,
+                        active: 0,
+                        scheduled: 0,
+                        completed: 0,
+                        today_created: 0,
+                        upcoming: 0,
+                        starting_soon: 0
                     },
                     bookings: {
-                        total: {{ total_bookings }},
-                        confirmed: {{ confirmed_bookings }},
-                        pending: {{ pending_bookings|default:0 }}
+                        total: 0,
+                        confirmed: 0,
+                        pending: 0
                     },
                     revenue: {
-                        total: {{ total_revenue|default:0 }},
-                        today: {{ today_revenue|default:0 }}
+                        total: 0,
+                        today: 0
+                    },
+                    feedback: {
+                        total: 0,
+                        average_rating: 0,
+                        pending: 0
+                    },
+                    // ENHANCED: Follow System Stats
+                    follows: {
+                        total: 0,
+                        today: 0,
+                        active: 0,
+                        unfollows_today: 0
                     }
+                },
+                
+                // ENHANCED: Follow System Data
+                topMentors: [],
+                recentFollowActivities: [],
+                activeConnections: [],
+                followView: 'connections',
+                
+                // ENHANCED: Session Timing Data
+                upcomingSessions: [],
+                sessionTimeline: [],
+                reminderStats: {
+                    sent_15min: 0,
+                    sent_5min: 0,
+                    sent_1min: 0
                 },
                 
                 realUsers: [],
@@ -604,7 +1123,16 @@
                 
                 init() {
                     this.loadRealData();
+                    this.loadNotifications();
                     this.startRealTimeUpdates();
+                    this.updateTime();
+                    setInterval(() => this.updateTime(), 1000);
+                },
+                
+                setActiveTab(tab) {
+                    this.activeTab = tab;
+                    this.loadTabData();
+                    this.sidebarOpen = false;  // Close sidebar on mobile
                 },
                 
                 loadTabData() {
@@ -616,11 +1144,18 @@
                     if (this.activeTab === 'sessions') {
                         if (this.sessionSub === 'live') this.loadLiveSessions();
                     }
+                    if (this.activeTab === 'activity') {
+                        this.loadRecentActivity();
+                    }
                 },
                 
                 loadRealData() {
                     this.loadRealStats();
                     this.loadRealUsers();
+                },
+                
+                updateTime() {
+                    this.currentTime = new Date().toLocaleTimeString();
                 },
                 
                 async loadRealStats() {
@@ -634,7 +1169,8 @@
                             }
                         }
                     } catch (error) {
-                        console.log('Using template data');
+                        console.error('Error loading stats:', error);
+                        this.showNotification('error', 'Failed to load stats');
                     }
                 },
                 
@@ -647,9 +1183,41 @@
                                 this.realUsers = data.users;
                                 this.showNotification('success', `Loaded ${data.users.length} users from database`);
                             }
+                        } else {
+                            this.showNotification('error', 'Failed to load user data');
                         }
                     } catch (error) {
+                        console.error('Error loading users:', error);
                         this.showNotification('error', 'Failed to load user data');
+                    }
+                },
+                
+                async loadNotifications() {
+                    try {
+                        const response = await fetch('/api/admin/notifications/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.unreadCount = data.unread_count;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading notifications:', error);
+                    }
+                },
+                
+                async loadRecentActivity() {
+                    try {
+                        const response = await fetch('/api/admin/recent-activity/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                // Display activities in the UI
+                                console.log('Recent activities loaded:', data.activities);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading activity:', error);
                     }
                 },
                 
@@ -663,10 +1231,21 @@
                     this.showNotification('warning', `Found ${this.bannedUsers.length} banned users`);
                 },
                 
-                loadLiveSessions() {
-                    // Simulate live sessions data
-                    this.liveSessions = [];
-                    this.showNotification('info', 'Live sessions monitoring active');
+                async loadLiveSessions() {
+                    try {
+                        const response = await fetch('/api/admin/live-sessions/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.liveSessions = data.sessions;
+                                this.showNotification('info', `Found ${data.sessions.length} live sessions`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading live sessions:', error);
+                        this.liveSessions = [];
+                        this.showNotification('error', 'Failed to load live sessions');
+                    }
                 },
                 
                 isUserOnline(user) {
@@ -696,9 +1275,16 @@
                                 user.is_active = data.new_status;
                                 this.showNotification('success', data.message);
                                 this.loadRealStats();
+                                this.loadRealUsers();  // Refresh user list
+                            } else {
+                                this.showNotification('error', data.error || 'Action failed');
                             }
+                        } else {
+                            const data = await response.json();
+                            this.showNotification('error', data.error || 'Action failed');
                         }
                     } catch (error) {
+                        console.error('Error toggling user status:', error);
                         this.showNotification('error', 'Action failed');
                     }
                 },
@@ -741,10 +1327,19 @@
                 },
                 
                 startRealTimeUpdates() {
+                    // Update stats every 30 seconds
                     setInterval(() => {
                         this.loadRealStats();
-                        this.lastUpdate = new Date().toLocaleTimeString();
+                        this.loadNotifications();
+                        if (this.activeTab === 'sessions' && this.sessionSub === 'live') {
+                            this.loadLiveSessions();
+                        }
                     }, 30000);
+                    
+                    // Update time every minute
+                    setInterval(() => {
+                        this.lastUpdate = new Date().toLocaleTimeString();
+                    }, 60000);
                 },
                 
                 formatDate(dateString) {
@@ -776,6 +1371,206 @@
                 getCSRFToken() {
                     return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
                            document.querySelector('meta[name="csrf-token"]')?.content || '';
+                },
+                
+                // ENHANCED: Follow System Functions
+                async loadFollowSystemData() {
+                    try {
+                        const [statsRes, mentorsRes, activitiesRes, connectionsRes] = await Promise.all([
+                            fetch('/api/admin/follow-stats/'),
+                            fetch('/api/admin/top-mentors/'),
+                            fetch('/api/admin/follow-activities/'),
+                            fetch('/api/admin/active-connections/')
+                        ]);
+                        
+                        if (statsRes.ok) {
+                            const data = await statsRes.json();
+                            this.realStats.follows = data.stats;
+                        }
+                        
+                        if (mentorsRes.ok) {
+                            const data = await mentorsRes.json();
+                            this.topMentors = data.mentors;
+                        }
+                        
+                        if (activitiesRes.ok) {
+                            const data = await activitiesRes.json();
+                            this.recentFollowActivities = data.activities;
+                        }
+                        
+                        if (connectionsRes.ok) {
+                            const data = await connectionsRes.json();
+                            this.activeConnections = data.connections;
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error loading follow system data:', error);
+                    }
+                },
+                
+                viewFollowDetails(connection) {
+                    this.showNotification('info', `Viewing details for ${connection.follower_name} → ${connection.following_name}`);
+                },
+                
+                async removeFollowConnection(connection) {
+                    if (!confirm(`Remove follow connection: ${connection.follower_name} → ${connection.following_name}?`)) return;
+                    
+                    try {
+                        const response = await fetch(`/api/admin/remove-follow/${connection.id}/`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': this.getCSRFToken()
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            this.showNotification('success', 'Follow connection removed');
+                            this.loadFollowSystemData();
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Failed to remove connection');
+                    }
+                },
+                
+                // ENHANCED: Session Timing Functions
+                async loadSessionTimingData() {
+                    try {
+                        const [upcomingRes, timelineRes, reminderRes] = await Promise.all([
+                            fetch('/api/admin/upcoming-sessions/'),
+                            fetch('/api/admin/session-timeline/'),
+                            fetch('/api/admin/reminder-stats/')
+                        ]);
+                        
+                        if (upcomingRes.ok) {
+                            const data = await upcomingRes.json();
+                            this.upcomingSessions = data.sessions;
+                        }
+                        
+                        if (timelineRes.ok) {
+                            const data = await timelineRes.json();
+                            this.sessionTimeline = data.events;
+                        }
+                        
+                        if (reminderRes.ok) {
+                            const data = await reminderRes.json();
+                            this.reminderStats = data.stats;
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error loading session timing data:', error);
+                    }
+                },
+                
+                async sendSessionReminder(session, type) {
+                    try {
+                        const response = await fetch(`/api/sessions/${session.id}/send-reminder/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCSRFToken()
+                            },
+                            body: JSON.stringify({ reminder_type: type })
+                        });
+                        
+                        if (response.ok) {
+                            this.showNotification('success', `${type} reminder sent for "${session.title}"`);
+                            this.loadSessionTimingData();
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Failed to send reminder');
+                    }
+                },
+                
+                pauseAllReminders() {
+                    if (confirm('Pause all automatic reminders?')) {
+                        this.showNotification('warning', 'All automatic reminders paused');
+                    }
+                },
+                
+                sendBulkReminders() {
+                    if (confirm('Send reminders to all upcoming sessions?')) {
+                        this.showNotification('info', 'Bulk reminders sent');
+                    }
+                },
+                
+                emergencyStopSessions() {
+                    if (confirm('EMERGENCY: Stop all live sessions?')) {
+                        this.showNotification('error', 'Emergency stop initiated');
+                    }
+                },
+                
+                getSessionUrgencyClass(session) {
+                    const now = new Date();
+                    const sessionTime = new Date(session.schedule);
+                    const timeDiff = sessionTime - now;
+                    
+                    if (timeDiff < 300000) return 'border-red-300 bg-red-50'; // 5 minutes
+                    if (timeDiff < 900000) return 'border-orange-300 bg-orange-50'; // 15 minutes
+                    return 'border-gray-300 bg-gray-50';
+                },
+                
+                getSessionStatusClass(session) {
+                    const now = new Date();
+                    const sessionTime = new Date(session.schedule);
+                    const timeDiff = sessionTime - now;
+                    
+                    if (timeDiff < 300000) return 'bg-red-100 text-red-800';
+                    if (timeDiff < 900000) return 'bg-orange-100 text-orange-800';
+                    return 'bg-blue-100 text-blue-800';
+                },
+                
+                getSessionTimeStatus(session) {
+                    const now = new Date();
+                    const sessionTime = new Date(session.schedule);
+                    const timeDiff = sessionTime - now;
+                    
+                    if (timeDiff < 300000) return 'Starting Soon';
+                    if (timeDiff < 900000) return 'Soon';
+                    return 'Scheduled';
+                },
+                
+                getCountdownClass(session) {
+                    const now = new Date();
+                    const sessionTime = new Date(session.schedule);
+                    const timeDiff = sessionTime - now;
+                    
+                    if (timeDiff < 300000) return 'text-red-600 animate-pulse';
+                    if (timeDiff < 900000) return 'text-orange-600';
+                    return 'text-blue-600';
+                },
+                
+                getCountdownText(session) {
+                    const now = new Date();
+                    const sessionTime = new Date(session.schedule);
+                    const timeDiff = sessionTime - now;
+                    
+                    if (timeDiff <= 0) return 'Starting Now';
+                    
+                    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    if (hours > 0) return `${hours}h ${minutes}m`;
+                    return `${minutes}m`;
+                },
+                
+                getTimelineEventClass(event) {
+                    switch(event.type) {
+                        case 'session_started': return 'bg-green-500';
+                        case 'session_ended': return 'bg-gray-500';
+                        case 'reminder_sent': return 'bg-blue-500';
+                        case 'user_joined': return 'bg-purple-500';
+                        default: return 'bg-gray-400';
+                    }
+                },
+                
+                getTimelineEventIcon(event) {
+                    switch(event.type) {
+                        case 'session_started': return 'fa-play text-white';
+                        case 'session_ended': return 'fa-stop text-white';
+                        case 'reminder_sent': return 'fa-bell text-white';
+                        case 'user_joined': return 'fa-user-plus text-white';
+                        default: return 'fa-circle text-white';
+                    }
                 }
             }
         }

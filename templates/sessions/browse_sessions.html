@@ -1,0 +1,595 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse Sessions - PeerLearn{% endblock %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<style>
+    .session-list-card {
+        transition: all 0.2s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .session-list-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: #d1d5db;
+    }
+    
+    .category-filter {
+        transition: all 0.2s ease;
+    }
+    .category-filter:hover {
+        transform: scale(1.05);
+    }
+    .search-input {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .search-input:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Premium Card Styles */
+    .premium-card {
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .premium-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .bestseller-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .premium-card .bg-gradient-to-br {
+        background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+    }
+    
+    /* Premium gradients */
+    .bg-gradient-to-br.from-purple-500.to-pink-500 {
+        background-image: linear-gradient(to bottom right, #8b5cf6, #ec4899);
+    }
+    
+    .bg-gradient-to-br.from-blue-500.to-cyan-500 {
+        background-image: linear-gradient(to bottom right, #3b82f6, #06b6d4);
+    }
+    
+    .bg-gradient-to-br.from-green-500.to-teal-500 {
+        background-image: linear-gradient(to bottom right, #10b981, #14b8a6);
+    }
+    
+    .bg-gradient-to-br.from-orange-500.to-red-500 {
+        background-image: linear-gradient(to bottom right, #f97316, #ef4444);
+    }
+    
+    .bg-gradient-to-br.from-indigo-500.to-purple-500 {
+        background-image: linear-gradient(to bottom right, #6366f1, #8b5cf6);
+    }
+    
+    .bg-gradient-to-br.from-yellow-500.to-orange-500 {
+        background-image: linear-gradient(to bottom right, #eab308, #f97316);
+    }
+    
+    .bg-gradient-to-br.from-pink-500.to-rose-500 {
+        background-image: linear-gradient(to bottom right, #ec4899, #f43f5e);
+    }
+    
+    .bg-gradient-to-br.from-teal-500.to-green-500 {
+        background-image: linear-gradient(to bottom right, #14b8a6, #10b981);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" x-data="browseSessions()" x-init="init()">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold mb-4">Discover Learning Sessions</h1>
+                <p class="text-xl text-blue-100 mb-8">Connect with expert mentors and expand your knowledge</p>
+                
+                <!-- Search Bar -->
+                <div class="max-w-2xl mx-auto">
+                    <div class="relative">
+                        <input type="text" 
+                               x-model="searchQuery" 
+                               @input="filterSessions()"
+                               placeholder="Search sessions, mentors, or topics..."
+                               class="w-full px-6 py-4 text-lg text-white placeholder-blue-200 search-input rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            <svg class="w-6 h-6 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Categories -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <!-- Category Filters -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
+                <div class="flex flex-wrap gap-3">
+                    <button @click="selectedCategory = 'all'"
+                            :class="selectedCategory === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            class="category-filter px-4 py-2 rounded-lg text-sm font-medium">
+                        All Categories
+                    </button>
+                    <template x-for="category in categories" :key="category.id">
+                        <button @click="selectedCategory = category.id"
+                                :class="selectedCategory === category.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                                class="category-filter px-4 py-2 rounded-lg text-sm font-medium"
+                                x-text="category.name"></button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Advanced Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Price Range -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                    <select x-model="priceFilter" @change="filterSessions()" class="w-full rounded-lg border-gray-300">
+                        <option value="all">All Prices</option>
+                        <option value="free">Free</option>
+                        <option value="paid">Paid</option>
+                        <option value="0-500">₹0 - ₹500</option>
+                        <option value="500-1000">₹500 - ₹1000</option>
+                        <option value="1000+">₹1000+</option>
+                    </select>
+                </div>
+
+                <!-- Duration -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                    <select x-model="durationFilter" @change="filterSessions()" class="w-full rounded-lg border-gray-300">
+                        <option value="all">Any Duration</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2+ hours</option>
+                    </select>
+                </div>
+
+                <!-- Skill Level -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Skill Level</label>
+                    <select x-model="levelFilter" @change="filterSessions()" class="w-full rounded-lg border-gray-300">
+                        <option value="all">All Levels</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+
+                <!-- Sort By -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                    <select x-model="sortBy" @change="filterSessions()" class="w-full rounded-lg border-gray-300">
+                        <option value="relevance">Relevance</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="date">Date</option>
+                        <option value="rating">Rating</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="flex justify-between items-center mb-6">
+            <p class="text-gray-600" x-text="`${filteredSessions.length} sessions found`"></p>
+            <div class="flex space-x-2">
+                <button @click="viewMode = 'grid'"
+                        :class="viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
+                        class="p-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                </button>
+                <button @click="viewMode = 'list'"
+                        :class="viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
+                        class="p-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Premium Course-Style Cards Grid -->
+        <div x-show="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <template x-for="(session, index) in filteredSessions" :key="session.id">
+                <div class="course-card bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105">
+                    <!-- Course Thumbnail -->
+                    <div class="relative h-40 overflow-hidden">
+                        <!-- Real uploaded image if available -->
+                        <div x-show="session.thumbnail" 
+                             class="w-full h-full bg-cover bg-center" 
+                             :style="`background-image: url(${session.thumbnail})`"></div>
+                        
+                        <!-- Premium gradient fallback when no image -->
+                        <div x-show="!session.thumbnail" 
+                             class="w-full h-full flex items-center justify-center"
+                             :class="`${getSessionCategoryGradient(session.category)}`">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-2">
+                                    <span x-text="session.title.charAt(0).toUpperCase()"></span>
+                                </div>
+                                <div class="text-white text-sm font-medium" x-text="session.category || 'Course'"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bestseller Badge -->
+                        <div x-show="session.is_popular || index < 2" class="absolute top-3 left-3">
+                            <span class="bg-orange-500 text-white px-3 py-1 text-xs font-bold rounded-full shadow-lg">
+                                Bestseller
+                            </span>
+                        </div>
+                        
+                        <!-- Premium Badge -->
+                        <div x-show="session.price > 0" class="absolute top-3 right-3">
+                            <span class="bg-purple-600 text-white px-3 py-1 text-xs font-bold rounded-full shadow-lg">
+                                Premium
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Course Content -->
+                    <div class="p-5">
+                        <!-- Course Title -->
+                        <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 leading-tight" x-text="session.title"></h3>
+                        
+                        <!-- Instructor Name -->
+                        <p class="text-sm text-gray-600 mb-3 font-medium" x-text="session.mentor_name"></p>
+                        
+                        <!-- Rating and Reviews -->
+                        <div class="flex items-center mb-4">
+                            <div class="flex items-center mr-2">
+                                <template x-for="star in [1,2,3,4,5]" :key="star">
+                                    <svg :class="star <= (session.rating || 4.0) ? 'text-yellow-400' : 'text-gray-300'" 
+                                         class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                    </svg>
+                                </template>
+                            </div>
+                            <span class="text-sm font-bold text-gray-900" x-text="(session.rating || 4.0).toFixed(1)"></span>
+                            <span class="text-sm text-gray-500 ml-1" x-text="`(${session.review_count || 25145})`"></span>
+                        </div>
+                        
+                        <!-- Price -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <template x-if="session.price > 0">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xl font-bold text-gray-900" x-text="`₹${session.price}`"></span>
+                                        <span x-show="session.original_price && session.original_price > session.price" 
+                                              class="text-sm text-gray-500 line-through" 
+                                              x-text="`₹${session.original_price}`"></span>
+                                    </div>
+                                </template>
+                                <template x-if="session.price === 'Free' || session.price == 0">
+                                    <span class="text-xl font-bold text-green-600">Free</span>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action on Hover -->
+                    <div class="course-card-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-center space-y-3">
+                            <button @click="viewDetails(session.id)" 
+                                    class="bg-white text-gray-900 px-6 py-2 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors">
+                                View Details
+                            </button>
+                            <button @click="bookSession(session.id)" 
+                                    class="bg-blue-500 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors block w-full">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Premium Course-Style Cards List View -->
+        <div x-show="viewMode === 'list'" class="space-y-6">
+            <template x-for="(session, index) in filteredSessions" :key="session.id">
+                <div class="course-card bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1">
+                    <div class="flex">
+                        <!-- Course Thumbnail -->
+                        <div class="relative w-64 h-40 flex-shrink-0">
+                            <!-- Real uploaded image if available -->
+                            <div x-show="session.thumbnail" 
+                                 class="w-full h-full bg-cover bg-center" 
+                                 :style="`background-image: url(${session.thumbnail})`"></div>
+                            
+                            <!-- Premium gradient fallback when no image -->
+                            <div x-show="!session.thumbnail" 
+                                 class="w-full h-full flex items-center justify-center"
+                                 :class="`${getSessionCategoryGradient(session.category)}`">
+                                <div class="text-center">
+                                    <div class="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white text-xl font-bold mb-1">
+                                        <span x-text="session.title.charAt(0).toUpperCase()"></span>
+                                    </div>
+                                    <div class="text-white text-xs font-medium" x-text="session.category || 'Course'"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Badges -->
+                            <div x-show="session.is_popular || index < 2" class="absolute top-2 left-2">
+                                <span class="bg-orange-500 text-white px-2 py-1 text-xs font-bold rounded-full">
+                                    Bestseller
+                                </span>
+                            </div>
+                            <div x-show="session.price > 0" class="absolute top-2 right-2">
+                                <span class="bg-purple-600 text-white px-2 py-1 text-xs font-bold rounded-full">
+                                    Premium
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Course Content -->
+                        <div class="flex-1 p-6">
+                            <div class="flex justify-between h-full">
+                                <div class="flex-1 pr-6">
+                                    <h3 class="text-xl font-bold text-gray-900 mb-2" x-text="session.title"></h3>
+                                    <p class="text-sm text-gray-600 mb-3 font-medium" x-text="session.mentor_name"></p>
+                                    
+                                    <!-- Rating -->
+                                    <div class="flex items-center mb-4">
+                                        <div class="flex items-center mr-2">
+                                            <template x-for="star in [1,2,3,4,5]" :key="star">
+                                                <svg :class="star <= (session.rating || 4.0) ? 'text-yellow-400' : 'text-gray-300'" 
+                                                     class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                                </svg>
+                                            </template>
+                                        </div>
+                                        <span class="text-sm font-bold text-gray-900" x-text="(session.rating || 4.0).toFixed(1)"></span>
+                                        <span class="text-sm text-gray-500 ml-1" x-text="`(${session.review_count || 25145})`"></span>
+                                    </div>
+                                    
+                                    <!-- Features -->
+                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                        <span x-text="formatDate(session.schedule)"></span>
+                                        <span x-text="session.duration + ' min'"></span>
+                                        <span x-text="`${session.lesson_count || 3} Lessons`"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Price and Actions -->
+                                <div class="flex flex-col justify-between items-end">
+                                    <div class="text-right mb-4">
+                                        <template x-if="session.price > 0">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-2xl font-bold text-gray-900" x-text="`₹${session.price}`"></span>
+                                                <span x-show="session.original_price && session.original_price > session.price" 
+                                                     class="text-sm text-gray-500 line-through" 
+                                                     x-text="`₹${session.original_price}`"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="session.price === 'Free' || session.price == 0">
+                                            <span class="text-2xl font-bold text-green-600">Free</span>
+                                        </template>
+                                    </div>
+                                    
+                                    <div class="space-y-2">
+                                        <button @click="viewDetails(session.id)" 
+                                                class="w-full px-6 py-2 text-sm font-bold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                                            View Details
+                                        </button>
+                                        <button @click="bookSession(session.id)" 
+                                                class="w-full px-6 py-2 text-sm font-bold text-white bg-blue-500 rounded-xl hover:bg-blue-600 transition-colors">
+                                            Book Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- No Results -->
+        <div x-show="filteredSessions.length === 0" class="text-center py-12">
+            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
+            <p class="text-gray-600">Try adjusting your search or filters to find more sessions.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function browseSessions() {
+    return {
+        // State
+        searchQuery: '',
+        selectedCategory: 'all',
+        priceFilter: 'all',
+        durationFilter: 'all',
+        levelFilter: 'all',
+        sortBy: 'relevance',
+        viewMode: 'grid',
+        
+        // Data
+        sessions: [],
+        categories: [
+            { id: 'programming', name: 'Programming' },
+            { id: 'design', name: 'Design' },
+            { id: 'business', name: 'Business' },
+            { id: 'marketing', name: 'Marketing' },
+            { id: 'data-science', name: 'Data Science' },
+            { id: 'ai-ml', name: 'AI & ML' },
+            { id: 'web-development', name: 'Web Development' },
+            { id: 'mobile-development', name: 'Mobile Development' }
+        ],
+        
+        // Computed
+        get filteredSessions() {
+            let filtered = this.sessions;
+            
+            // Search filter
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                filtered = filtered.filter(session => 
+                    session.title.toLowerCase().includes(query) ||
+                    session.description.toLowerCase().includes(query) ||
+                    session.mentor_name.toLowerCase().includes(query) ||
+                    session.category.toLowerCase().includes(query)
+                );
+            }
+            
+            // Category filter
+            if (this.selectedCategory !== 'all') {
+                filtered = filtered.filter(session => session.category === this.selectedCategory);
+            }
+            
+            // Price filter
+            if (this.priceFilter !== 'all') {
+                if (this.priceFilter === 'free') {
+                    filtered = filtered.filter(session => session.price === 'Free');
+                } else if (this.priceFilter === 'paid') {
+                    filtered = filtered.filter(session => session.price !== 'Free');
+                } else {
+                    const [min, max] = this.priceFilter.split('-').map(Number);
+                    filtered = filtered.filter(session => {
+                        const price = parseInt(session.price) || 0;
+                        return price >= min && (max ? price <= max : true);
+                    });
+                }
+            }
+            
+            // Duration filter
+            if (this.durationFilter !== 'all') {
+                const duration = parseInt(this.durationFilter);
+                filtered = filtered.filter(session => session.duration === duration);
+            }
+            
+            // Level filter
+            if (this.levelFilter !== 'all') {
+                filtered = filtered.filter(session => session.level === this.levelFilter);
+            }
+            
+            // Sort
+            filtered.sort((a, b) => {
+                switch (this.sortBy) {
+                    case 'price_low':
+                        return (parseInt(a.price) || 0) - (parseInt(b.price) || 0);
+                    case 'price_high':
+                        return (parseInt(b.price) || 0) - (parseInt(a.price) || 0);
+                    case 'date':
+                        return new Date(a.schedule) - new Date(b.schedule);
+                    case 'rating':
+                        return b.rating - a.rating;
+                    default:
+                        return 0;
+                }
+            });
+            
+            return filtered;
+        },
+        
+        // Methods
+        init() {
+            this.loadSessions();
+        },
+        
+        async loadSessions() {
+            try {
+                const response = await fetch('/api/sessions/');
+                const data = await response.json();
+                this.sessions = data.sessions || [];
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        },
+        
+        filterSessions() {
+            // This is handled by the computed property
+        },
+        
+        formatDate(dateString) {
+            if (!dateString) return 'TBD';
+            
+            try {
+                const date = new Date(dateString);
+                const options = { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                return date.toLocaleDateString('en-US', options);
+            } catch (e) {
+                return 'TBD';
+            }
+        },
+        
+        getSessionCategoryGradient(category) {
+            const categoryGradients = {
+                'programming': 'bg-gradient-to-br from-blue-500 to-cyan-500',
+                'design': 'bg-gradient-to-br from-purple-500 to-pink-500',
+                'web development': 'bg-gradient-to-br from-blue-500 to-cyan-500',
+                'data science': 'bg-gradient-to-br from-green-500 to-teal-500',
+                'machine learning': 'bg-gradient-to-br from-indigo-500 to-purple-500',
+                'artificial intelligence': 'bg-gradient-to-br from-purple-500 to-pink-500',
+                'mobile development': 'bg-gradient-to-br from-orange-500 to-red-500',
+                'devops': 'bg-gradient-to-br from-teal-500 to-green-500',
+                'cybersecurity': 'bg-gradient-to-br from-pink-500 to-rose-500',
+                'blockchain': 'bg-gradient-to-br from-yellow-500 to-orange-500',
+                'ui/ux': 'bg-gradient-to-br from-purple-500 to-pink-500',
+                'business': 'bg-gradient-to-br from-blue-500 to-cyan-500',
+                'marketing': 'bg-gradient-to-br from-orange-500 to-red-500',
+                'default': 'bg-gradient-to-br from-purple-500 to-pink-500'
+            };
+            
+            const normalizedCategory = category ? category.toLowerCase() : 'default';
+            return categoryGradients[normalizedCategory] || categoryGradients['default'];
+        },
+        
+        viewDetails(sessionId) {
+            window.location.href = `/sessions/${sessionId}/`;
+        },
+
+        bookSession(sessionId) {
+            // Check if user is authenticated
+            if (!this.currentUser) {
+                // Redirect to login with return URL
+                window.location.href = `/auth/login/?next=/sessions/${sessionId}/book/`;
+                return;
+            }
+            
+            // Show booking modal or redirect to booking page
+            window.location.href = `/sessions/${sessionId}/book/`;
+        }
+    }
+}
+</script>
+{% endblock %} 

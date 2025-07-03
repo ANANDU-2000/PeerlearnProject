@@ -9,5 +9,5 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'email', 'first_name', 'last_name')
     
     fieldsets = UserAdmin.fieldsets + (
-        ('Role Information', {'fields': ('role', 'bio', 'expertise', 'profile_image')}),
+        ('Role Information', {'fields': ('role', 'bio', 'skills', 'interests', 'domain', 'profile_image')}),
     )

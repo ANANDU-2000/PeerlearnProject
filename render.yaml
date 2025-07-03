@@ -1,30 +1,44 @@
 services:
+  # Main Web Application
   - type: web
-    name: peerlearn-app             # Must match name you’ll pick on Render
+    name: peerlearn-platform
     env: python
-    region: oregon                  # Same region as your DB
-    plan: free
+    region: oregon
+    plan: starter                   # Upgraded for better performance
     repo: https://github.com/ANANDU-2000/PeerlearnProject
     branch: main
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-      python manage.py migrate --noinput
       python manage.py collectstatic --noinput
+      python manage.py migrate --noinput
     startCommand: |
-      gunicorn peerlearn.wsgi:application
+      gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 peerlearn.wsgi:application
     envVars:
     - key: SECRET_KEY
-      value: "sTdTsNC1uCWR0mF2nHaloYRBNJZwlYYlN77s7cQSiAZ2MYMgSniKmU-rzAd9WJGUu0E"
+      generateValue: true           # Auto-generate secure secret key
     - key: DEBUG
       value: "False"
     - key: ALLOWED_HOSTS
-      value: "peerlearnproject.onrender.com"
+      value: "peerlearn-platform.onrender.com,localhost,127.0.0.1"
+    - key: DJANGO_SETTINGS_MODULE
+      value: "peerlearn.settings"
+    - key: PYTHONPATH
+      value: "/opt/render/project/src"
+    - key: RAZORPAY_KEY_ID
+      value: "rzp_test_JTeqXMBguhg25H"
+    - key: RAZORPAY_KEY_SECRET
+      value: "7FYtozDO4Tb6w0aEZwYtc6DB"
     - key: SENDGRID_API_KEY
-      value: "SG.RL1WCPJ3KJ8QKQWK1HJRQ395"
+      value: "SG.your_sendgrid_key" # Replace with actual key
     - key: DEFAULT_FROM_EMAIL
-      value: "no-reply@yourdomain.com"
-    # DATABASE_URL will be auto‑injected by Render
+      value: "no-reply@peerlearn.com"
+    # DATABASE_URL will be auto-injected by Render when you add a PostgreSQL database
+
+# Additional services can be added:
+# - PostgreSQL database (add via Render dashboard)  
+# - Redis instance (add via Render dashboard)
+# - Background workers for Celery tasks
 
 
 

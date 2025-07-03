@@ -1,7 +1,7 @@
 # Advanced Admin API Endpoints for PeerLearn Platform
 # Comprehensive admin controls with real-time features
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -10,12 +10,16 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mass_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, Avg
+from datetime import datetime, timedelta
+from django.utils import timezone
 import json
 import requests
-from datetime import datetime, timedelta
-from .models import User
-from sessions.models import Session, Booking, Feedback, Notification
+from .models import User, UserActivity, PaymentHistory, Follow
+from sessions.models import Session, Booking, Feedback, Notification, Request
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 def is_admin_user(user):
     return user.is_authenticated and (user.is_superuser or user.is_staff)
@@ -654,3 +658,953 @@ def create_admin_endpoint(request):
             'success': False,
             'error': f'Admin creation failed: {str(e)}'
         })
+
+@login_required
+@require_http_methods(["GET"])
+def get_real_admin_stats(request):
+    """Get real-time admin statistics"""
+    if not (request.user.is_superuser or request.user.is_staff):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+    
+    try:
+        now = timezone.now()
+        today = now.date()
+        
+        # User statistics
+        total_users = User.objects.count()
+        total_mentors = User.objects.filter(role='mentor').count()
+        total_learners = User.objects.filter(role='learner').count()
+        
+        # Online users (active in last 15 minutes)
+        online_threshold = now - timedelta(minutes=15)
+        online_users = User.objects.filter(
+            last_active__gte=online_threshold,
+            is_active=True
+        ).count()
+        
+        # Session statistics
+        total_sessions = Session.objects.count()
+        live_sessions = Session.objects.filter(status='live').count()
+        scheduled_sessions = Session.objects.filter(
+            status='scheduled',
+            schedule__gte=now
+        ).count()
+        completed_sessions = Session.objects.filter(status='completed').count()
+        
+        # Booking statistics
+        total_bookings = Booking.objects.count()
+        confirmed_bookings = Booking.objects.filter(status='confirmed').count()
+        pending_bookings = Booking.objects.filter(status='pending').count()
+        
+        # Revenue statistics
+        total_revenue = PaymentHistory.objects.filter(
+            status='completed',
+            payment_type='session_booking'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        today_revenue = PaymentHistory.objects.filter(
+            status='completed',
+            payment_type='session_booking',
+            created_at__date=today
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Feedback statistics
+        total_feedback = Feedback.objects.count()
+        avg_rating = Feedback.objects.aggregate(avg=Avg('rating'))['avg'] or 0
+        pending_feedback = Feedback.objects.filter(
+            comment='',
+            created_at__gte=now - timedelta(days=7)
+        ).count()
+        
+        # Recent activity counts
+        today_signups = User.objects.filter(date_joined__date=today).count()
+        today_sessions = Session.objects.filter(created_at__date=today).count()
+        
+        stats = {
+            'users': {
+                'total': total_users,
+                'mentors': total_mentors,
+                'learners': total_learners,
+                'online': online_users,
+                'today_signups': today_signups,
+            },
+            'sessions': {
+                'total': total_sessions,
+                'active': live_sessions,
+                'scheduled': scheduled_sessions,
+                'completed': completed_sessions,
+                'today_created': today_sessions,
+            },
+            'bookings': {
+                'total': total_bookings,
+                'confirmed': confirmed_bookings,
+                'pending': pending_bookings,
+            },
+            'revenue': {
+                'total': float(total_revenue),
+                'today': float(today_revenue),
+            },
+            'feedback': {
+                'total': total_feedback,
+                'average_rating': round(float(avg_rating), 2),
+                'pending': pending_feedback,
+            },
+            'last_updated': now.isoformat(),
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+@login_required
+def get_real_users(request):
+    """Get real users from database with full details"""
+    if not request.user.is_staff and not request.user.role == 'admin':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        # Get all users with related data
+        users = User.objects.all().select_related().prefetch_related(
+            'following', 'followers', 'activities'
+        )
+        
+        users_data = []
+        for user in users:
+            users_data.append({
+                'id': str(user.id),
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'is_active': user.is_active,
+                'is_verified': user.is_verified,
+                'date_joined': user.date_joined.isoformat(),
+                'last_login': user.last_login.isoformat() if user.last_login else None,
+                'last_active': user.last_active.isoformat() if user.last_active else None,
+                'total_sessions': user.total_sessions,
+                'session_count': user.total_sessions,
+                'followers_count': user.followers_count,
+                'following_count': user.following_count,
+                'profile_image': user.profile_image_url,
+                'bio': user.bio,
+                'location': user.location,
+                'skills': user.get_skills_list(),
+                'interests': user.get_interests_list(),
+                'is_online': user.is_online,
+                'hourly_rate': float(user.hourly_rate) if user.hourly_rate else None,
+                'total_earnings': float(user.total_earnings) if user.total_earnings else 0,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'users': users_data,
+            'total': users.count(),
+            'stats': {
+                'total_users': users.count(),
+                'active_users': users.filter(is_active=True).count(),
+                'mentors': users.filter(role='mentor').count(),
+                'learners': users.filter(role='learner').count(),
+                'online_users': len([u for u in users if u.is_online]),
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+@login_required
+def get_online_users(request):
+    """Get currently online users"""
+    if not request.user.is_staff and not request.user.role == 'admin':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Consider users online if active in last 5 minutes
+        cutoff_time = timezone.now() - timedelta(minutes=5)
+        online_users = User.objects.filter(last_active__gte=cutoff_time)
+        
+        users_data = []
+        for user in online_users:
+            users_data.append({
+                'id': str(user.id),
+                'username': user.username,
+                'email': user.email,
+                'role': user.role,
+                'last_active': user.last_active.isoformat(),
+                'is_online': True,
+                'profile_image': user.profile_image_url,
+                'activity_status': 'Active' if user.last_active > timezone.now() - timedelta(minutes=1) else 'Recently Active'
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'online_users': users_data,
+            'count': len(users_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+@login_required
+def get_admin_stats(request):
+    """Get comprehensive admin statistics"""
+    if not request.user.is_staff and not request.user.role == 'admin':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        from sessions.models import Session, Booking
+        from datetime import timedelta
+        from django.utils import timezone
+        from django.db.models import Sum, Count, Q
+        
+        # User stats
+        total_users = User.objects.count()
+        active_users = User.objects.filter(is_active=True).count()
+        online_users = User.objects.filter(last_active__gte=timezone.now() - timedelta(minutes=5)).count()
+        new_users_today = User.objects.filter(date_joined__date=timezone.now().date()).count()
+        
+        # Session stats
+        total_sessions = Session.objects.count()
+        active_sessions = Session.objects.filter(status='live').count()
+        sessions_today = Session.objects.filter(created_at__date=timezone.now().date()).count()
+        completed_sessions = Session.objects.filter(status='completed').count()
+        
+        # Revenue stats (from payments)
+        today_revenue = PaymentHistory.objects.filter(
+            created_at__date=timezone.now().date(),
+            status='completed'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        total_revenue = PaymentHistory.objects.filter(
+            status='completed'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Booking stats
+        pending_bookings = Booking.objects.filter(status='pending').count()
+        confirmed_bookings = Booking.objects.filter(status='confirmed').count()
+        
+        # Feedback stats
+        total_feedback = 0  # Will be updated when feedback model is available
+        pending_feedback = 0
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'users': {
+                    'total': total_users,
+                    'active': active_users,
+                    'online': online_users,
+                    'new_today': new_users_today,
+                    'mentors': User.objects.filter(role='mentor').count(),
+                    'learners': User.objects.filter(role='learner').count(),
+                },
+                'sessions': {
+                    'total': total_sessions,
+                    'active': active_sessions,
+                    'today': sessions_today,
+                    'completed': completed_sessions,
+                },
+                'revenue': {
+                    'today': float(today_revenue),
+                    'total': float(total_revenue),
+                    'avg_session': float(total_revenue / max(completed_sessions, 1)),
+                },
+                'bookings': {
+                    'pending': pending_bookings,
+                    'confirmed': confirmed_bookings,
+                },
+                'feedback': {
+                    'total': total_feedback,
+                    'pending': pending_feedback,
+                }
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting admin stats: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def update_user_status(request, user_id):
+    """Update user status (active/banned)"""
+    # Enhanced access control - allow superusers, staff, or users with admin role
+    if not (request.user.is_superuser or request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        user = get_object_or_404(User, id=user_id)
+        
+        # Prevent superusers from being banned by non-superusers
+        if user.is_superuser and not request.user.is_superuser:
+            return JsonResponse({'error': 'Cannot modify superuser accounts'}, status=403)
+        
+        action = data.get('action')
+        reason = data.get('reason', 'No reason provided')
+        
+        if action == 'ban':
+            user.is_active = False
+            # Log admin action with safe activity type
+            UserActivity.objects.create(
+                user=user,
+                activity_type='profile_updated',  # Use existing activity type
+                description=f'Account banned by admin {request.user.username}. Reason: {reason}',
+                related_user_id=request.user.id
+            )
+            message = f'User {user.username} has been banned'
+            
+        elif action == 'unban':
+            user.is_active = True
+            UserActivity.objects.create(
+                user=user,
+                activity_type='profile_updated',  # Use existing activity type
+                description=f'Account unbanned by admin {request.user.username}',
+                related_user_id=request.user.id
+            )
+            message = f'User {user.username} has been unbanned'
+            
+        elif action == 'verify':
+            user.is_verified = True
+            UserActivity.objects.create(
+                user=user,
+                activity_type='profile_updated',  # Use existing activity type
+                description=f'Account verified by admin {request.user.username}',
+                related_user_id=request.user.id
+            )
+            message = f'User {user.username} has been verified'
+            
+        else:
+            return JsonResponse({'error': 'Invalid action'}, status=400)
+        
+        user.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'user': {
+                'id': str(user.id),
+                'username': user.username,
+                'is_active': user.is_active,
+                'is_verified': getattr(user, 'is_verified', False),
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error in update_user_status: {str(e)}")  # Debug logging
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def create_admin_user(request):
+    """Create a new user from admin panel"""
+    if not request.user.is_staff and not request.user.role == 'admin':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Validate required fields
+        required_fields = ['username', 'email', 'password', 'role']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({'error': f'{field} is required'}, status=400)
+        
+        # Check if user already exists
+        if User.objects.filter(email=data['email']).exists():
+            return JsonResponse({'error': 'User with this email already exists'}, status=400)
+        
+        if User.objects.filter(username=data['username']).exists():
+            return JsonResponse({'error': 'User with this username already exists'}, status=400)
+        
+        # Create user
+        user = User.objects.create_user(
+            username=data['username'],
+            email=data['email'],
+            password=data['password'],
+            role=data['role'],
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+            bio=data.get('bio', ''),
+            location=data.get('location', ''),
+            is_verified=data.get('is_verified', False),
+        )
+        
+        # Add role-specific fields
+        if data['role'] == 'mentor':
+            user.hourly_rate = data.get('hourly_rate')
+            user.experience_years = data.get('experience_years', 0)
+            user.skills = data.get('skills', '')
+        elif data['role'] == 'learner':
+            user.interests = data.get('interests', '')
+            user.career_goals = data.get('career_goals', '')
+            user.domain = data.get('domain', '')
+        
+        user.save()
+        
+        # Log activity
+        UserActivity.objects.create(
+            user=user,
+            activity_type='account_created',
+            description=f'Account created by admin {request.user.username}',
+            related_user_id=request.user.id
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'User {user.username} created successfully',
+            'user': {
+                'id': str(user.id),
+                'username': user.username,
+                'email': user.email,
+                'role': user.role,
+                'is_active': user.is_active,
+                'is_verified': user.is_verified,
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+@login_required  
+def get_banned_users(request):
+    """Get list of banned users"""
+    if not request.user.is_staff and not request.user.role == 'admin':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        banned_users = User.objects.filter(is_active=False)
+        
+        users_data = []
+        for user in banned_users:
+            # Get last ban activity
+            ban_activity = UserActivity.objects.filter(
+                user=user,
+                activity_type='banned'
+            ).order_by('-created_at').first()
+            
+            users_data.append({
+                'id': str(user.id),
+                'username': user.username,
+                'email': user.email,
+                'role': user.role,
+                'date_joined': user.date_joined.isoformat(),
+                'banned_at': ban_activity.created_at.isoformat() if ban_activity else None,
+                'ban_reason': ban_activity.description if ban_activity else 'Unknown',
+                'profile_image': user.profile_image_url,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'banned_users': users_data,
+            'count': len(users_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+@login_required
+def get_user_activities(request, user_id):
+    """Get detailed activity log for a specific user"""
+    if not request.user.is_staff and not request.user.role == 'admin':
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        user = get_object_or_404(User, id=user_id)
+        activities = UserActivity.objects.filter(user=user).order_by('-created_at')[:50]
+        
+        activities_data = []
+        for activity in activities:
+            activities_data.append({
+                'id': str(activity.id),
+                'activity_type': activity.activity_type,
+                'description': activity.description,
+                'created_at': activity.created_at.isoformat(),
+                'ip_address': activity.ip_address,
+                'metadata': activity.metadata,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'user': {
+                'id': str(user.id),
+                'username': user.username,
+                'email': user.email,
+            },
+            'activities': activities_data,
+            'count': len(activities_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def get_recent_activity(request):
+    """Get recent platform activity for admin dashboard"""
+    if not (request.user.is_superuser or request.user.is_staff):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+    
+    try:
+        # Get recent activities
+        activities = UserActivity.objects.select_related('user').order_by('-created_at')[:50]
+        
+        activities_data = []
+        for activity in activities:
+            time_diff = timezone.now() - activity.created_at
+            if time_diff.days > 0:
+                time_ago = f"{time_diff.days} days ago"
+            elif time_diff.seconds > 3600:
+                time_ago = f"{time_diff.seconds // 3600} hours ago"
+            elif time_diff.seconds > 60:
+                time_ago = f"{time_diff.seconds // 60} minutes ago"
+            else:
+                time_ago = "Just now"
+            
+            activities_data.append({
+                'id': str(activity.id),
+                'user': activity.user.username,
+                'activity_type': activity.activity_type,
+                'description': activity.description,
+                'time_ago': time_ago,
+                'created_at': activity.created_at.isoformat(),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'activities': activities_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def get_notifications(request):
+    """Get admin notifications"""
+    if not (request.user.is_superuser or request.user.is_staff):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+    
+    try:
+        from sessions.models import Notification
+        
+        # Get notifications for the admin user
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:20]
+        
+        unread_count = notifications.filter(read=False).count()
+        
+        notifications_data = []
+        for notif in notifications:
+            try:
+                time_diff = timezone.now() - notif.created_at
+                if time_diff.days > 0:
+                    time_ago = f"{time_diff.days} days ago"
+                elif time_diff.seconds > 3600:
+                    time_ago = f"{time_diff.seconds // 3600} hours ago"
+                elif time_diff.seconds > 60:
+                    time_ago = f"{time_diff.seconds // 60} minutes ago"
+                else:
+                    time_ago = "Just now"
+                
+                notifications_data.append({
+                    'id': str(notif.id),
+                    'type': notif.type or 'info',
+                    'title': notif.title or 'Notification',
+                    'message': notif.message or '',
+                    'read': notif.read,
+                    'time_ago': time_ago,
+                    'created_at': notif.created_at.isoformat(),
+                })
+            except Exception as inner_e:
+                # Skip problematic notifications
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'notifications': notifications_data,
+            'unread_count': unread_count
+        })
+        
+    except Exception as e:
+        # Return empty notifications if there's an error
+        return JsonResponse({
+            'success': True,
+            'notifications': [],
+            'unread_count': 0,
+            'error_message': f'Error loading notifications: {str(e)}'
+        })
+
+@login_required
+@require_http_methods(["POST"])
+def mark_notification_read(request, notification_id):
+    """Mark notification as read"""
+    if not (request.user.is_superuser or request.user.is_staff):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+    
+    try:
+        notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+        notification.mark_as_read()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Notification marked as read'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def send_user_notification(request):
+    """Send notification to specific users"""
+    if not (request.user.is_superuser or request.user.is_staff):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        user_ids = data.get('user_ids', [])
+        title = data.get('title', '')
+        message = data.get('message', '')
+        
+        if not user_ids or not title or not message:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        # Create notifications for selected users
+        notifications_created = 0
+        for user_id in user_ids:
+            try:
+                user = User.objects.get(id=user_id)
+                Notification.objects.create(
+                    user=user,
+                    type='admin_message',
+                    title=title,
+                    message=message
+                )
+                notifications_created += 1
+            except User.DoesNotExist:
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Notifications sent to {notifications_created} users'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def analytics_data(request):
+    """Get analytics data for mentor dashboard"""
+    try:
+        user = request.user
+        
+        # Get mentor's sessions
+        sessions = Session.objects.filter(mentor=user)
+        
+        # Calculate analytics
+        total_sessions = sessions.count()
+        completed_sessions = sessions.filter(status='completed').count()
+        live_sessions = sessions.filter(status='live').count()
+        
+        # Get total earnings (sum of prices for completed sessions)
+        total_earnings = sessions.filter(
+            status='completed',
+            price__gt=0
+        ).aggregate(
+            total=models.Sum('price')
+        )['total'] or 0
+        
+        # Get unique students count
+        unique_students = Booking.objects.filter(
+            session__mentor=user,
+            status__in=['confirmed', 'attended', 'completed']
+        ).values('learner').distinct().count()
+        
+        # Monthly earnings for last 6 months
+        from datetime import datetime, timedelta
+        import calendar
+        
+        monthly_earnings = []
+        for i in range(6):
+            date = datetime.now() - timedelta(days=30*i)
+            month_name = calendar.month_abbr[date.month]
+            
+            month_earnings = sessions.filter(
+                status='completed',
+                schedule__year=date.year,
+                schedule__month=date.month,
+                price__gt=0
+            ).aggregate(
+                total=models.Sum('price')
+            )['total'] or 0
+            
+            monthly_earnings.insert(0, {
+                'month': month_name,
+                'amount': float(month_earnings)
+            })
+        
+        # Calculate average rating
+        from django.db.models import Avg
+        avg_rating = sessions.filter(
+            feedback__isnull=False
+        ).aggregate(
+            avg_rating=Avg('feedback__rating')
+        )['avg_rating'] or 4.5
+        
+        analytics_data = {
+            'totalSessions': total_sessions,
+            'completedSessions': completed_sessions,
+            'liveSessions': live_sessions,
+            'averageRating': round(float(avg_rating), 1),
+            'totalStudents': unique_students,
+            'totalEarnings': float(total_earnings),
+            'monthlyEarnings': monthly_earnings
+        }
+        
+        return Response({
+            'success': True,
+            'analytics': analytics_data
+        })
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@api_view(['GET'])
+def admin_real_data_api(request):
+    """Get comprehensive real platform data for admin dashboard"""
+    if not (request.user.is_superuser or request.user.is_staff):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+    
+    try:
+        from django.contrib.auth import get_user_model
+        from sessions.models import Session, Booking, Feedback, Request, Notification
+        from django.db.models import Count, Avg, Sum, Q
+        from datetime import datetime, timedelta
+        
+        User = get_user_model()
+        now = timezone.now()
+        today = now.date()
+        
+        # Real User Statistics
+        total_users = User.objects.count()
+        total_mentors = User.objects.filter(role='mentor').count()
+        total_learners = User.objects.filter(role='learner').count()
+        active_users = User.objects.filter(is_active=True).count()
+        banned_users = User.objects.filter(is_active=False).count()
+        
+        # Online users (active in last 30 minutes)
+        thirty_minutes_ago = now - timedelta(minutes=30)
+        online_users = User.objects.filter(last_login__gte=thirty_minutes_ago).count()
+        
+        # Session Statistics
+        total_sessions = Session.objects.count()
+        active_sessions = Session.objects.filter(status='live').count()
+        completed_sessions = Session.objects.filter(status='completed').count()
+        scheduled_sessions = Session.objects.filter(status='scheduled').count()
+        
+        # Today's sessions
+        today_sessions = Session.objects.filter(
+            schedule__date=today
+        ).count()
+        
+        # Booking Statistics
+        total_bookings = Booking.objects.count()
+        confirmed_bookings = Booking.objects.filter(status='confirmed').count()
+        attended_bookings = Booking.objects.filter(status='attended').count()
+        
+        # Request Statistics
+        total_requests = Request.objects.count()
+        pending_requests = Request.objects.filter(status='pending').count()
+        accepted_requests = Request.objects.filter(status='accepted').count()
+        
+        # Financial Data
+        today_revenue = Session.objects.filter(
+            status='completed',
+            schedule__date=today,
+            price__isnull=False
+        ).aggregate(total=Sum('price'))['total'] or 0
+        
+        total_revenue = Session.objects.filter(
+            status='completed',
+            price__isnull=False
+        ).aggregate(total=Sum('price'))['total'] or 0
+        
+        # Platform Health
+        avg_rating = Feedback.objects.aggregate(
+            avg_rating=Avg('rating')
+        )['avg_rating'] or 0
+        
+        # Recent Activities
+        recent_users = list(User.objects.order_by('-date_joined')[:10].values(
+            'id', 'username', 'email', 'first_name', 'last_name', 'role', 'date_joined', 'is_active'
+        ))
+        
+        recent_sessions = list(Session.objects.select_related('mentor').order_by('-created_at')[:10].values(
+            'id', 'title', 'status', 'schedule', 'mentor__username', 'mentor__first_name', 'mentor__last_name'
+        ))
+        
+        recent_requests = list(Request.objects.select_related('learner', 'mentor').order_by('-created_at')[:10].values(
+            'id', 'topic', 'status', 'created_at', 
+            'learner__username', 'learner__first_name', 'learner__last_name',
+            'mentor__username', 'mentor__first_name', 'mentor__last_name'
+        ))
+        
+        # Top Performers
+        top_mentors = list(User.objects.filter(role='mentor').annotate(
+            session_count=Count('mentor_sessions'),
+            avg_rating=Avg('mentor_sessions__feedback__rating')
+        ).order_by('-session_count')[:5].values(
+            'id', 'username', 'first_name', 'last_name', 'session_count', 'avg_rating'
+        ))
+        
+        # System Metrics
+        unread_notifications = Notification.objects.filter(read=False).count()
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'users': {
+                    'total': total_users,
+                    'mentors': total_mentors,
+                    'learners': total_learners,
+                    'active': active_users,
+                    'banned': banned_users,
+                    'online': online_users
+                },
+                'sessions': {
+                    'total': total_sessions,
+                    'active': active_sessions,
+                    'completed': completed_sessions,
+                    'scheduled': scheduled_sessions,
+                    'today': today_sessions
+                },
+                'bookings': {
+                    'total': total_bookings,
+                    'confirmed': confirmed_bookings,
+                    'attended': attended_bookings
+                },
+                'requests': {
+                    'total': total_requests,
+                    'pending': pending_requests,
+                    'accepted': accepted_requests
+                },
+                'revenue': {
+                    'today': float(today_revenue),
+                    'total': float(total_revenue)
+                },
+                'metrics': {
+                    'avg_rating': round(float(avg_rating), 2),
+                    'unread_notifications': unread_notifications
+                },
+                'recent': {
+                    'users': recent_users,
+                    'sessions': recent_sessions,
+                    'requests': recent_requests
+                },
+                'top_mentors': top_mentors,
+                'last_updated': now.isoformat()
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@csrf_exempt
+@api_view(['POST'])
+def admin_user_action_api(request):
+    """Perform actions on users (ban, activate, delete, etc.)"""
+    if not (request.user.is_superuser or request.user.is_staff):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        action = data.get('action')
+        
+        if not user_id or not action:
+            return JsonResponse({'error': 'User ID and action are required'}, status=400)
+        
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        
+        # Prevent admins from affecting superusers unless they are superuser
+        if user.is_superuser and not request.user.is_superuser:
+            return JsonResponse({'error': 'Cannot modify superuser accounts'}, status=403)
+        
+        message = ''
+        
+        if action == 'ban':
+            user.is_active = False
+            user.save()
+            message = f'User {user.username} has been banned'
+            
+        elif action == 'activate':
+            user.is_active = True
+            user.save()
+            message = f'User {user.username} has been activated'
+            
+        elif action == 'delete':
+            if user.is_superuser:
+                return JsonResponse({'error': 'Cannot delete superuser accounts'}, status=403)
+            
+            # Store user info before deletion
+            username = user.username
+            user_email = user.email
+            
+            # Log the deletion action
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='admin_action',
+                description=f'Deleted user: {username} ({user_email})'
+            )
+            
+            # Delete user (Django will handle cascading)
+            user.delete()
+            message = f'User {username} has been permanently deleted'
+            
+        elif action == 'make_mentor':
+            user.role = 'mentor'
+            user.save()
+            message = f'User {user.username} is now a mentor'
+            
+        elif action == 'make_learner':
+            user.role = 'learner'
+            user.save()
+            message = f'User {user.username} is now a learner'
+            
+        else:
+            return JsonResponse({'error': 'Invalid action'}, status=400)
+        
+        return JsonResponse({
+            'success': True,
+            'message': message
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

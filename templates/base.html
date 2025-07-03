@@ -1,9 +1,14 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PeerLearn - Learn from Experts Live{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,6 +22,132 @@
     <!-- Custom CSS -->
     <style>
         [x-cloak] { display: none !important; }
+        
+        /* Premium Course Cards Global Styles */
+        .course-card {
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .course-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+        
+        .course-card-overlay {
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Gradient Category Colors */
+        .gradient-web-dev { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+        .gradient-design { background: linear-gradient(135deg, #EC4899, #BE185D); }
+        .gradient-data { background: linear-gradient(135deg, #8B5CF6, #6D28D9); }
+        .gradient-mobile { background: linear-gradient(135deg, #10B981, #047857); }
+        .gradient-devops { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .gradient-ai { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        .gradient-blockchain { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+        .gradient-general { background: linear-gradient(135deg, #64748B, #475569); }
+
+        /* Premium Course Card Session Color Functions */
+        .session-color-1 { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+        .session-color-2 { background: linear-gradient(135deg, #EC4899, #BE185D); }
+        .session-color-3 { background: linear-gradient(135deg, #8B5CF6, #6D28D9); }
+        .session-color-4 { background: linear-gradient(135deg, #10B981, #047857); }
+        .session-color-5 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .session-color-6 { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        .session-color-7 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+        .session-color-8 { background: linear-gradient(135deg, #64748B, #475569); }
+
+        /* Scrollbar Hide Utility */
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .scrollbar-hide::-webkit-scrollbar { 
+            display: none;  /* Safari and Chrome */
+        }
+
+        /* Touch Pan X for Mobile */
+        .touch-pan-x {
+            touch-action: pan-x;
+        }
+
+        /* Line Clamp Utilities */
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .line-clamp-3 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+        }
+
+        /* Mobile Responsive Grid */
+        @media (max-width: 768px) {
+            .course-grid {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+            
+            .course-grid::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .course-grid .course-card {
+                flex: 0 0 280px;
+                scroll-snap-align: start;
+                margin-right: 1rem;
+            }
+        }
+
+        /* Premium Effects */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Animation Utilities */
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Category Badge Colors */
+        .badge-web-dev { @apply bg-blue-100 text-blue-800; }
+        .badge-design { @apply bg-pink-100 text-pink-800; }
+        .badge-data { @apply bg-purple-100 text-purple-800; }
+        .badge-mobile { @apply bg-green-100 text-green-800; }
+        .badge-devops { @apply bg-yellow-100 text-yellow-800; }
+        .badge-ai { @apply bg-red-100 text-red-800; }
+        .badge-blockchain { @apply bg-indigo-100 text-indigo-800; }
+        .badge-general { @apply bg-gray-100 text-gray-800; }
     </style>
     
     {% block extra_head %}{% endblock %}
@@ -30,7 +161,13 @@
                 <!-- Logo and main nav -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <a href="{% url 'landing' %}" class="text-2xl font-bold text-blue-600">PeerLearn</a>
+                        {% if user.is_mentor %}
+                            <a href="{% url 'mentor_dashboard' %}" class="text-2xl font-bold text-blue-600">PeerLearn</a>
+                        {% elif user.is_learner %}
+                            <a href="{% url 'learner_dashboard' %}" class="text-2xl font-bold text-blue-600">PeerLearn</a>
+                        {% else %}
+                            <a href="{% url 'landing' %}" class="text-2xl font-bold text-blue-600">PeerLearn</a>
+                        {% endif %}
                     </div>
                     
                     <!-- Desktop Navigation -->
@@ -66,15 +203,30 @@
                         <div>
                             <button @click="open = !open" type="button" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="user-menu-button">
                                 <span class="sr-only">Open user menu</span>
-                                <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                                    <span class="text-white text-sm font-medium">{{ user.first_name|first|default:user.username|first }}</span>
-                                </div>
+                                {% if user.profile_image %}
+                                    <img class="h-8 w-8 rounded-full object-cover" src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}">
+                                {% else %}
+                                    <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                                        <span class="text-white text-sm font-medium">{{ user.first_name|first|default:user.username|first }}</span>
+                                    </div>
+                                {% endif %}
                             </button>
                         </div>
                         
                         <div x-show="open" @click.away="open = false" x-cloak class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                            <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                            <div class="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
+                                <div class="font-medium">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="text-gray-500">{{ user.email }}</div>
+                                <div class="text-xs text-blue-600 capitalize">{{ user.role }}</div>
+                            </div>
+                            <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i data-feather="user" class="h-4 w-4 inline mr-2"></i>
+                                Profile
+                            </a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i data-feather="log-out" class="h-4 w-4 inline mr-2"></i>
+                                Sign out
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -103,18 +255,29 @@
             <div class="pt-4 pb-3 border-t border-gray-200">
                 <div class="flex items-center px-4">
                     <div class="flex-shrink-0">
-                        <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                            <span class="text-white font-medium">{{ user.first_name|first|default:user.username|first }}</span>
-                        </div>
+                        {% if user.profile_image %}
+                            <img class="h-10 w-10 rounded-full object-cover" src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}">
+                        {% else %}
+                            <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                                <span class="text-white font-medium">{{ user.first_name|first|default:user.username|first }}</span>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="ml-3">
                         <div class="text-base font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</div>
                         <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
+                        <div class="text-xs text-blue-600 capitalize">{{ user.role }}</div>
                     </div>
                 </div>
                 <div class="mt-3 space-y-1">
-                    <a href="{% url 'profile' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Profile</a>
-                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Sign out</a>
+                    <a href="{% url 'profile' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+                        <i data-feather="user" class="h-4 w-4 inline mr-2"></i>
+                        Profile
+                    </a>
+                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+                        <i data-feather="log-out" class="h-4 w-4 inline mr-2"></i>
+                        Sign out
+                    </a>
                 </div>
             </div>
         </div>
@@ -217,6 +380,84 @@
     <!-- Initialize Feather Icons -->
     <script>
         feather.replace();
+    </script>
+    
+    <!-- Premium Course Cards JavaScript Functions -->
+    <script>
+        function getSessionColor(title) {
+            if (!title) return '#3B82F6';
+            const colors = [
+                '#3B82F6', // Blue
+                '#EC4899', // Pink  
+                '#8B5CF6', // Purple
+                '#10B981', // Green
+                '#F59E0B', // Orange
+                '#EF4444', // Red
+                '#6366F1', // Indigo
+                '#64748B'  // Gray
+            ];
+            
+            // Generate consistent color based on title hash
+            let hash = 0;
+            for (let i = 0; i < title.length; i++) {
+                const char = title.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function getSessionColorSecondary(title) {
+            if (!title) return '#1D4ED8';
+            const secondaryColors = [
+                '#1D4ED8', // Blue secondary
+                '#BE185D', // Pink secondary
+                '#6D28D9', // Purple secondary
+                '#047857', // Green secondary
+                '#D97706', // Orange secondary
+                '#DC2626', // Red secondary
+                '#4F46E5', // Indigo secondary
+                '#475569'  // Gray secondary
+            ];
+            
+            // Generate consistent secondary color
+            let hash = 0;
+            for (let i = 0; i < title.length; i++) {
+                const char = title.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return secondaryColors[Math.abs(hash) % secondaryColors.length];
+        }
+
+        function getSessionCategoryColor(category) {
+            const categoryColors = {
+                'web_development': { primary: '#3B82F6', secondary: '#1D4ED8' },
+                'programming': { primary: '#3B82F6', secondary: '#1D4ED8' },
+                'design': { primary: '#EC4899', secondary: '#BE185D' },
+                'ui_ux': { primary: '#EC4899', secondary: '#BE185D' },
+                'data_science': { primary: '#8B5CF6', secondary: '#6D28D9' },
+                'machine_learning': { primary: '#8B5CF6', secondary: '#6D28D9' },
+                'mobile_development': { primary: '#10B981', secondary: '#047857' },
+                'ios': { primary: '#10B981', secondary: '#047857' },
+                'android': { primary: '#10B981', secondary: '#047857' },
+                'devops': { primary: '#F59E0B', secondary: '#D97706' },
+                'cloud': { primary: '#F59E0B', secondary: '#D97706' },
+                'ai': { primary: '#EF4444', secondary: '#DC2626' },
+                'artificial_intelligence': { primary: '#EF4444', secondary: '#DC2626' },
+                'blockchain': { primary: '#6366F1', secondary: '#4F46E5' },
+                'cryptocurrency': { primary: '#6366F1', secondary: '#4F46E5' },
+                'default': { primary: '#64748B', secondary: '#475569' }
+            };
+            
+            const normalizedCategory = category ? category.toLowerCase().replace(/\s+/g, '_') : 'default';
+            return categoryColors[normalizedCategory] || categoryColors['default'];
+        }
+
+        // Session color functions for Alpine.js
+        window.getSessionColor = getSessionColor;
+        window.getSessionColorSecondary = getSessionColorSecondary;
+        window.getSessionCategoryColor = getSessionCategoryColor;
     </script>
     
     {% block extra_js %}{% endblock %}

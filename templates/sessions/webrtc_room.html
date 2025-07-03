@@ -5,96 +5,335 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ session.title }} - Live Session</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
         }
+        
         .video-container {
             position: relative;
             background: #000;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        
+        .video-container:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+        
         .video-element {
             width: 100%;
             height: 100%;
             object-fit: cover;
             background: #1a1a1a;
         }
+        
         .control-panel {
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
+        
         .status-indicator {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             display: inline-block;
             margin-right: 8px;
+            animation: pulse 2s infinite;
         }
-        .status-connected { background: #10b981; }
-        .status-connecting { background: #f59e0b; animation: pulse 2s infinite; }
-        .status-disconnected { background: #ef4444; }
+        
+        .status-connected { 
+            background: #10b981; 
+            animation: none;
+        }
+        .status-connecting { 
+            background: #f59e0b; 
+        }
+        .status-disconnected { 
+            background: #ef4444; 
+        }
+        
+        .network-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        
+        .network-high { background: #10b981; }
+        .network-medium { background: #f59e0b; }
+        .network-low { background: #ef4444; }
+        
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
         }
+        
         .chat-message {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
-            border-left: 3px solid #0056d3;
+            border-left: 3px solid #3b82f6;
+            transition: all 0.2s ease;
         }
+        
+        .chat-message:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(2px);
+        }
+        
         .btn-primary {
-            background: linear-gradient(135deg, #0056d3 0%, #004bb5 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             transition: all 0.3s ease;
+            border: none;
+            outline: none;
         }
+        
         .btn-primary:hover {
-            background: linear-gradient(135deg, #004bb5 0%, #003d96 100%);
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
         }
+        
         .btn-danger {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         }
+        
         .btn-danger:hover {
             background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        .participant-list {
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #1e293b;
+        }
+        
+        .participant-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .participant-list::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        .participant-list::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .modal-overlay {
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .video-grid {
+            display: grid;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            height: 100%;
+            max-height: calc(100vh - 200px);
+        }
+        
+        .video-grid.single {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+        }
+        
+        .video-grid.double {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+        }
+        
+        .video-grid.multiple {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(auto-fit, minmax(200px, 1fr));
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+        }
+        
+        .video-container {
+            min-height: 200px;
+            max-height: 400px;
+            height: 100%;
+            aspect-ratio: 16/9;
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .recording-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .screen-share-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .video-grid.double {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+            
+            .video-grid.multiple {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(auto-fit, minmax(180px, 1fr));
+            }
+            
+            .video-container {
+                min-height: 180px;
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .video-container {
+                min-height: 150px;
+                max-height: 250px;
+            }
+            
+            .control-panel {
+                padding: 1rem;
+            }
+            
+            .control-panel .flex {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
         }
     </style>
 </head>
-<body>
-    <div class="min-h-screen flex flex-col">
+<body x-data="sessionRoom()" class="h-screen">
+    <div class="h-full flex flex-col">
         <!-- Header -->
         <div class="control-panel px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <h1 class="text-white text-xl font-semibold">{{ session.title }}</h1>
-                <div class="flex items-center text-sm text-gray-300">
-                    <span class="status-indicator status-connecting" id="connectionStatus"></span>
-                    <span id="statusText">Connecting...</span>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-3">
+                    <h1 class="text-white text-xl font-bold">{{ session.title }}</h1>
+                    <div class="flex items-center text-sm text-gray-300">
+                        <span class="status-indicator" :class="connectionStatusClass"></span>
+                        <span x-text="statusText">Connecting...</span>
+                    </div>
+                </div>
+                
+                <!-- Session Info -->
+                <div class="flex items-center space-x-4 text-sm text-gray-300">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-clock"></i>
+                        <span x-text="sessionTimer">00:00</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-users"></i>
+                        <span x-text="`${participants.length + 1} participants`"></span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-signal"></i>
+                        <span x-text="networkQuality">High</span>
+                    </div>
                 </div>
             </div>
             
             <div class="flex items-center space-x-4">
-                <div class="text-sm text-gray-300">
-                    Duration: {{ session.duration }} minutes
+                <!-- Session Progress -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-32 bg-gray-700 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                             :style="`width: ${sessionProgress}%`"></div>
+                    </div>
+                    <span class="text-sm text-gray-300" x-text="`${sessionProgress}%`"></span>
                 </div>
+                
+                <!-- Recording Indicator -->
+                <div x-show="isRecording" class="recording-indicator">
+                    <i class="fas fa-circle text-red-400"></i>
+                    REC
+                </div>
+                
+                <!-- User Role Badge -->
                 {% if user_role == 'mentor' %}
-                <div class="bg-blue-500 px-3 py-1 rounded-full text-white text-sm font-medium">
-                    Mentor
+                <div class="bg-blue-500 px-3 py-1 rounded-full text-white text-sm font-medium flex items-center space-x-1">
+                    <i class="fas fa-crown"></i>
+                    <span>Host</span>
                 </div>
                 {% else %}
-                <div class="bg-green-500 px-3 py-1 rounded-full text-white text-sm font-medium">
-                    Learner
+                <div class="bg-green-500 px-3 py-1 rounded-full text-white text-sm font-medium flex items-center space-x-1">
+                    <i class="fas fa-user"></i>
+                    <span>Participant</span>
                 </div>
                 {% endif %}
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex">
+        <div class="flex-1 flex overflow-hidden">
             <!-- Video Area -->
             <div class="flex-1 p-6">
                 {% if is_waiting_room %}
@@ -102,185 +341,499 @@
                 <div class="h-full flex flex-col items-center justify-center">
                     <div class="video-container w-full max-w-2xl h-96 mb-8">
                         <video id="localVideo" class="video-element" autoplay muted playsinline></video>
+                        <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm">
+                            You ({{ user_role|title }})
+                        </div>
                     </div>
                     
                     <div class="text-center text-white mb-8">
-                        <h2 class="text-2xl font-bold mb-2">Waiting Room</h2>
-                        <p class="text-gray-300">Prepare yourself for the session. Check your camera and microphone.</p>
+                        <h2 class="text-3xl font-bold mb-3">Waiting Room</h2>
+                        <p class="text-gray-300 text-lg">Prepare yourself for the session. Check your camera and microphone.</p>
+                    </div>
+                    
+                    <!-- Participant List -->
+                    <div class="w-full max-w-md mb-8">
+                        <h3 class="text-white text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-users mr-2"></i>
+                            Participants (<span x-text="participants.length + 1"></span>)
+                        </h3>
+                        <div class="participant-list bg-gray-800 rounded-lg p-4 space-y-3">
+                            <!-- Mentor -->
+                            <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="user-avatar">{{ session.mentor.username|first|upper }}</div>
+                                    <div>
+                                        <div class="text-white font-medium">{{ session.mentor.username }}</div>
+                                        <div class="text-gray-400 text-sm">Host</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="bg-blue-500 px-2 py-1 rounded text-xs text-white">Host</span>
+                                    <div class="network-indicator network-high"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Learners -->
+                            <template x-for="participant in participants" :key="participant.user_id">
+                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="user-avatar" x-text="participant.username.charAt(0).toUpperCase()"></div>
+                                        <div>
+                                            <div class="text-white font-medium" x-text="participant.username"></div>
+                                            <div class="text-gray-400 text-sm" x-text="participant.joinTime"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="bg-green-500 px-2 py-1 rounded text-xs text-white">Participant</span>
+                                        <div class="network-indicator" :class="participant.networkQuality"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                     
                     <div class="flex space-x-4">
                         {% if user_role == 'mentor' %}
-                        <button onclick="startMainSession()" class="btn-primary px-6 py-3 rounded-lg text-white font-medium">
-                            🚀 Start Session
+                        <button @click="startSession()" 
+                                :disabled="!canStart"
+                                class="btn-primary px-8 py-3 rounded-lg text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                            <i class="fas fa-play"></i>
+                            <span>Start Session</span>
                         </button>
                         {% endif %}
-                        <button onclick="leaveRoom()" class="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg text-white font-medium">
-                            Leave Room
+                        <button @click="leaveRoom()" class="bg-gray-600 hover:bg-gray-700 px-8 py-3 rounded-lg text-white font-medium flex items-center space-x-2">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Leave Room</span>
                         </button>
                     </div>
                 </div>
                 {% else %}
                 <!-- Main Session Room -->
-                <div class="h-full">
+                <div class="h-full flex flex-col">
                     <!-- Video Grid -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-4/5">
-                        <!-- Local Video (Self) -->
-                        <div class="video-container">
-                            <video id="localVideo" class="video-element" autoplay muted playsinline></video>
-                            <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm">
-                                You ({{ user_role|title }})
+                    <div class="flex-1 mb-4">
+                        <div class="video-grid h-full" :class="videoGridClass">
+                            <!-- Local Video (Self) -->
+                            <div class="video-container relative">
+                                <video id="localVideo" class="video-element" autoplay muted playsinline></video>
+                                <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm flex items-center space-x-2">
+                                    <span>You ({{ user_role|title }})</span>
+                                    <div class="flex space-x-1">
+                                        <div class="w-2 h-2 rounded-full" :class="cameraStatus ? 'bg-green-500' : 'bg-red-500'"></div>
+                                        <div class="w-2 h-2 rounded-full" :class="micStatus ? 'bg-green-500' : 'bg-red-500'"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Screen Share Indicator -->
+                                <div x-show="screenSharing" class="screen-share-overlay">
+                                    <i class="fas fa-desktop mr-1"></i>
+                                    Screen Share
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Remote Video (Other participant) -->
-                        <div class="video-container">
-                            <video id="remoteVideo" class="video-element" autoplay playsinline></video>
-                            <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm" id="remoteUserLabel">
-                                Waiting for others...
-                            </div>
+                            
+                            <!-- Remote Videos - FIXED: Enhanced with better debugging and status indicators -->
+                            <template x-for="(participant, index) in participants" :key="participant.user_id">
+                                <div class="video-container relative" x-data="{ 
+                                    streamReady: false, 
+                                    videoLoaded: false, 
+                                    hasError: false,
+                                    connectionStatus: 'connecting',
+                                    lastStatusUpdate: Date.now()
+                                }">
+                                    <video :id="`remoteVideo_${participant.user_id}`" 
+                                           class="video-element" 
+                                           autoplay 
+                                           playsinline
+                                           muted="false"
+                                           @loadstart="console.log('📼 Video load started for:', participant.username)"
+                                           @loadeddata="console.log('📊 Video data loaded for:', participant.username); videoLoaded = true"
+                                           @loadedmetadata="console.log('🎥 Video metadata loaded for:', participant.username); streamReady = true"
+                                           @canplay="console.log('▶️ Video can play for:', participant.username); connectionStatus = 'ready'"
+                                           @playing="console.log('🎬 Video is playing for:', participant.username); connectionStatus = 'playing'"
+                                           @error="console.error('❌ Video error for:', participant.username); hasError = true; connectionStatus = 'error'"
+                                           @stalled="console.warn('⏸️ Video stalled for:', participant.username); connectionStatus = 'stalled'"
+                                           x-init="
+                                               console.log('🎥 Remote video element created for:', participant.username, 'ID:', participant.user_id);
+                                               // Check stream assignment after element creation
+                                               setTimeout(() => {
+                                                   const video = document.getElementById(`remoteVideo_${participant.user_id}`);
+                                                   if (video && !video.srcObject) {
+                                                       console.log('⚠️ Video element exists but no stream assigned for:', participant.username);
+                                                   } else if (video && video.srcObject) {
+                                                       console.log('✅ Video element has stream for:', participant.username);
+                                                   }
+                                               }, 1000);
+                                           "></video>
+                                    
+                                    <!-- Enhanced Status Indicators -->
+                                    <div x-show="!streamReady || hasError" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-90">
+                                        <div class="text-white text-center p-4">
+                                            <!-- Loading State -->
+                                            <div x-show="!hasError && connectionStatus === 'connecting'" class="space-y-3">
+                                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
+                                                <div class="text-sm">Connecting to <span x-text="participant.username"></span>...</div>
+                                                <div class="text-xs text-gray-400">Setting up video stream</div>
+                                            </div>
+                                            
+                                            <!-- Ready State -->
+                                            <div x-show="!hasError && connectionStatus === 'ready'" class="space-y-3">
+                                                <div class="text-blue-400">
+                                                    <i class="fas fa-check-circle text-2xl"></i>
+                                                </div>
+                                                <div class="text-sm">Video ready for <span x-text="participant.username"></span></div>
+                                            </div>
+                                            
+                                            <!-- Error State -->
+                                            <div x-show="hasError" class="space-y-3">
+                                                <div class="text-red-400">
+                                                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                                                </div>
+                                                <div class="text-sm">Video connection failed</div>
+                                                <div class="text-xs text-gray-400">for <span x-text="participant.username"></span></div>
+                                                <button @click="window.location.reload()" 
+                                                        class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs">
+                                                    Retry Connection
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Enhanced Participant Info -->
+                                    <div class="absolute bottom-4 left-4 bg-black bg-opacity-75 px-3 py-2 rounded-lg text-white text-sm">
+                                        <div class="flex items-center space-x-2">
+                                            <span x-text="participant.username" class="font-medium"></span>
+                                            <span x-show="participant.is_mentor" class="bg-blue-500 px-2 py-0.5 rounded text-xs">Mentor</span>
+                                            <span x-show="!participant.is_mentor" class="bg-green-500 px-2 py-0.5 rounded text-xs">Student</span>
+                                        </div>
+                                        <div class="text-xs text-gray-300 mt-1">
+                                            Status: <span x-text="connectionStatus" class="capitalize"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Enhanced Network & Audio Quality -->
+                                    <div class="absolute top-4 right-4 bg-black bg-opacity-50 px-2 py-1 rounded-lg">
+                                        <div class="flex items-center space-x-2 text-white text-xs">
+                                            <!-- Network Quality -->
+                                            <div class="flex items-center space-x-1">
+                                                <div class="network-indicator w-2 h-2 rounded-full" 
+                                                     :class="{
+                                                         'bg-green-400': participant.networkQuality === 'High',
+                                                         'bg-yellow-400': participant.networkQuality === 'Medium',
+                                                         'bg-red-400': participant.networkQuality === 'Low'
+                                                     }"></div>
+                                                <span x-text="participant.networkQuality"></span>
+                                            </div>
+                                            
+                                            <!-- Audio Quality -->
+                                            <div class="flex items-center space-x-1">
+                                                <i class="fas fa-volume-up" 
+                                                   :class="{
+                                                       'text-green-400': participant.audioQuality === 'High',
+                                                       'text-yellow-400': participant.audioQuality === 'Medium', 
+                                                       'text-orange-400': participant.audioQuality === 'Low',
+                                                       'text-red-400': participant.audioQuality === 'Silent'
+                                                   }"></i>
+                                                <span x-text="participant.audioQuality"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </div>
                     
                     <!-- Control Bar -->
-                    <div class="control-panel mt-6 px-6 py-4 rounded-lg flex items-center justify-between">
+                    <div class="control-panel px-6 py-4 rounded-lg flex items-center justify-between">
                         <div class="flex items-center space-x-4">
                             <!-- Session Timer -->
                             <div class="flex items-center space-x-2 text-white">
-                                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                                <span id="sessionTimer" class="font-mono text-lg">00:00</span>
+                                <i class="fas fa-clock text-red-400"></i>
+                                <span class="font-mono text-lg" x-text="sessionTimer">00:00</span>
                             </div>
                             
                             <!-- Camera Toggle -->
-                            <button id="toggleCamera" onclick="toggleCamera()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white transition-colors">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14 8a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                </svg>
+                            <button @click="toggleCamera()" 
+                                    :class="cameraStatus ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'"
+                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
+                                <i :class="cameraStatus ? 'fas fa-video' : 'fas fa-video-slash'" class="w-5 h-5"></i>
                             </button>
                             
                             <!-- Microphone Toggle -->
-                            <button id="toggleMic" onclick="toggleMicrophone()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path>
-                                </svg>
+                            <button @click="toggleMicrophone()" 
+                                    :class="micStatus ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'"
+                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
+                                <i :class="micStatus ? 'fas fa-microphone' : 'fas fa-microphone-slash'" class="w-5 h-5"></i>
                             </button>
                             
                             <!-- Screen Share -->
-                            <button id="shareScreen" onclick="shareScreen()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-2 0V5H5v10h4a1 1 0 110 2H4a1 1 0 01-1-1V4zm9.707 4.293a1 1 0 010 1.414L9.414 13H11a1 1 0 110 2H7a1 1 0 01-1-1V10a1 1 0 112 0v1.586l3.293-3.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
+                            <button @click="shareScreen()" 
+                                    :class="screenSharing ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'"
+                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
+                                <i class="fas fa-desktop w-5 h-5"></i>
                             </button>
+
+                            <!-- Recording Toggle (Host Only) -->
+                            {% if user_role == 'mentor' %}
+                            <button @click="toggleRecording()" 
+                                    :class="isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'"
+                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
+                                <i :class="isRecording ? 'fas fa-stop-circle' : 'fas fa-record-vinyl'" class="w-5 h-5"></i>
+                            </button>
+                            {% endif %}
 
                             <!-- Gift/Donation Button (for learners) -->
                             {% if user_role == 'learner' %}
-                            <button onclick="openGiftModal()" class="p-3 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white transition-colors" title="Send Gift/Donation">
-                                🎁
+                            <button @click="openGiftModal()" class="p-3 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white transition-all duration-200 flex items-center justify-center">
+                                <i class="fas fa-gift w-5 h-5"></i>
                             </button>
                             {% endif %}
 
                             <!-- Rating & Feedback Button -->
-                            <button onclick="openFeedbackModal()" class="p-3 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-colors" title="Rate & Feedback">
-                                ⭐
+                            <button @click="openFeedbackModal()" class="p-3 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all duration-200 flex items-center justify-center">
+                                <i class="fas fa-star w-5 h-5"></i>
                             </button>
 
                             <!-- Notifications Bell -->
-                            <button onclick="toggleNotifications()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white transition-colors relative">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
-                                </svg>
-                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                            <button @click="toggleNotifications()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white transition-all duration-200 flex items-center justify-center relative">
+                                <i class="fas fa-bell w-5 h-5"></i>
+                                <span x-show="notificationCount > 0" x-text="notificationCount" 
+                                      class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
                             </button>
                         </div>
                         
                         <div class="flex items-center space-x-4">
-                            <!-- Session Time -->
-                            <div class="text-white text-sm" id="sessionTimer">00:00</div>
+                            <!-- Network Quality -->
+                            <div class="flex items-center space-x-2 text-white text-sm">
+                                <i class="fas fa-signal"></i>
+                                <span x-text="networkQuality">High</span>
+                            </div>
                             
-                            <!-- FIXED: Start Session Button for Mentors -->
+                            <!-- Audio Quality -->
+                            <div class="flex items-center space-x-2 text-white text-sm">
+                                <i class="fas fa-volume-up" 
+                                   :class="{
+                                       'text-green-400': audioQuality === 'High',
+                                       'text-yellow-400': audioQuality === 'Medium', 
+                                       'text-orange-400': audioQuality === 'Low',
+                                       'text-red-400': audioQuality === 'Silent'
+                                   }"></i>
+                                <span :class="{
+                                          'text-green-400': audioQuality === 'High',
+                                          'text-yellow-400': audioQuality === 'Medium',
+                                          'text-orange-400': audioQuality === 'Low', 
+                                          'text-red-400': audioQuality === 'Silent'
+                                      }"
+                                      x-text="audioQuality">High</span>
+                            </div>
+                            
+                            <!-- End Session Button (Host Only) -->
                             {% if user_role == 'mentor' %}
-                                {% if session.status == 'published' %}
-                                <button onclick="startSession()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg text-white font-medium transition-colors" id="startSessionBtn">
-                                    🟢 Start Session
-                                </button>
-                                {% else %}
-                                <button onclick="endSession()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white font-medium">
-                                    End Session
-                                </button>
-                                {% endif %}
-                            {% else %}
-                            <button onclick="leaveSession()" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white font-medium">
-                                Leave Session
+                            <button @click="endSession()" class="btn-danger px-6 py-2 rounded-lg text-white font-medium flex items-center space-x-2">
+                                <i class="fas fa-stop"></i>
+                                <span>End Session</span>
                             </button>
                             {% endif %}
+                            
+                            <!-- Leave Button -->
+                            <button @click="leaveRoom()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg text-white font-medium flex items-center space-x-2">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Leave</span>
+                            </button>
                         </div>
                     </div>
                 </div>
                 {% endif %}
             </div>
-
-            <!-- Chat Sidebar -->
-            <div class="w-80 control-panel flex flex-col">
-                <!-- Chat Header -->
-                <div class="px-4 py-3 border-b border-gray-600">
-                    <h3 class="text-white font-medium">Session Chat</h3>
+            
+            <!-- Sidebar -->
+            <div class="w-96 bg-gray-800 border-l border-gray-700 flex flex-col">
+                <!-- Tab Navigation -->
+                <div class="flex border-b border-gray-700">
+                    <button @click="activeTab = 'participants'" 
+                            :class="activeTab === 'participants' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'"
+                            class="flex-1 px-4 py-3 text-sm font-medium transition-colors">
+                        <i class="fas fa-users mr-2"></i>
+                        Participants
+                    </button>
+                    <button @click="activeTab = 'chat'" 
+                            :class="activeTab === 'chat' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'"
+                            class="flex-1 px-4 py-3 text-sm font-medium transition-colors">
+                        <i class="fas fa-comments mr-2"></i>
+                        Chat
+                    </button>
                 </div>
                 
-                <!-- Chat Messages -->
-                <div class="flex-1 overflow-y-auto p-4 space-y-3" id="chatMessages">
-                    <div class="chat-message p-3 rounded-lg">
-                        <div class="text-blue-400 text-sm font-medium">System</div>
-                        <div class="text-gray-300 text-sm">Welcome to the live session!</div>
+                <!-- Participants Tab -->
+                <div x-show="activeTab === 'participants'" class="flex-1 flex flex-col">
+                    <div class="p-4">
+                        <h3 class="text-white font-semibold mb-4">Participants (<span x-text="participants.length + 1"></span>)</h3>
+                        <div class="participant-list space-y-3">
+                            <!-- Mentor -->
+                            <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="user-avatar">{{ session.mentor.username|first|upper }}</div>
+                                    <div>
+                                        <div class="text-white font-medium">{{ session.mentor.username }}</div>
+                                        <div class="text-gray-400 text-sm">Host</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="bg-blue-500 px-2 py-1 rounded text-xs text-white">Host</span>
+                                    <div class="network-indicator network-high"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Learners -->
+                            <template x-for="participant in participants" :key="participant.user_id">
+                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="user-avatar" x-text="participant.username.charAt(0).toUpperCase()"></div>
+                                        <div>
+                                            <div class="text-white font-medium" x-text="participant.username"></div>
+                                            <div class="text-gray-400 text-sm" x-text="participant.joinTime"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="bg-green-500 px-2 py-1 rounded text-xs text-white">Participant</span>
+                                        <div class="network-indicator" :class="participant.networkQuality"></div>
+                                        <!-- Audio Level Indicator -->
+                                        <div class="audio-indicator flex items-center space-x-1">
+                                            <i class="fas fa-volume-up text-xs" 
+                                               :class="{
+                                                   'text-green-400': participant.audioQuality === 'High',
+                                                   'text-yellow-400': participant.audioQuality === 'Medium', 
+                                                   'text-orange-400': participant.audioQuality === 'Low',
+                                                   'text-red-400': participant.audioQuality === 'Silent',
+                                                   'text-gray-400': !participant.audioQuality
+                                               }"></i>
+                                            <span class="text-xs" 
+                                                  :class="{
+                                                      'text-green-400': participant.audioQuality === 'High',
+                                                      'text-yellow-400': participant.audioQuality === 'Medium',
+                                                      'text-orange-400': participant.audioQuality === 'Low', 
+                                                      'text-red-400': participant.audioQuality === 'Silent',
+                                                      'text-gray-400': !participant.audioQuality
+                                                  }"
+                                                  x-text="participant.audioQuality || 'Silent'"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Chat Input -->
-                <div class="p-4 border-t border-gray-600">
+                <!-- Chat Tab -->
+                <div x-show="activeTab === 'chat'" class="flex-1 flex flex-col">
+                    <!-- Chat Messages -->
+                    <div class="flex-1 p-4 overflow-y-auto space-y-3" id="chatMessages">
+                        <template x-for="message in chatMessages" :key="message.id">
+                            <div class="chat-message p-3 rounded">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-blue-400 font-medium" x-text="message.username"></span>
+                                    <span class="text-gray-400 text-xs" x-text="message.timestamp"></span>
+                                </div>
+                                <p class="text-white" x-text="message.message"></p>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <!-- Chat Input -->
+                    <div class="p-4 border-t border-gray-700">
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   x-model="chatMessage" 
+                                   @keyup.enter="sendChatMessage()"
+                                   placeholder="Type a message..."
+                                   class="flex-1 bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button @click="sendChatMessage()" 
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div x-show="showNotification" 
+         x-transition 
+         class="notification-toast bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-check-circle"></i>
+            <span x-text="notificationMessage"></span>
+            <button @click="showNotification = false" class="text-white hover:text-gray-200 ml-2">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Gift Modal -->
+    <div x-show="showGiftModal" 
+         x-transition 
+         class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+        <div class="modal-content p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 class="text-white text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-gift mr-2 text-yellow-400"></i>
+                Send Gift/Donation
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-white mb-2">Amount (₹)</label>
+                    <input type="number" x-model="giftAmount" min="10" step="10" 
+                           class="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                <div>
+                    <label class="block text-white mb-2">Message (Optional)</label>
+                    <textarea x-model="giftMessage" 
+                              class="w-full bg-gray-700 text-white px-3 py-2 rounded h-20 focus:outline-none focus:ring-2 focus:ring-yellow-500"></textarea>
+                </div>
+                <div class="flex space-x-3">
+                    <button @click="sendGift()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded flex items-center justify-center space-x-2">
+                        <i class="fas fa-gift"></i>
+                        <span>Send Gift</span>
+                    </button>
+                    <button @click="showGiftModal = false" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div x-show="showFeedbackModal" 
+         x-transition 
+         class="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+        <div class="modal-content p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 class="text-white text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-star mr-2 text-purple-400"></i>
+                Rate & Feedback
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-white mb-2">Overall Rating</label>
                     <div class="flex space-x-2">
-                        <input type="text" id="chatInput" placeholder="Type a message..." 
-                               class="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button onclick="sendMessage()" class="btn-primary px-4 py-2 rounded-lg text-white text-sm">
-                            Send
-                        </button>
+                        <template x-for="i in 5" :key="i">
+                            <button @click="feedbackRating = i" 
+                                    :class="feedbackRating >= i ? 'text-yellow-400' : 'text-gray-400'"
+                                    class="text-2xl hover:text-yellow-400 transition-colors">★</button>
+                        </template>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Gift/Donation Modal -->
-    <div id="giftModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Send Gift to Mentor</h3>
-                <button onclick="closeGiftModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Gift Amount (₹)</label>
-                    <div class="grid grid-cols-3 gap-2 mb-2">
-                        <button onclick="setGiftAmount(50)" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded text-sm">₹50</button>
-                        <button onclick="setGiftAmount(100)" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded text-sm">₹100</button>
-                        <button onclick="setGiftAmount(200)" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded text-sm">₹200</button>
-                    </div>
-                    <input type="number" id="giftAmount" placeholder="Enter custom amount" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-white mb-2">Comment</label>
+                    <textarea x-model="feedbackComment" 
+                              class="w-full bg-gray-700 text-white px-3 py-2 rounded h-20 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
-                    <textarea id="giftMessage" placeholder="Thank you for the great session!" class="w-full border border-gray-300 rounded-lg px-3 py-2 h-20 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                
                 <div class="flex space-x-3">
-                    <button onclick="sendGift()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium">
-                        🎁 Send Gift
+                    <button @click="submitFeedback()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded flex items-center justify-center space-x-2">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Submit</span>
                     </button>
-                    <button onclick="closeGiftModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium">
+                    <button @click="showFeedbackModal = false" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded">
                         Cancel
                     </button>
                 </div>
@@ -288,644 +841,1287 @@
         </div>
     </div>
 
-    <!-- Feedback & Rating Modal -->
-    <div id="feedbackModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Rate This Session</h3>
-                <button onclick="closeFeedbackModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Rating</label>
-                    <div class="flex space-x-1" id="ratingStars">
-                        <button onclick="setRating(1)" class="text-2xl text-gray-300 hover:text-yellow-400">⭐</button>
-                        <button onclick="setRating(2)" class="text-2xl text-gray-300 hover:text-yellow-400">⭐</button>
-                        <button onclick="setRating(3)" class="text-2xl text-gray-300 hover:text-yellow-400">⭐</button>
-                        <button onclick="setRating(4)" class="text-2xl text-gray-300 hover:text-yellow-400">⭐</button>
-                        <button onclick="setRating(5)" class="text-2xl text-gray-300 hover:text-yellow-400">⭐</button>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-1" id="ratingText">Click to rate</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Feedback</label>
-                    <textarea id="feedbackText" placeholder="Share your experience..." class="w-full border border-gray-300 rounded-lg px-3 py-2 h-24 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                
-                <div class="flex space-x-3">
-                    <button onclick="submitFeedback()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
-                        Submit Feedback
-                    </button>
-                    <button onclick="closeFeedbackModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notifications Panel -->
-    <div id="notificationPanel" class="fixed top-20 right-4 w-80 bg-white rounded-lg shadow-xl border hidden z-50 max-h-96 overflow-y-auto">
-        <div class="p-4 border-b border-gray-200">
-            <h3 class="font-semibold text-gray-800">Live Notifications</h3>
-        </div>
-        <div id="notificationList" class="p-4 space-y-2">
-            <div class="text-sm text-gray-500 text-center">No new notifications</div>
-        </div>
-    </div>
-
-    <!-- WebRTC JavaScript -->
     <script>
-        // WebRTC Configuration
-        const roomId = '{{ room_id }}';
-        const userRole = '{{ user_role }}';
-        const isWaitingRoom = {{ is_waiting_room|yesno:"true,false" }};
-        const sessionTitle = '{{ session.title }}';
-        
-        let localStream = null;
-        let remoteStream = null;
-        let peerConnection = null;
-        let isVideoEnabled = true;
-        let isAudioEnabled = true;
-        let sessionStartTime = null;
-        let sessionTimer = null;
-        let currentRating = 0;
-        let notificationCount = 0;
-        
-        // WebRTC Configuration
-        const rtcConfiguration = {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
-            ]
-        };
-
-        // Initialize WebRTC - FIXED VERSION
-        async function initializeWebRTC() {
-            try {
-                console.log('Initializing WebRTC...');
+        function sessionRoom() {
+            return {
+                // Session state
+                sessionId: '{{ session.id }}',
+                userRole: '{{ user_role }}',
+                isWaitingRoom: {{ is_waiting_room|yesno:"true,false" }},
+                activeTab: 'participants',
                 
-                // Get user media with explicit constraints
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: 'user'
-                    },
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true
+                // Connection state
+                connectionStatus: 'connecting',
+                statusText: 'Connecting...',
+                cameraStatus: true,
+                micStatus: true,
+                screenSharing: false,
+                isRecording: false,
+                networkQuality: 'High',
+                
+                // Session tracking
+                sessionTimer: '00:00',
+                sessionTime: '00:00',
+                sessionProgress: 0,
+                sessionStartTime: null,
+                
+                // Participants and chat
+                participants: [],
+                chatMessages: [],
+                chatMessage: '',
+                
+                // Notifications
+                notificationCount: 0,
+                showNotification: false,
+                notificationMessage: '',
+                
+                // Modals
+                showGiftModal: false,
+                showFeedbackModal: false,
+                giftAmount: 100,
+                giftMessage: '',
+                feedbackRating: 0,
+                feedbackComment: '',
+                
+                // Session control
+                canStart: {% if user_role == 'mentor' and session.can_start %}true{% else %}false{% endif %},
+                
+                // WebSocket connection
+                socket: null,
+                
+                // WebRTC Configuration with STUN/TURN servers
+                peerConnections: {},
+                localStream: null,
+                remoteStreams: {},
+                
+                // Advanced WebRTC configuration
+                rtcConfiguration: {
+                    iceServers: [
+                        // Google STUN servers
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        // Additional reliable STUN servers
+                        { urls: 'stun:stun.stunprotocol.org:3478' },
+                        { urls: 'stun:stun.voiparound.com' },
+                        { urls: 'stun:stun.voipbuster.com' },
+                        // TURN servers (for production, add credentials)
+                        // { 
+                        //     urls: 'turn:your-turn-server.com:3478',
+                        //     username: 'user',
+                        //     credential: 'pass'
+                        // }
+                    ],
+                    iceCandidatePoolSize: 10,
+                    bundlePolicy: 'max-bundle',
+                    rtcpMuxPolicy: 'require'
+                },
+                
+                // Audio analysis
+                audioContext: null,
+                audioAnalyser: null,
+                audioLevel: 0,
+                audioQuality: 'High',
+                
+                // Computed properties
+                get connectionStatusClass() {
+                    return {
+                        'status-connected': this.connectionStatus === 'connected',
+                        'status-connecting': this.connectionStatus === 'connecting',
+                        'status-disconnected': this.connectionStatus === 'disconnected'
                     }
-                });
+                },
                 
-                console.log('Local stream obtained:', localStream);
+                get videoGridClass() {
+                    const totalParticipants = this.participants.length + 1;
+                    if (totalParticipants === 1) return 'single';
+                    if (totalParticipants === 2) return 'double';
+                    return 'multiple';
+                },
                 
-                // Display local video - ENSURE AUTOPLAY
-                const localVideo = document.getElementById('localVideo');
-                if (localVideo) {
-                    localVideo.srcObject = localStream;
-                    localVideo.autoplay = true;
-                    localVideo.muted = true; // Prevent feedback
-                    localVideo.playsInline = true;
-                    
-                    // Force play
+                // Methods
+                init() {
+                    this.connectWebSocket();
+                    this.startSessionTimer();
+                    this.initializeWebRTC();
+                    this.setupAudioAnalysis();
+                    this.monitorNetworkQuality();
+                },
+                
+                async initializeWebRTC() {
                     try {
-                        await localVideo.play();
-                        console.log('Local video playing');
-                    } catch (playError) {
-                        console.log('Autoplay prevented, will play on user interaction');
+                        console.log('🎥 Initializing WebRTC with advanced configuration...');
+                        
+                        // FIXED: Try multiple fallback strategies for better compatibility
+                        const strategies = [
+                            // Strategy 1: High quality
+                            {
+                                video: {
+                                    width: { ideal: 1280, max: 1920 },
+                                    height: { ideal: 720, max: 1080 },
+                                    frameRate: { ideal: 30 },
+                                    facingMode: 'user'
+                                },
+                                audio: {
+                                    echoCancellation: true,
+                                    noiseSuppression: true,
+                                    autoGainControl: true
+                                }
+                            },
+                            // Strategy 2: Standard quality
+                            {
+                                video: { width: 640, height: 480, frameRate: 30 },
+                                audio: true
+                            },
+                            // Strategy 3: Basic quality
+                            {
+                                video: true,
+                                audio: true
+                            },
+                            // Strategy 4: Video only
+                            {
+                                video: true,
+                                audio: false
+                            },
+                            // Strategy 5: Audio only
+                            {
+                                video: false,
+                                audio: true
+                            }
+                        ];
+                        
+                        let streamAcquired = false;
+                        
+                        for (let i = 0; i < strategies.length && !streamAcquired; i++) {
+                            try {
+                                console.log(`📹 Trying media strategy ${i + 1}:`, strategies[i]);
+                                this.localStream = await navigator.mediaDevices.getUserMedia(strategies[i]);
+                                console.log(`✅ Media stream acquired with strategy ${i + 1}`);
+                                streamAcquired = true;
+                                
+                                // Set camera and mic status based on acquired tracks
+                                this.cameraStatus = this.localStream.getVideoTracks().length > 0;
+                                this.micStatus = this.localStream.getAudioTracks().length > 0;
+                                
+                                console.log(`📊 Stream status - Video: ${this.cameraStatus}, Audio: ${this.micStatus}`);
+                                
+                            } catch (error) {
+                                console.warn(`⚠️ Strategy ${i + 1} failed:`, error.name, error.message);
+                                if (i === strategies.length - 1) {
+                                    throw error; // Re-throw if all strategies failed
+                                }
+                            }
+                        }
+                        
+                        // Set local video
+                        const localVideo = document.getElementById('localVideo');
+                        if (localVideo && this.localStream) {
+                            localVideo.srcObject = this.localStream;
+                            console.log('🎬 Local video stream assigned successfully');
+                            
+                            // Remove any test mode indicators
+                            localVideo.style.display = 'block';
+                            
+                            // Setup audio analysis if we have audio
+                            if (this.micStatus) {
+                                this.setupAudioAnalysis();
+                            }
+                        }
+                        
+                        console.log('✅ WebRTC initialized successfully');
+                        this.showToast('📹 Camera and microphone ready');
+                        
+                    } catch (error) {
+                        console.error('❌ WebRTC initialization failed:', error);
+                        
+                        // FIXED: Better error handling without test mode
+                        let errorMessage = '';
+                        if (error.name === 'NotReadableError') {
+                            errorMessage = '📹 Camera/microphone in use by another application';
+                        } else if (error.name === 'NotAllowedError') {
+                            errorMessage = '🔒 Camera/microphone permission denied';
+                        } else if (error.name === 'NotFoundError') {
+                            errorMessage = '🎥 No camera/microphone found';
+                        } else {
+                            errorMessage = '⚠️ Media devices not available';
+                        }
+                        
+                        this.showToast(errorMessage);
+                        this.cameraStatus = false;
+                        this.micStatus = false;
+                        
+                        // FIXED: Create a proper placeholder without "Test Mode" text
+                        this.createBetterPlaceholder();
+                        
+                        // Still allow WebRTC signaling for text chat and screen sharing
+                        console.log('📡 Continuing with signaling-only mode (no local media)');
                     }
-                }
+                },
                 
-                // Update connection status
-                updateConnectionStatus('connected', 'Camera & Microphone Active');
-                showNotification('Camera and microphone connected successfully!', 'success');
-                
-                // Initialize peer connection for main session
-                if (!isWaitingRoom) {
-                    await initializePeerConnection();
-                    startSessionTimer();
-                }
-                
-                // Enable start session button for mentors
-                if (userRole === 'mentor') {
-                    const startBtn = document.querySelector('[onclick="startSession()"]');
-                    if (startBtn) {
-                        startBtn.disabled = false;
-                        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        startBtn.classList.add('hover:bg-green-600');
+                setupAudioAnalysis() {
+                    try {
+                        if (this.localStream && this.localStream.getAudioTracks().length > 0) {
+                            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const source = this.audioContext.createMediaStreamSource(this.localStream);
+                            this.audioAnalyser = this.audioContext.createAnalyser();
+                            
+                            this.audioAnalyser.fftSize = 256;
+                            source.connect(this.audioAnalyser);
+                            
+                            // Start monitoring audio levels
+                            this.monitorAudioLevel();
+                        }
+                    } catch (error) {
+                        console.warn('Audio analysis setup failed:', error);
                     }
-                }
+                },
                 
-            } catch (error) {
-                console.error('Error accessing media devices:', error);
-                updateConnectionStatus('disconnected', 'Media access denied');
-                showNotification('Please allow camera/microphone access to join the video session', 'error');
-                
-                // Show detailed error message
-                if (error.name === 'NotAllowedError') {
-                    showNotification('Camera permission denied. Please refresh and allow access.', 'error');
-                } else if (error.name === 'NotFoundError') {
-                    showNotification('No camera/microphone found. Please check your devices.', 'error');
-                }
-            }
-        }
-
-        // Initialize Peer Connection - ENHANCED FOR MULTI-TAB
-        async function initializePeerConnection() {
-            peerConnection = new RTCPeerConnection(rtcConfiguration);
-            
-            // Add local stream tracks
-            localStream.getTracks().forEach(track => {
-                console.log('Adding track:', track);
-                peerConnection.addTrack(track, localStream);
-            });
-            
-            // Handle remote stream - FIXED FOR BOTH TABS
-            peerConnection.ontrack = (event) => {
-                console.log('Received remote track:', event);
-                const remoteVideo = document.getElementById('remoteVideo');
-                if (remoteVideo && event.streams[0]) {
-                    remoteVideo.srcObject = event.streams[0];
-                    remoteVideo.autoplay = true;
-                    remoteVideo.playsInline = true;
+                monitorAudioLevel() {
+                    const dataArray = new Uint8Array(this.audioAnalyser.frequencyBinCount);
                     
-                    // Force play for remote video
-                    remoteVideo.play().then(() => {
-                        console.log('Remote video playing');
-                        showNotification('Partner connected! You can now see each other.', 'success');
-                        document.getElementById('remoteUserLabel').textContent = 'Live Participant';
-                    }).catch(e => console.log('Remote video autoplay issue:', e));
-                }
-            };
-            
-            // Enhanced ICE candidate handling
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    console.log('ICE candidate:', event.candidate);
-                    // Store ICE candidate (implement signaling server for production)
-                    sendSignalingMessage({
-                        type: 'ice-candidate',
-                        candidate: event.candidate,
-                        sessionId: '{{ session.id }}',
-                        userId: '{{ user.id }}'
+                    const updateAudioLevel = () => {
+                        if (this.audioAnalyser) {
+                            this.audioAnalyser.getByteFrequencyData(dataArray);
+                            
+                            // Calculate average audio level
+                            let sum = 0;
+                            for (let i = 0; i < dataArray.length; i++) {
+                                sum += dataArray[i];
+                            }
+                            this.audioLevel = sum / dataArray.length;
+                            
+                            // Determine audio quality based on level
+                            if (this.audioLevel > 50) {
+                                this.audioQuality = 'High';
+                            } else if (this.audioLevel > 25) {
+                                this.audioQuality = 'Medium';
+                            } else if (this.audioLevel > 10) {
+                                this.audioQuality = 'Low';
+                            } else {
+                                this.audioQuality = 'Silent';
+                            }
+                        }
+                        
+                        requestAnimationFrame(updateAudioLevel);
+                    };
+                    
+                    updateAudioLevel();
+                },
+                
+                async handleWebRTCSignal(data) {
+                    console.log('Handling WebRTC signal:', data.signal_type, 'from:', data.from_user);
+                    
+                    switch (data.signal_type) {
+                        case 'offer':
+                            await this.handleWebRTCOffer(data);
+                            break;
+                        case 'answer':
+                            await this.handleWebRTCAnswer(data);
+                            break;
+                        case 'ice_candidate':
+                            await this.handleICECandidate(data);
+                            break;
+                    }
+                },
+                
+                async createPeerConnection(remoteUserId) {
+                    console.log('🔗 Creating peer connection for user:', remoteUserId);
+                    
+                    const pc = new RTCPeerConnection(this.rtcConfiguration);
+                    this.peerConnections[remoteUserId] = pc;
+                    
+                    // Add local stream to peer connection (if available)
+                    if (this.localStream) {
+                        this.localStream.getTracks().forEach(track => {
+                            console.log('📹 Adding local track:', track.kind, 'to peer connection');
+                            pc.addTrack(track, this.localStream);
+                        });
+                    } else {
+                        console.log('⚠️ No local stream available - test mode signaling only');
+                    }
+                    
+                    // FIXED: Enhanced remote stream handling with better timing
+                    pc.ontrack = (event) => {
+                        const username = this.getUsernameById(remoteUserId);
+                        console.log('🎥 Received remote stream from:', username, 'UserID:', remoteUserId);
+                        console.log('📊 Stream details:', {
+                            streamId: event.streams[0].id,
+                            trackCount: event.streams[0].getTracks().length,
+                            videoTracks: event.streams[0].getVideoTracks().length,
+                            audioTracks: event.streams[0].getAudioTracks().length
+                        });
+                        
+                        // Store the stream immediately
+                        this.remoteStreams[remoteUserId] = event.streams[0];
+                        
+                        // Try to find video element with multiple attempts
+                        let attempts = 0;
+                        const maxAttempts = 20;
+                        
+                        const assignStreamToVideo = () => {
+                            const remoteVideo = document.getElementById(`remoteVideo_${remoteUserId}`);
+                            if (remoteVideo) {
+                                console.log('✅ Found video element for:', username, '- Assigning stream');
+                                remoteVideo.srcObject = event.streams[0];
+                                
+                                // Add comprehensive event listeners
+                                remoteVideo.onloadstart = () => console.log('📼 Video load started for:', username);
+                                remoteVideo.onloadeddata = () => console.log('📊 Video data loaded for:', username);
+                                remoteVideo.oncanplay = () => console.log('▶️ Video can play for:', username);
+                                remoteVideo.onplaying = () => {
+                                    console.log('🎬 Video is playing for:', username);
+                                    this.showToast(`🎥 Video connected with ${username}`);
+                                };
+                                remoteVideo.onerror = (error) => {
+                                    console.error('❌ Video error for:', username, error);
+                                    this.showToast(`❌ Video error for ${username}`);
+                                };
+                                
+                                return true;
+                            } else if (attempts < maxAttempts) {
+                                attempts++;
+                                console.log(`⏳ Stream assignment attempt ${attempts}/${maxAttempts} for:`, username);
+                                setTimeout(assignStreamToVideo, 200);
+                                return false;
+                            } else {
+                                console.error('❌ Could not find video element for stream assignment:', username);
+                                this.showToast(`❌ Video display failed for ${username}`);
+                                return false;
+                            }
+                        };
+                        
+                        // Start stream assignment
+                        assignStreamToVideo();
+                    };
+                    
+                    // Handle ICE candidates
+                    pc.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            console.log('🧊 Sending ICE candidate to:', remoteUserId);
+                            this.sendWebSocketMessage({
+                                type: 'ice_candidate',
+                                candidate: event.candidate,
+                                to_user: remoteUserId
+                            });
+                        } else {
+                            console.log('✅ ICE gathering complete for:', remoteUserId);
+                        }
+                    };
+                    
+                    // Monitor connection state
+                    pc.onconnectionstatechange = () => {
+                        const state = pc.connectionState;
+                        const username = this.getUsernameById(remoteUserId);
+                        console.log(`🔄 Peer connection state for ${username}:`, state);
+                        
+                        if (state === 'connected') {
+                            this.showToast(`✅ Connected with ${username}`);
+                        } else if (state === 'connecting') {
+                            this.showToast(`🔄 Connecting to ${username}...`);
+                        } else if (state === 'failed') {
+                            this.showToast(`❌ Connection failed with ${username}, retrying...`);
+                            setTimeout(() => this.recreatePeerConnection(remoteUserId), 3000);
+                        } else if (state === 'disconnected') {
+                            this.showToast(`⚠️ Disconnected from ${username}`);
+                        }
+                    };
+                    
+                    // Monitor ICE connection state
+                    pc.oniceconnectionstatechange = () => {
+                        console.log(`🧊 ICE connection state for ${this.getUsernameById(remoteUserId)}:`, pc.iceConnectionState);
+                    };
+                    
+                    return pc;
+                },
+                
+                // FIXED: Enhanced video element management with better timing
+                ensureVideoElementAndInitiateCall(userId) {
+                    const participant = this.participants.find(p => p.user_id === userId);
+                    if (!participant) {
+                        console.warn('Participant not found:', userId);
+                        return;
+                    }
+                    
+                    console.log('🔍 Ensuring video element exists for:', participant.username);
+                    
+                    // Check if video element exists, retry if not
+                    let attempts = 0;
+                    const maxAttempts = 20; // Increased attempts
+                    
+                    const checkAndInitiate = () => {
+                        const videoElement = document.getElementById(`remoteVideo_${userId}`);
+                        if (videoElement) {
+                            console.log('✅ Video element found for:', participant.username, '- Initiating WebRTC call');
+                            this.initiateCallWith(userId);
+                            return true;
+                        } else if (attempts < maxAttempts) {
+                            attempts++;
+                            console.log(`⏳ Attempt ${attempts}/${maxAttempts} - Video element not ready for:`, participant.username);
+                            setTimeout(checkAndInitiate, 500);
+                            return false;
+                        } else {
+                            console.error('❌ Video element never appeared for:', participant.username);
+                            // Force DOM update and try once more
+                            this.$nextTick(() => {
+                                const finalCheck = document.getElementById(`remoteVideo_${userId}`);
+                                if (finalCheck) {
+                                    console.log('✅ Final check successful - Initiating call for:', participant.username);
+                                    this.initiateCallWith(userId);
+                                } else {
+                                    console.error('🚨 CRITICAL: Video element missing for:', participant.username);
+                                    this.showToast(`❌ Video setup failed for ${participant.username}`);
+                                }
+                            });
+                            return false;
+                        }
+                    };
+                    
+                    checkAndInitiate();
+                },
+
+                createRemoteVideoElement(userId, stream) {
+                    const participant = this.participants.find(p => p.user_id === userId);
+                    if (participant && stream) {
+                        console.log('📺 Setting up remote video for:', participant.username);
+                        this.remoteStreams[userId] = stream;
+                        
+                        // Enhanced video element finding with better retry logic
+                        let attempts = 0;
+                        const maxAttempts = 15; // Increased attempts
+                        
+                        const setVideoStream = () => {
+                            const remoteVideo = document.getElementById(`remoteVideo_${userId}`);
+                            if (remoteVideo) {
+                                console.log('✅ Found remote video element, setting stream for:', participant.username);
+                                remoteVideo.srcObject = stream;
+                                
+                                // Add event listeners for video ready
+                                remoteVideo.onloadedmetadata = () => {
+                                    console.log('🎥 Video metadata loaded for:', participant.username);
+                                    this.showToast(`📺 Video connected with ${participant.username}`);
+                                };
+                                
+                                remoteVideo.onplaying = () => {
+                                    console.log('▶️ Video playing for:', participant.username);
+                                };
+                                
+                                return true;
+                            } else if (attempts < maxAttempts) {
+                                attempts++;
+                                console.log(`⏳ Attempt ${attempts}/${maxAttempts} - Waiting for video element for:`, participant.username);
+                                setTimeout(setVideoStream, 300); // Faster retry
+                                return false;
+                            } else {
+                                console.warn('❌ Could not find remote video element after', maxAttempts, 'attempts for:', participant.username);
+                                this.showToast(`❌ Video display failed for ${participant.username}`);
+                                return false;
+                            }
+                        };
+                        
+                        // Start trying to set video stream
+                        setVideoStream();
+                    }
+                },
+                
+                getUsernameById(userId) {
+                    const participant = this.participants.find(p => p.user_id === userId);
+                    return participant ? participant.username : 'Unknown';
+                },
+                
+                async handleWebRTCOffer(data) {
+                    console.log('Handling WebRTC offer from:', data.from_user);
+                    
+                    const pc = await this.createPeerConnection(data.from_user);
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    
+                    this.sendWebSocketMessage({
+                        type: 'webrtc_answer',
+                        answer: answer,
+                        to_user: data.from_user
                     });
-                }
-            };
-            
-            // Enhanced connection monitoring
-            peerConnection.onconnectionstatechange = () => {
-                const state = peerConnection.connectionState;
-                console.log('WebRTC Connection state:', state);
+                },
                 
-                if (state === 'connected') {
-                    updateConnectionStatus('connected', '🟢 Both participants connected');
-                    showNotification('Video connection established successfully!', 'success');
-                } else if (state === 'connecting') {
-                    updateConnectionStatus('connecting', '🟡 Connecting to partner...');
-                } else if (state === 'disconnected' || state === 'failed') {
-                    updateConnectionStatus('disconnected', '🔴 Connection lost');
-                    showNotification('Connection lost. Trying to reconnect...', 'error');
-                }
-            };
-
-            // For demo purposes - simulate connection between tabs
-            // In production, use a proper signaling server
-            simulateTabConnection();
-        }
-
-        // ENHANCED: Real-time WebSocket connection for multi-tab video
-        function simulateTabConnection() {
-            // For multi-tab testing - create real WebSocket connection
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${wsProtocol}//${window.location.host}/ws/session/{{ session.id }}/`;
-            
-            try {
-                const socket = new WebSocket(wsUrl);
-                
-                socket.onopen = () => {
-                    console.log('WebSocket connected for real-time video');
-                    showNotification('Connected to session - looking for other participants', 'success');
+                async handleWebRTCAnswer(data) {
+                    console.log('Handling WebRTC answer from:', data.from_user);
                     
-                    // Send join message
-                    socket.send(JSON.stringify({
-                        type: 'join_session',
-                        user_id: '{{ user.id }}',
-                        user_role: userRole,
-                        session_id: '{{ session.id }}'
-                    }));
-                };
+                    const pc = this.peerConnections[data.from_user];
+                    if (pc) {
+                        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+                    }
+                },
                 
-                socket.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    handleSignalingMessage(data);
-                };
+                async handleICECandidate(data) {
+                    console.log('Handling ICE candidate from:', data.from_user);
+                    
+                    const pc = this.peerConnections[data.from_user];
+                    if (pc && data.candidate) {
+                        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    }
+                },
                 
-                socket.onclose = () => {
-                    console.log('WebSocket disconnected');
-                    showNotification('Connection lost - attempting to reconnect', 'error');
-                };
+                async initiateCallWith(remoteUserId) {
+                    const username = this.getUsernameById(remoteUserId);
+                    console.log('🚀 Initiating WebRTC call with:', username, 'UserID:', remoteUserId);
+                    
+                    try {
+                        // Create peer connection
+                        const pc = await this.createPeerConnection(remoteUserId);
+                        console.log('✅ Peer connection created for:', username);
+                        
+                        // Create offer
+                        console.log('📝 Creating offer for:', username);
+                        const offer = await pc.createOffer({
+                            offerToReceiveAudio: true,
+                            offerToReceiveVideo: true
+                        });
+                        
+                        // Set local description
+                        console.log('📤 Setting local description for:', username);
+                        await pc.setLocalDescription(offer);
+                        
+                        // Send offer via WebSocket
+                        console.log('📡 Sending WebRTC offer to:', username);
+                        this.sendWebSocketMessage({
+                            type: 'webrtc_offer',
+                            offer: offer,
+                            to_user: remoteUserId
+                        });
+                        
+                        console.log('✅ WebRTC offer sent successfully to:', username);
+                        
+                    } catch (error) {
+                        console.error('❌ Error initiating call with:', username, error);
+                        this.showToast(`Failed to connect with ${username}: ${error.message}`);
+                    }
+                },
                 
-            } catch (error) {
-                console.log('WebSocket not available, using fallback connection');
-                // Fallback for testing - simulate connection after delay
-                setTimeout(() => {
-                    const remoteVideo = document.getElementById('remoteVideo');
-                    if (remoteVideo && !remoteVideo.srcObject) {
-                        // Create realistic demo video for testing
+                async recreatePeerConnection(remoteUserId) {
+                    console.log('Recreating peer connection for:', remoteUserId);
+                    
+                    // Close existing connection
+                    if (this.peerConnections[remoteUserId]) {
+                        this.peerConnections[remoteUserId].close();
+                        delete this.peerConnections[remoteUserId];
+                    }
+                    
+                    // Create new connection
+                    await this.createPeerConnection(remoteUserId);
+                    await this.initiateCallWith(remoteUserId);
+                },
+                
+                connectWebSocket() {
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const wsUrl = `${protocol}//${window.location.host}/ws/session/${this.sessionId}/`;
+                    
+                    console.log('🔌 Connecting to WebSocket:', wsUrl);
+                    
+                    this.socket = new WebSocket(wsUrl);
+                    
+                    this.socket.onopen = () => {
+                        this.connectionStatus = 'connected';
+                        this.statusText = 'Connected';
+                        console.log('✅ WebSocket connected successfully');
+                        
+                        // FIXED: Better initial setup sequence
+                        setTimeout(() => {
+                            // Send initial presence message
+                            this.sendWebSocketMessage({
+                                type: 'user_presence',
+                                user_role: this.userRole,
+                                is_ready: true
+                            });
+                            
+                            // Request current session state
+                            this.sendWebSocketMessage({
+                                type: 'get_session_state'
+                            });
+                            
+                            // Announce connection status
+                            this.sendWebSocketMessage({
+                                type: 'connection_status_update',
+                                status: 'connected'
+                            });
+                        }, 500);
+                    };
+                    
+                    this.socket.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            console.log('WebSocket message received:', data);
+                            this.handleWebSocketMessage(data);
+                        } catch (error) {
+                            console.error('Error parsing WebSocket message:', error);
+                        }
+                    };
+                    
+                    this.socket.onclose = (event) => {
+                        this.connectionStatus = 'disconnected';
+                        this.statusText = 'Disconnected';
+                        console.log('WebSocket disconnected:', event.code, event.reason);
+                        
+                        // Attempt reconnection after 3 seconds
+                        if (event.code !== 1000) { // Not a normal closure
+                            setTimeout(() => {
+                                console.log('Attempting to reconnect...');
+                                this.connectWebSocket();
+                            }, 3000);
+                        }
+                    };
+                    
+                    this.socket.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.connectionStatus = 'error';
+                        this.statusText = 'Connection Error';
+                        this.showToast('Connection error. Please check your internet connection.');
+                    };
+                },
+                
+                sendWebSocketMessage(message) {
+                    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                        this.socket.send(JSON.stringify(message));
+                        console.log('WebSocket message sent:', message);
+                    } else {
+                        console.warn('WebSocket not ready, message queued:', message);
+                        // Queue message for when connection is ready
+                        setTimeout(() => {
+                            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                                this.socket.send(JSON.stringify(message));
+                            }
+                        }, 1000);
+                    }
+                },
+                
+                // REMOVED: Duplicate WebRTC functions - using enhanced versions above
+
+                handleWebSocketMessage(data) {
+                    console.log('📨 Received WebSocket message:', data.type, data);
+                    
+                    switch (data.type) {
+                        case 'user_joined':
+                            // Enhanced duplicate prevention - check both user_id and username
+                            const existingUser = this.participants.find(p => 
+                                p.user_id === data.user_id || 
+                                (p.username === data.username && data.username !== 'Anonymous')
+                            );
+                            
+                            // Don't add self to participants list
+                            const isCurrentUser = data.user_id === '{{ user.id }}' || data.username === '{{ user.username }}';
+                            
+                            if (!existingUser && !isCurrentUser && data.user_id && data.username) {
+                                console.log('👥 Adding new participant:', data.username, 'ID:', data.user_id);
+                                this.participants.push({
+                                    user_id: data.user_id,
+                                    username: data.username,
+                                    is_mentor: data.is_mentor || false,
+                                    joinTime: new Date().toLocaleTimeString(),
+                                    networkQuality: 'High',
+                                    audioQuality: 'High',
+                                    isConnected: true,
+                                    connectionStatus: 'connecting'
+                                });
+                                
+                                this.showToast(`${data.username} joined the session`);
+                                console.log('✅ Added participant:', data.username, 'Total participants:', this.participants.length);
+                                
+                                // Update connection status to connected
+                                this.connectionStatus = 'connected';
+                                this.statusText = 'Connected';
+                                
+                                // FIXED: Better timing for video element creation and WebRTC call
+                                this.$nextTick(() => {
+                                    // Wait for Alpine.js to render the new participant
+                                    setTimeout(() => {
+                                        console.log('🚀 Initiating WebRTC call with:', data.username, 'ID:', data.user_id);
+                                        this.ensureVideoElementAndInitiateCall(data.user_id);
+                                        
+                                        // Update participant connection status
+                                        const participant = this.participants.find(p => p.user_id === data.user_id);
+                                        if (participant) {
+                                            participant.connectionStatus = 'connected';
+                                        }
+                                    }, 1000); // Reduced timeout for faster connection
+                                });
+                            } else {
+                                console.log('⏭️ Skipped duplicate or self participant:', data.username);
+                            }
+                            break;
+                            
+                        case 'webrtc_offer':
+                            this.handleWebRTCSignal({
+                                signal_type: 'offer',
+                                from_user: data.from_user,
+                                offer: data.offer
+                            });
+                            break;
+                            
+                        case 'webrtc_answer':
+                            this.handleWebRTCSignal({
+                                signal_type: 'answer',
+                                from_user: data.from_user,
+                                answer: data.answer
+                            });
+                            break;
+                            
+                        case 'ice_candidate':
+                            this.handleWebRTCSignal({
+                                signal_type: 'ice_candidate',
+                                from_user: data.from_user,
+                                candidate: data.candidate
+                            });
+                            break;
+                            
+                        case 'audio_level':
+                            if (data.user_id) {
+                                const participant = this.participants.find(p => p.user_id === data.user_id);
+                                if (participant) {
+                                    participant.audioQuality = data.quality;
+                                    participant.audioLevel = data.level;
+                                }
+                            }
+                            break;
+                            
+                        case 'user_left':
+                            this.participants = this.participants.filter(p => p.user_id !== data.user_id);
+                            if (data.username) {
+                                this.showToast(`${data.username} left the session`);
+                            }
+                            break;
+                            
+                        case 'chat_message':
+                            if (data.message && data.username) {
+                                this.chatMessages.push({
+                                    id: data.message_id || Date.now(),
+                                    username: data.username,
+                                    message: data.message,
+                                    timestamp: data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString()
+                                });
+                                this.scrollChatToBottom();
+                            }
+                            break;
+                            
+                        case 'session_started':
+                            this.isWaitingRoom = false;
+                            this.sessionStartTime = new Date();
+                            this.showToast('Session has started!');
+                            break;
+                            
+                        case 'session_ended':
+                            this.showToast('Session has ended');
+                            setTimeout(() => this.leaveRoom(), 3000);
+                            break;
+                            
+                        case 'network_quality_update':
+                            if (data.user_id) {
+                                const participant = this.participants.find(p => p.user_id === data.user_id);
+                                if (participant && data.quality) {
+                                    participant.networkQuality = data.quality;
+                                }
+                                // Update own network quality if it's for current user
+                                if (data.user_id === '{{ user.id }}') {
+                                    this.networkQuality = data.quality;
+                                }
+                            }
+                            break;
+                            
+                        case 'connection_test_response':
+                            // Handle latency measurement
+                            if (data.test_id) {
+                                const latency = Date.now() - data.test_id;
+                                console.log('Measured latency:', latency, 'ms');
+                            }
+                            break;
+                            
+                        case 'mentor_ready':
+                            console.log('👨‍🏫 Mentor ready status:', data);
+                            const mentorParticipant = this.participants.find(p => p.user_id === data.user_id);
+                            if (mentorParticipant) {
+                                mentorParticipant.isReady = data.is_ready;
+                            }
+                            this.showToast(`${data.username} is ${data.is_ready ? 'ready' : 'not ready'}`);
+                            break;
+                            
+                        case 'session_started':
+                            console.log('🎬 Session started:', data);
+                            this.isWaitingRoom = false;
+                            this.sessionStartTime = new Date();
+                            this.showToast('Session has started!');
+                            break;
+                            
+                        case 'connection_status_update':
+                            console.log('🔄 Connection status update:', data);
+                            const participant = this.participants.find(p => p.user_id === data.user_id);
+                            if (participant) {
+                                participant.connectionStatus = data.status;
+                            }
+                            break;
+                            
+                        case 'session_state':
+                            console.log('📊 Session state received:', data);
+                            if (data.data && data.data.participants) {
+                                // Update participants list with current session state
+                                data.data.participants.forEach(p => {
+                                    const existing = this.participants.find(existing => existing.user_id === p.user_id);
+                                    if (!existing) {
+                                        this.participants.push({
+                                            user_id: p.user_id,
+                                            username: p.username,
+                                            is_mentor: p.is_mentor,
+                                            joinTime: new Date().toLocaleTimeString(),
+                                            networkQuality: p.network_quality || 'High',
+                                            audioQuality: 'High',
+                                            isConnected: true,
+                                            connectionStatus: p.connection_status || 'connected'
+                                        });
+                                        
+                                        // Initiate WebRTC call with existing participants
+                                        setTimeout(() => {
+                                            this.ensureVideoElementAndInitiateCall(p.user_id);
+                                        }, 500);
+                                    }
+                                });
+                            }
+                            break;
+                            
+                        case 'error':
+                            console.error('❌ WebSocket error:', data.message);
+                            this.showToast('Connection error: ' + data.message);
+                            break;
+                            
+                        case 'ping':
+                            // Respond to server ping
+                            this.sendWebSocketMessage({
+                                type: 'pong',
+                                timestamp: data.timestamp
+                            });
+                            break;
+                    }
+                },
+                
+                startSessionTimer() {
+                    setInterval(() => {
+                        if (this.sessionStartTime) {
+                            const elapsed = Math.floor((new Date() - this.sessionStartTime) / 1000);
+                            const minutes = Math.floor(elapsed / 60);
+                            const seconds = elapsed % 60;
+                            this.sessionTimer = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                            this.sessionTime = this.sessionTimer;
+                            
+                            // Calculate progress
+                            const totalDuration = {{ session.duration }} * 60; // Convert to seconds
+                            this.sessionProgress = Math.min(100, (elapsed / totalDuration) * 100);
+                        }
+                    }, 1000);
+                },
+                
+                monitorNetworkQuality() {
+                    // Real network quality monitoring
+                    setInterval(() => {
+                        if (this.connectionStatus === 'connected') {
+                            // Send real network quality test
+                            this.sendWebSocketMessage({
+                                type: 'network_quality',
+                                quality: this.calculateNetworkQuality(),
+                                packet_loss: 0.0,
+                                latency: this.measureLatency(),
+                                bandwidth: 0.0
+                            });
+                        }
+                    }, 10000); // Update every 10 seconds
+                },
+                
+                calculateNetworkQuality() {
+                    // Basic network quality calculation based on connection
+                    if (this.connectionStatus === 'connected') {
+                        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                        if (connection) {
+                            const effectiveType = connection.effectiveType;
+                            if (effectiveType === '4g') return 'High';
+                            if (effectiveType === '3g') return 'Medium';
+                            return 'Low';
+                        }
+                    }
+                    return 'High'; // Default
+                },
+                
+                measureLatency() {
+                    // Simple latency measurement
+                    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                        const startTime = Date.now();
+                        this.sendWebSocketMessage({
+                            type: 'connection_test',
+                            test_id: startTime
+                        });
+                        return 50; // Default latency
+                    }
+                    return 0;
+                },
+                
+                async requestMediaPermissions() {
+                    try {
+                        // Try to get both video and audio first
+                        let constraints = { video: true, audio: true };
+                        let stream = null;
+                        
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia(constraints);
+                            this.cameraStatus = true;
+                            this.micStatus = true;
+                        } catch (fullError) {
+                            // If full access fails (e.g., device in use), try video only
+                            console.warn('Full media access failed, trying video only:', fullError);
+                            try {
+                                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                                this.cameraStatus = true;
+                                this.micStatus = false;
+                                this.showToast('Audio not available (device may be in use by another tab)');
+                            } catch (videoError) {
+                                // If video also fails, try audio only
+                                console.warn('Video access failed, trying audio only:', videoError);
+                                try {
+                                    stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                                    this.cameraStatus = false;
+                                    this.micStatus = true;
+                                    this.showToast('Camera not available (device may be in use by another tab)');
+                                } catch (audioError) {
+                                    // If everything fails, show placeholder
+                                    console.error('No media access available:', audioError);
+                                    this.cameraStatus = false;
+                                    this.micStatus = false;
+                                    this.showToast('Camera and microphone not available - testing mode');
+                                    this.createPlaceholderVideo();
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        const localVideo = document.getElementById('localVideo');
+                        if (localVideo && stream) {
+                            localVideo.srcObject = stream;
+                        }
+                        
+                    } catch (error) {
+                        console.error('Media permission error:', error);
+                        this.showToast('Media devices not available - using test mode');
+                        this.createPlaceholderVideo();
+                    }
+                },
+                
+                createBetterPlaceholder() {
+                    // FIXED: Create a better placeholder without "Test Mode" text
+                    const localVideo = document.getElementById('localVideo');
+                    if (localVideo) {
                         const canvas = document.createElement('canvas');
                         canvas.width = 640;
                         canvas.height = 480;
                         const ctx = canvas.getContext('2d');
                         
-                        let frame = 0;
-                        const animate = () => {
-                            // Create moving pattern to simulate live video
-                            ctx.fillStyle = '#1a1a2e';
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            
-                            // Animated background
-                            ctx.fillStyle = `hsl(${(Date.now() / 50) % 360}, 60%, 20%)`;
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            
-                            // Simulate person silhouette
-                            ctx.fillStyle = '#333';
-                            ctx.fillRect(canvas.width/2 - 60, canvas.height/2 - 80, 120, 160);
-                            
-                            // Text overlay
-                            ctx.fillStyle = 'white';
-                            ctx.font = '20px Arial';
-                            ctx.textAlign = 'center';
-                            ctx.fillText('👤 Other Participant', canvas.width/2, canvas.height/2 - 20);
-                            ctx.fillText(`${userRole === 'mentor' ? 'Learner' : 'Mentor'} Video Feed`, canvas.width/2, canvas.height/2 + 10);
-                            
-                            frame++;
-                            requestAnimationFrame(animate);
-                        };
-                        animate();
+                        // Create a nice gradient background
+                        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                        gradient.addColorStop(0, '#667eea');
+                        gradient.addColorStop(1, '#764ba2');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
                         
-                        const stream = canvas.captureStream(30);
-                        remoteVideo.srcObject = stream;
-                        remoteVideo.play();
-                        document.getElementById('remoteUserLabel').textContent = `${userRole === 'mentor' ? 'Learner' : 'Mentor'} Connected`;
-                        updateConnectionStatus('connected', '🟢 Both participants connected');
-                        showNotification('Video connection established! You can now see each other.', 'success');
+                        // Draw user avatar circle
+                        const centerX = canvas.width / 2;
+                        const centerY = canvas.height / 2;
+                        const radius = 60;
+                        
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                        ctx.fill();
+                        
+                        // Draw user initial
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 48px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        const userInitial = '{{ user.username|first|upper }}' || 'U';
+                        ctx.fillText(userInitial, centerX, centerY);
+                        
+                        // Draw username below
+                        ctx.font = '16px Arial';
+                        ctx.fillText('{{ user.username }}', centerX, centerY + 100);
+                        
+                        // Draw camera off indicator
+                        ctx.font = '14px Arial';
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.fillText('📹 Camera not available', centerX, centerY + 130);
+                        
+                        // Convert canvas to stream (very low frame rate for placeholder)
+                        const stream = canvas.captureStream(1);
+                        localVideo.srcObject = stream;
+                        
+                        console.log('🎨 Created better placeholder for local video');
                     }
-                }, 3000);
-            }
-        }
-        
-        // Handle WebSocket signaling messages
-        function handleSignalingMessage(data) {
-            switch(data.type) {
-                case 'user_joined':
-                    showNotification(`${data.username} joined the session`, 'success');
-                    break;
-                case 'offer':
-                    handleOffer(data.offer);
-                    break;
-                case 'answer':
-                    handleAnswer(data.answer);
-                    break;
-                case 'ice-candidate':
-                    handleIceCandidate(data.candidate);
-                    break;
-            }
-        }
-
-        // Media Controls
-        function toggleCamera() {
-            if (localStream) {
-                const videoTrack = localStream.getVideoTracks()[0];
-                if (videoTrack) {
-                    videoTrack.enabled = !videoTrack.enabled;
-                    isVideoEnabled = videoTrack.enabled;
-                    
-                    const button = document.getElementById('toggleCamera');
-                    button.classList.toggle('bg-red-600', !isVideoEnabled);
-                    button.classList.toggle('bg-gray-700', isVideoEnabled);
-                }
-            }
-        }
-
-        function toggleMicrophone() {
-            if (localStream) {
-                const audioTrack = localStream.getAudioTracks()[0];
-                if (audioTrack) {
-                    audioTrack.enabled = !audioTrack.enabled;
-                    isAudioEnabled = audioTrack.enabled;
-                    
-                    const button = document.getElementById('toggleMic');
-                    button.classList.toggle('bg-red-600', !isAudioEnabled);
-                    button.classList.toggle('bg-gray-700', isAudioEnabled);
-                }
-            }
-        }
-
-        async function shareScreen() {
-            try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true,
-                    audio: true
-                });
-                
-                // Replace video track
-                const videoTrack = screenStream.getVideoTracks()[0];
-                const sender = peerConnection.getSenders().find(s => 
-                    s.track && s.track.kind === 'video'
-                );
-                
-                if (sender) {
-                    await sender.replaceTrack(videoTrack);
-                }
-                
-                // Handle screen share end
-                videoTrack.onended = async () => {
-                    const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    const cameraTrack = cameraStream.getVideoTracks()[0];
-                    await sender.replaceTrack(cameraTrack);
-                    
-                    // Update local video
-                    const localVideo = document.getElementById('localVideo');
-                    localVideo.srcObject = new MediaStream([cameraTrack, localStream.getAudioTracks()[0]]);
-                };
-                
-            } catch (error) {
-                console.error('Error sharing screen:', error);
-                showNotification('Screen sharing failed', 'error');
-            }
-        }
-
-        // Session Management
-        function startMainSession() {
-            if (userRole === 'mentor') {
-                fetch(`/api/sessions/{{ session.id }}/start/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = `/sessions/{{ session.id }}/room/`;
-                    } else {
-                        showNotification('Failed to start session', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error starting session:', error);
-                    showNotification('Error starting session', 'error');
-                });
-            }
-        }
-
-        function endSession() {
-            if (confirm('Are you sure you want to end this session?')) {
-                fetch(`/api/sessions/{{ session.id }}/end/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(() => {
-                    window.location.href = '/dashboard/mentor/';
-                })
-                .catch(error => {
-                    console.error('Error ending session:', error);
-                });
-            }
-        }
-
-        function leaveSession() {
-            if (confirm('Are you sure you want to leave this session?')) {
-                if (localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                }
-                if (peerConnection) {
-                    peerConnection.close();
-                }
-                window.location.href = '/dashboard/learner/';
-            }
-        }
-
-        function leaveRoom() {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-            window.location.href = '/sessions/{{ session.id }}/';
-        }
-
-        // Chat Functions
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            
-            if (message) {
-                addChatMessage('You', message, 'self');
-                input.value = '';
-                
-                // Send via WebSocket (implement as needed)
-                sendSignalingMessage({
-                    type: 'chat',
-                    message: message,
-                    sender: userRole
-                });
-            }
-        }
-
-        function addChatMessage(sender, message, type = 'other') {
-            const chatMessages = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message p-3 rounded-lg';
-            
-            const senderColor = type === 'self' ? 'text-blue-400' : 'text-green-400';
-            messageDiv.innerHTML = `
-                <div class="${senderColor} text-sm font-medium">${sender}</div>
-                <div class="text-gray-300 text-sm">${message}</div>
-            `;
-            
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Utility Functions
-        function updateConnectionStatus(status, text) {
-            const indicator = document.getElementById('connectionStatus');
-            const statusText = document.getElementById('statusText');
-            
-            indicator.className = `status-indicator status-${status}`;
-            statusText.textContent = text;
-        }
-
-        function startSessionTimer() {
-            sessionStartTime = Date.now();
-            setInterval(updateTimer, 1000);
-        }
-
-        function updateTimer() {
-            if (sessionStartTime) {
-                const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
-                const minutes = Math.floor(elapsed / 60);
-                const seconds = elapsed % 60;
-                document.getElementById('sessionTimer').textContent = 
-                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }
-        }
-
-        function sendSignalingMessage(message) {
-            // Implement WebSocket signaling as needed
-            console.log('Signaling message:', message);
-        }
-
-        // START SESSION FUNCTION - FIXED FOR MENTORS
-        function startSession() {
-            if (userRole !== 'mentor') {
-                showNotification('Only mentors can start sessions', 'error');
-                return;
-            }
-            
-            if (!localStream) {
-                showNotification('Please allow camera access first', 'error');
-                return;
-            }
-            
-            // Update session status to live
-            fetch(`/sessions/{{ session.id }}/start/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    session_id: '{{ session.id }}'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    isWaitingRoom = false;
-                    showNotification('Session started successfully! Learners can now join.', 'success');
+                
+                // Legacy function for compatibility
+                createPlaceholderVideo() {
+                    this.createBetterPlaceholder();
+                },
+                
+                async toggleCamera() {
+                    const localVideo = document.getElementById('localVideo');
+                    const stream = localVideo.srcObject;
                     
-                    // Update UI
-                    const startBtn = document.querySelector('[onclick="startSession()"]');
-                    if (startBtn) {
-                        startBtn.textContent = '🟢 Session Live';
-                        startBtn.disabled = true;
-                        startBtn.classList.add('bg-green-600');
+                    if (stream) {
+                        const videoTrack = stream.getVideoTracks()[0];
+                        if (videoTrack) {
+                            videoTrack.enabled = !videoTrack.enabled;
+                            this.cameraStatus = videoTrack.enabled;
+                        }
+                    }
+                },
+                
+                async toggleMicrophone() {
+                    const localVideo = document.getElementById('localVideo');
+                    const stream = localVideo.srcObject;
+                    
+                    if (stream) {
+                        const audioTrack = stream.getAudioTracks()[0];
+                        if (audioTrack) {
+                            audioTrack.enabled = !audioTrack.enabled;
+                            this.micStatus = audioTrack.enabled;
+                        }
+                    }
+                },
+                
+                async shareScreen() {
+                    try {
+                        if (!this.screenSharing) {
+                            const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                                video: true
+                            });
+                            
+                            const localVideo = document.getElementById('localVideo');
+                            localVideo.srcObject = screenStream;
+                            this.screenSharing = true;
+                        } else {
+                            // Stop screen sharing
+                            const localVideo = document.getElementById('localVideo');
+                            const stream = localVideo.srcObject;
+                            if (stream) {
+                                stream.getTracks().forEach(track => track.stop());
+                            }
+                            
+                            // Restart camera
+                            await this.requestMediaPermissions();
+                            this.screenSharing = false;
+                        }
+                    } catch (error) {
+                        console.error('Screen sharing error:', error);
+                        this.showToast('Screen sharing failed');
+                    }
+                },
+                
+                toggleRecording() {
+                    this.isRecording = !this.isRecording;
+                    this.showToast(this.isRecording ? 'Recording started' : 'Recording stopped');
+                },
+                
+                sendChatMessage() {
+                    if (this.chatMessage.trim() && this.socket) {
+                        this.socket.send(JSON.stringify({
+                            type: 'chat_message',
+                            message: this.chatMessage.trim()
+                        }));
+                        this.chatMessage = '';
+                    }
+                },
+                
+                scrollChatToBottom() {
+                    setTimeout(() => {
+                        const chatMessages = document.getElementById('chatMessages');
+                        if (chatMessages) {
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                    }, 100);
+                },
+                
+                showToast(message) {
+                    this.notificationMessage = message;
+                    this.showNotification = true;
+                    setTimeout(() => {
+                        this.showNotification = false;
+                    }, 3000);
+                },
+                
+                async startSession() {
+                    try {
+                        const response = await fetch(`/sessions/${this.sessionId}/start/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': this.getCSRFToken(),
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        if (data.status === 'success') {
+                            this.showToast('Session started successfully!');
+                            this.isWaitingRoom = false;
+                            this.sessionStartTime = new Date();
+                        } else {
+                            this.showToast('Failed to start session');
+                        }
+                    } catch (error) {
+                        console.error('Start session error:', error);
+                        this.showToast('Failed to start session');
+                    }
+                },
+                
+                async endSession() {
+                    if (confirm('Are you sure you want to end this session?')) {
+                        try {
+                            const response = await fetch(`/sessions/${this.sessionId}/end/`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRFToken': this.getCSRFToken(),
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            const data = await response.json();
+                            if (data.status === 'success') {
+                                this.showToast('Session ended');
+                                setTimeout(() => this.leaveRoom(), 2000);
+                            } else {
+                                this.showToast('Failed to end session');
+                            }
+                        } catch (error) {
+                            console.error('End session error:', error);
+                            this.showToast('Failed to end session');
+                        }
+                    }
+                },
+                
+                async leaveRoom() {
+                    try {
+                        await fetch(`/sessions/${this.sessionId}/leave/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': this.getCSRFToken(),
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Leave session error:', error);
                     }
                     
-                    // Start timer and enable full features
-                    startSessionTimer();
-                    updateConnectionStatus('connected', '🟢 Session is now live!');
+                    // Close WebSocket
+                    if (this.socket) {
+                        this.socket.close();
+                    }
                     
-                } else {
-                    showNotification('Error starting session: ' + data.message, 'error');
-                }
-            })
-            .catch(error => {
-                showNotification('Network error starting session', 'error');
-                console.error('Start session error:', error);
-            });
-        }
-
-        // END SESSION FUNCTION
-        function endSession() {
-            if (confirm('Are you sure you want to end this session?')) {
-                fetch(`/sessions/{{ session.id }}/end/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json',
+                    // Stop media streams
+                    const localVideo = document.getElementById('localVideo');
+                    if (localVideo && localVideo.srcObject) {
+                        localVideo.srcObject.getTracks().forEach(track => track.stop());
                     }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification('Session ended successfully', 'success');
-                        window.location.href = '/dashboard/mentor/';
+                    
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard/learner/';
+                },
+                
+                openGiftModal() {
+                    this.showGiftModal = true;
+                },
+                
+                async sendGift() {
+                    try {
+                        const response = await fetch('/sessions/gift-payment/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': this.getCSRFToken(),
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                session_id: this.sessionId,
+                                amount: this.giftAmount,
+                                message: this.giftMessage
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        if (data.status === 'success') {
+                            this.showToast('Gift sent successfully!');
+                            this.showGiftModal = false;
+                        } else {
+                            this.showToast('Failed to send gift');
+                        }
+                    } catch (error) {
+                        console.error('Send gift error:', error);
+                        this.showToast('Failed to send gift');
                     }
-                });
-            }
-        }
-
-        // LEAVE SESSION FUNCTION
-        function leaveSession() {
-            if (confirm('Are you sure you want to leave this session?')) {
-                window.location.href = '/dashboard/learner/';
-            }
-        }
-
-        function showNotification(message, type = 'info') {
-            // Create enhanced notification
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 shadow-lg transform transition-all duration-300 ${
-                type === 'error' ? 'bg-red-500' : 
-                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-            }`;
-            
-            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
-            notification.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <span>${icon}</span>
-                    <span>${message}</span>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Animate in
-            setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-            
-            // Remove after delay
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => notification.remove(), 300);
-            }, 4000);
-        }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+                },
+                
+                openFeedbackModal() {
+                    this.showFeedbackModal = true;
+                },
+                
+                async submitFeedback() {
+                    try {
+                        const response = await fetch(`/sessions/${this.sessionId}/feedback/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': this.getCSRFToken(),
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                rating: this.feedbackRating,
+                                comment: this.feedbackComment
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            this.showToast('Feedback submitted successfully!');
+                            this.showFeedbackModal = false;
+                        } else {
+                            this.showToast('Failed to submit feedback');
+                        }
+                    } catch (error) {
+                        console.error('Submit feedback error:', error);
+                        this.showToast('Failed to submit feedback');
                     }
-                }
+                },
+                
+                toggleNotifications() {
+                    // Toggle notifications panel
+                    this.notificationCount = 0;
+                },
+                
+                getCSRFToken() {
+                    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                           document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+                },
+                
+                // Enhanced WebRTC configuration with test mode detection
+                rtcConfiguration: {
+                    iceServers: [
+                        // Google STUN servers
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        // Additional reliable STUN servers
+                        { urls: 'stun:stun.stunprotocol.org:3478' },
+                        { urls: 'stun:stun.voiparound.com' },
+                        { urls: 'stun:stun.voipbuster.com' },
+                    ],
+                    iceCandidatePoolSize: 10,
+                    bundlePolicy: 'max-bundle',
+                    rtcpMuxPolicy: 'require'
+                },
+                
+                // Test mode detection
+                isTestMode: false,
+                sameDeviceTest: false
             }
-            return cookieValue;
         }
-
-        // Chat input enter key handler
-        document.getElementById('chatInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', initializeWebRTC);
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-            if (peerConnection) {
-                peerConnection.close();
-            }
-        });
     </script>
 </body>
 </html>

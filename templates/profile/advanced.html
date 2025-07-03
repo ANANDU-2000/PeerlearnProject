@@ -1,287 +1,492 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load users_filters %}
 
-{% block title %}Profile Settings - PeerLearn{% endblock %}
+{% block title %}Advanced Profile - PeerLearn{% endblock %}
 
 {% block extra_head %}
 <style>
-    .profile-header {
+    .profile-gradient {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    .stats-card {
+    .profile-card {
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .tab-active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    .tab-inactive {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #e5e7eb;
+    }
+    .tab-inactive:hover {
+        background: #f8fafc;
+        color: #374151;
+        transform: translateY(-1px);
+    }
+    .activity-item {
         transition: all 0.3s ease;
     }
+    .activity-item:hover {
+        background: #f8fafc;
+        transform: translateX(4px);
+    }
+    .image-upload-area {
+        border: 2px dashed #cbd5e1;
+        transition: all 0.3s ease;
+    }
+    .image-upload-area:hover {
+        border-color: #667eea;
+        background: #f8fafc;
+    }
+    .image-upload-area.dragover {
+        border-color: #667eea;
+        background: #e0e7ff;
+    }
+    .profile-image-preview {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+    .stats-card {
+        background: linear-gradient(45deg, #f8fafc, #e2e8f0);
+        border-left: 4px solid #667eea;
+        transition: transform 0.3s ease;
+    }
     .stats-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    }
-    .skill-tag {
-        transition: all 0.2s ease;
-    }
-    .skill-tag:hover {
-        transform: scale(1.05);
+        transform: translateY(-4px);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50" 
-     x-data="profileManager()" 
-     x-init="init()">
-    
+<div class="min-h-screen bg-gray-50" x-data="advancedProfile()" x-init="init()">
     <!-- Profile Header -->
-    <div class="profile-header text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex items-center space-x-6">
-                    <!-- Profile Image -->
-                    <div class="relative">
-                        <div class="w-32 h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-4xl font-bold backdrop-blur-sm">
-                            {% if user.profile_image %}
-                                <img src="{{ user.profile_image.url }}" alt="Profile" class="w-32 h-32 rounded-full object-cover">
+    <div class="profile-gradient text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+                <!-- Profile Image -->
+                <div class="relative">
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image.url }}" alt="Profile" class="profile-image-preview">
+                    {% else %}
+                        <div class="profile-image-preview bg-white bg-opacity-20 flex items-center justify-center text-4xl font-bold text-white">
+                            {{ user.avatar_letter }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Online Status -->
+                    <div class="absolute bottom-4 right-4 w-6 h-6 bg-green-500 rounded-full border-4 border-white"></div>
+                    
+                    <!-- Edit Button -->
+                    <button @click="showImageUpload = true" 
+                            class="absolute top-0 right-0 bg-white bg-opacity-90 text-gray-700 p-2 rounded-full hover:bg-opacity-100 transition-all duration-300">
+                        <i class="fas fa-camera text-sm"></i>
+                    </button>
+                </div>
+                
+                <!-- Profile Info -->
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex items-center justify-center md:justify-start space-x-3 mb-2">
+                        <h1 class="text-3xl font-bold">{{ user.get_full_name|default:user.username }}</h1>
+                        {% if user.is_verified %}
+                            <div class="bg-blue-500 p-1 rounded-full" title="Verified User">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                        {% endif %}
+                        {% if user.is_premium %}
+                            <div class="bg-yellow-500 p-1 rounded-full" title="Premium User">
+                                <i class="fas fa-crown text-white text-xs"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="space-y-2 text-blue-100">
+                        <p class="text-lg">{{ user.role|title }} at PeerLearn</p>
+                        {% if user.bio %}
+                            <p class="text-sm">{{ user.bio }}</p>
+                        {% endif %}
+                        {% if user.location %}
+                            <p class="text-sm">
+                                <i class="fas fa-map-marker-alt mr-2"></i>{{ user.location }}
+                            </p>
+                        {% endif %}
+                        {% if user.website %}
+                            <p class="text-sm">
+                                <i class="fas fa-globe mr-2"></i>
+                                <a href="{{ user.website }}" target="_blank" class="hover:text-white">{{ user.website }}</a>
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="flex justify-center md:justify-start space-x-6 mt-4">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold">{{ user.total_sessions }}</p>
+                            <p class="text-sm text-blue-200">Sessions</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold">{{ user.followers_count }}</p>
+                            <p class="text-sm text-blue-200">Followers</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold">{{ user.following_count }}</p>
+                            <p class="text-sm text-blue-200">Following</p>
+                        </div>
+                        {% if user.is_mentor %}
+                        <div class="text-center">
+                            <p class="text-2xl font-bold">₹{{ user.total_earnings|default:0 }}</p>
+                            <p class="text-sm text-blue-200">Earned</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-col space-y-3">
+                    <button @click="activeTab = 'edit'" 
+                            class="bg-white bg-opacity-20 text-white px-6 py-3 rounded-xl font-semibold hover:bg-opacity-30 transition-all duration-300 flex items-center space-x-2">
+                        <i class="fas fa-edit"></i>
+                        <span>Edit Profile</span>
+                    </button>
+                    
+                    <div class="flex space-x-2">
+                        <!-- Bell Notification -->
+                        <button @click="showNotifications = !showNotifications" 
+                                class="bg-white bg-opacity-20 text-white p-3 rounded-xl hover:bg-opacity-30 transition-all duration-300 relative">
+                            <i class="fas fa-bell"></i>
+                            <span x-show="unreadCount > 0" 
+                                  x-text="unreadCount"
+                                  class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse"></span>
+                        </button>
+                        
+                        <!-- Settings -->
+                        <button @click="activeTab = 'settings'" 
+                                class="bg-white bg-opacity-20 text-white p-3 rounded-xl hover:bg-opacity-30 transition-all duration-300">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-2xl shadow-lg mb-8 p-2">
+            <div class="flex flex-wrap gap-2">
+                <button @click="activeTab = 'overview'"
+                        :class="activeTab === 'overview' ? 'tab-active' : 'tab-inactive'"
+                        class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Overview</span>
+                </button>
+                
+                <button @click="activeTab = 'sessions'"
+                        :class="activeTab === 'sessions' ? 'tab-active' : 'tab-inactive'"
+                        class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2">
+                    <i class="fas fa-video"></i>
+                    <span>Sessions</span>
+                </button>
+                
+                <button @click="activeTab = 'payments'"
+                        :class="activeTab === 'payments' ? 'tab-active' : 'tab-inactive'"
+                        class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Payments</span>
+                </button>
+                
+                <button @click="activeTab = 'activity'"
+                        :class="activeTab === 'activity' ? 'tab-active' : 'tab-inactive'"
+                        class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2">
+                    <i class="fas fa-history"></i>
+                    <span>Activity</span>
+                </button>
+                
+                <button @click="activeTab = 'followers'"
+                        :class="activeTab === 'followers' ? 'tab-active' : 'tab-inactive'"
+                        class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2">
+                    <i class="fas fa-users"></i>
+                    <span>Social</span>
+                </button>
+                
+                <button @click="activeTab = 'edit'"
+                        :class="activeTab === 'edit' ? 'tab-active' : 'tab-inactive'"
+                        class="px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2">
+                    <i class="fas fa-edit"></i>
+                    <span>Edit Profile</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2">
+                <!-- Overview Tab -->
+                <div x-show="activeTab === 'overview'" class="space-y-6">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="stats-card p-6 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Total Sessions</p>
+                                    <p class="text-3xl font-bold text-gray-900">{{ user.total_sessions }}</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-video text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if user.is_mentor %}
+                        <div class="stats-card p-6 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Total Earnings</p>
+                                    <p class="text-3xl font-bold text-gray-900">₹{{ user.total_earnings|default:0 }}</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-rupee-sign text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="stats-card p-6 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Followers</p>
+                                    <p class="text-3xl font-bold text-gray-900">{{ user.followers_count }}</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-heart text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card p-6 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Profile Views</p>
+                                    <p class="text-3xl font-bold text-gray-900" x-text="profileViews">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-eye text-yellow-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skills/Interests -->
+                    <div class="profile-card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">
+                            {% if user.is_mentor %}Skills{% else %}Interests{% endif %}
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% if user.is_mentor and user.skills %}
+                                {% for skill in user.get_skills_list %}
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                        {{ skill }}
+                                    </span>
+                                {% endfor %}
+                            {% elif user.is_learner and user.interests %}
+                                {% for interest in user.get_interests_list %}
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                        {{ interest }}
+                                    </span>
+                                {% endfor %}
                             {% else %}
-                                <span>{{ user.first_name|first|default:user.username|first|upper }}</span>
+                                <p class="text-gray-500">No {{ user.is_mentor|yesno:"skills,interests" }} added yet.</p>
                             {% endif %}
                         </div>
-                        <button @click="showImageUpload = true" 
-                                class="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-colors">
-                            <i data-feather="camera" class="h-4 w-4"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Profile Info -->
-                    <div>
-                        <h1 class="text-4xl font-bold">{{ user.get_full_name|default:user.username }}</h1>
-                        <p class="text-xl text-blue-100 mt-2">@{{ user.username }}</p>
-                        <div class="flex items-center space-x-4 mt-4">
-                            <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium capitalize">
-                                {{ user.role }}
-                            </span>
-                            <span class="text-blue-100">Member since {{ user.date_joined|date:"M Y" }}</span>
-                        </div>
                     </div>
                 </div>
-                
-                <!-- Quick Stats -->
-                <div class="mt-8 lg:mt-0">
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
-                            <div class="text-2xl font-bold">{{ profile_stats.sessions_count|default:0 }}</div>
-                            <div class="text-xs text-blue-100">{% if user.is_mentor %}Sessions Created{% else %}Sessions Attended{% endif %}</div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
-                            <div class="text-2xl font-bold">{{ profile_stats.rating|default:0.0|floatformat:1 }}</div>
-                            <div class="text-xs text-blue-100">Average Rating</div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
-                            <div class="text-2xl font-bold">{{ profile_stats.followers|default:0 }}</div>
-                            <div class="text-xs text-blue-100">Followers</div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center backdrop-blur-sm">
-                            <div class="text-2xl font-bold">{{ profile_stats.hours|default:0 }}</div>
-                            <div class="text-xs text-blue-100">Total Hours</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Tab Navigation -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="border-b border-gray-200 bg-white rounded-t-xl shadow-sm -mt-4 relative z-10">
-            <nav class="flex space-x-8 px-6" aria-label="Tabs">
-                <template x-for="tab in tabs" :key="tab.id">
-                    <button @click="activeTab = tab.id" 
-                            :class="activeTab === tab.id ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2">
-                        <i :data-feather="tab.icon" class="h-4 w-4"></i>
-                        <span x-text="tab.name"></span>
-                    </button>
-                </template>
-            </nav>
-        </div>
-    </div>
+                <!-- Sessions Tab -->
+                <div x-show="activeTab === 'sessions'" class="space-y-6">
+                    <div class="profile-card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Session History</h3>
+                        <div class="space-y-4" id="sessionsContainer">
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p>Loading sessions...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Tab Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-b-xl shadow-sm border-t-0 p-8">
-            
-            <!-- Basic Information Tab -->
-            <div x-show="activeTab === 'basic'">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Basic Information</h2>
-                    <button @click="toggleEdit('basic')" 
-                            :class="editMode.basic ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'"
-                            class="px-4 py-2 text-white rounded-lg transition-colors">
-                        <span x-text="editMode.basic ? 'Save Changes' : 'Edit Profile'"></span>
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                        <template x-if="editMode.basic">
-                            <input x-model="formData.firstName" 
-                                   type="text" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </template>
-                        <template x-if="!editMode.basic">
-                            <p class="text-gray-900 py-3" x-text="formData.firstName"></p>
-                        </template>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                        <template x-if="editMode.basic">
-                            <input x-model="formData.lastName" 
-                                   type="text" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </template>
-                        <template x-if="!editMode.basic">
-                            <p class="text-gray-900 py-3" x-text="formData.lastName"></p>
-                        </template>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                        <template x-if="editMode.basic">
-                            <input x-model="formData.email" 
-                                   type="email" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </template>
-                        <template x-if="!editMode.basic">
-                            <p class="text-gray-900 py-3" x-text="formData.email"></p>
-                        </template>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                        <p class="text-gray-500 py-3">@{{ user.username }} <span class="text-xs">(cannot be changed)</span></p>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                        <template x-if="editMode.basic">
-                            <textarea x-model="formData.bio" 
-                                      rows="4" 
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
-                        </template>
-                        <template x-if="!editMode.basic">
-                            <p class="text-gray-900 py-3" x-text="formData.bio || 'No bio provided'"></p>
-                        </template>
+                <!-- Payments Tab -->
+                <div x-show="activeTab === 'payments'" class="space-y-6">
+                    <div class="profile-card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Payment History</h3>
+                        <div class="space-y-4" id="paymentsContainer">
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p>Loading payment history...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Skills & Expertise Tab -->
-            <div x-show="activeTab === 'expertise'">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">
-                        <span x-text="'{{ user.role }}' === 'mentor' ? 'Teaching Expertise' : 'Learning Interests'"></span>
-                    </h2>
-                    <button @click="toggleEdit('expertise')" 
-                            :class="editMode.expertise ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'"
-                            class="px-4 py-2 text-white rounded-lg transition-colors">
-                        <span x-text="editMode.expertise ? 'Save Changes' : 'Edit Expertise'"></span>
-                    </button>
+                <!-- Activity Tab -->
+                <div x-show="activeTab === 'activity'" class="space-y-6">
+                    <div class="profile-card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+                        <div class="space-y-3" id="activityContainer">
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p>Loading activity...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Domains -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold mb-4">
-                        <span x-text="'{{ user.role }}' === 'mentor' ? 'Teaching Domains' : 'Interest Areas'"></span>
-                    </h3>
-                    
-                    <template x-if="editMode.expertise">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <template x-for="domain in availableDomains" :key="domain.value">
-                                <label class="cursor-pointer">
-                                    <input type="checkbox" 
-                                           :value="domain.value"
-                                           x-model="formData.domains"
-                                           class="sr-only peer">
-                                    <div :class="formData.domains.includes(domain.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'"
-                                         class="border-2 rounded-lg p-3 text-center transition-all">
-                                        <div class="text-xl mb-1" x-text="domain.icon"></div>
-                                        <div class="text-xs font-medium" x-text="domain.name"></div>
-                                    </div>
-                                </label>
-                            </template>
-                        </div>
-                    </template>
-                    
-                    <template x-if="!editMode.expertise">
-                        <div class="flex flex-wrap gap-3">
-                            <template x-for="domain in formData.domains" :key="domain">
-                                <span class="skill-tag bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
-                                      x-text="getDomainName(domain)"></span>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-                
-                <!-- Skills -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Specific Skills</h3>
-                    
-                    <template x-if="editMode.expertise">
-                        <div>
-                            <input x-model="formData.skills" 
-                                   type="text" 
-                                   placeholder="Enter skills separated by commas..."
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <p class="text-xs text-gray-500 mt-1">Separate multiple skills with commas</p>
-                        </div>
-                    </template>
-                    
-                    <template x-if="!editMode.expertise">
-                        <div class="flex flex-wrap gap-2">
-                            <template x-for="skill in getSkillsArray()" :key="skill">
-                                <span class="skill-tag bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm"
-                                      x-text="skill.trim()"></span>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-            </div>
 
-            <!-- Settings Tab -->
-            <div x-show="activeTab === 'settings'">
-                <h2 class="text-2xl font-bold mb-6">Account Settings</h2>
-                
-                <div class="space-y-6">
-                    <!-- Privacy Settings -->
-                    <div class="bg-gray-50 rounded-lg p-6">
-                        <h3 class="text-lg font-semibold mb-4">Privacy Settings</h3>
-                        
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Profile Visibility</h4>
-                                    <p class="text-sm text-gray-600">Allow others to find and view your profile</p>
+                <!-- Social Tab -->
+                <div x-show="activeTab === 'followers'" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Followers -->
+                        <div class="profile-card p-6 rounded-xl">
+                            <h3 class="text-lg font-semibold mb-4">Followers ({{ user.followers_count }})</h3>
+                            <div class="space-y-3" id="followersContainer">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Loading followers...</p>
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input x-model="settings.profileVisible" type="checkbox" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Following -->
+                        <div class="profile-card p-6 rounded-xl">
+                            <h3 class="text-lg font-semibold mb-4">Following ({{ user.following_count }})</h3>
+                            <div class="space-y-3" id="followingContainer">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Loading following...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Profile Tab -->
+                <div x-show="activeTab === 'edit'" class="space-y-6">
+                    <div class="profile-card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Edit Profile</h3>
+                        <form @submit.prevent="updateProfile()" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                    <input type="text" x-model="editForm.first_name" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                    <input type="text" x-model="editForm.last_name" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
                             </div>
                             
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Email Notifications</h4>
-                                    <p class="text-sm text-gray-600">Receive email updates about sessions and platform news</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input x-model="settings.emailNotifications" type="checkbox" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                                <textarea x-model="editForm.bio" rows="3"
+                                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                             </div>
-                        </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                                    <input type="text" x-model="editForm.location" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                                    <input type="url" x-model="editForm.website" 
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                            
+                            {% if user.is_mentor %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Skills (comma-separated)</label>
+                                <input type="text" x-model="editForm.skills" 
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            {% elif user.is_learner %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Interests (comma-separated)</label>
+                                <input type="text" x-model="editForm.interests" 
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            {% endif %}
+                            
+                            <div class="flex space-x-4">
+                                <button type="submit" 
+                                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                                    <i class="fas fa-save"></i>
+                                    <span>Save Changes</span>
+                                </button>
+                                <button type="button" @click="resetForm()" 
+                                        class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Quick Actions -->
+                <div class="profile-card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        {% if user.is_mentor %}
+                            <a href="{% url 'create_session' %}" 
+                               class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                                <i class="fas fa-plus"></i>
+                                <span>Create Session</span>
+                            </a>
+                        {% endif %}
                         
-                        <button @click="saveSettings()" 
-                                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
-                            Save Settings
+                        <a href="{% url 'session_list' %}" 
+                           class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2">
+                            <i class="fas fa-search"></i>
+                            <span>Browse Sessions</span>
+                        </a>
+                        
+                        <button @click="activeTab = 'settings'" 
+                                class="w-full bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Recent Notifications -->
+                <div class="profile-card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center justify-between">
+                        Recent Notifications
+                        <span x-show="unreadCount > 0" 
+                              x-text="unreadCount"
+                              class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"></span>
+                    </h3>
+                    <div class="space-y-3" id="notificationsContainer">
+                        <div class="text-center py-4 text-gray-500">
+                            <i class="fas fa-bell text-2xl mb-2"></i>
+                            <p class="text-sm">No new notifications</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -290,124 +495,365 @@
 
     <!-- Image Upload Modal -->
     <div x-show="showImageUpload" 
-         x-cloak
+         x-transition 
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold mb-4">Update Profile Picture</h3>
-            <div class="space-y-4">
-                <input type="file" accept="image/*" @change="handleImageUpload($event)" 
-                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                <div class="flex space-x-3">
-                    <button @click="showImageUpload = false" 
-                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200">
-                        Cancel
-                    </button>
-                    <button @click="uploadImage()" 
-                            class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
-                        Upload
-                    </button>
-                </div>
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4">Update Profile Image</h3>
+            
+            <div class="image-upload-area p-6 rounded-lg text-center mb-4">
+                <input type="file" 
+                       id="profileImageInput" 
+                       accept="image/*" 
+                       @change="handleImageUpload($event)"
+                       class="hidden">
+                
+                <label for="profileImageInput" class="cursor-pointer">
+                    <div class="space-y-2">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                        <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
+                        <p class="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                    </div>
+                </label>
+            </div>
+            
+            <div x-show="imagePreview" class="mb-4">
+                <img :src="imagePreview" alt="Preview" class="w-32 h-32 rounded-full mx-auto object-cover">
+            </div>
+            
+            <div class="flex space-x-3">
+                <button @click="uploadImage()" 
+                        :disabled="!selectedImage"
+                        class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Upload
+                </button>
+                <button @click="showImageUpload = false; resetImageUpload()" 
+                        class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-function profileManager() {
+function advancedProfile() {
     return {
-        activeTab: 'basic',
+        activeTab: 'overview',
         showImageUpload: false,
+        showNotifications: false,
+        unreadCount: 0,
+        profileViews: 1247,
         
-        editMode: {
-            basic: false,
-            expertise: false
+        // Image upload
+        selectedImage: null,
+        imagePreview: null,
+        
+        // Edit form
+        editForm: {
+            first_name: '{{ user.first_name }}',
+            last_name: '{{ user.last_name }}',
+            bio: '{{ user.bio }}',
+            location: '{{ user.location }}',
+            website: '{{ user.website }}',
+            {% if user.is_mentor %}
+            skills: '{{ user.skills }}',
+            {% elif user.is_learner %}
+            interests: '{{ user.interests }}',
+            {% endif %}
         },
-        
-        tabs: [
-            { id: 'basic', name: 'Basic Info', icon: 'user' },
-            { id: 'expertise', name: 'Expertise', icon: 'book' },
-            { id: 'settings', name: 'Settings', icon: 'settings' }
-        ],
-        
-        formData: {
-            firstName: '{{ user.first_name }}',
-            lastName: '{{ user.last_name }}',
-            email: '{{ user.email }}',
-            bio: '{{ user.bio|default:"" }}',
-            domains: {{ user.expertise|default:"[]"|safe }},
-            skills: ''
-        },
-        
-        settings: {
-            profileVisible: true,
-            emailNotifications: true
-        },
-        
-        availableDomains: [
-            { value: 'web-development', name: 'Web Dev', icon: '🌐' },
-            { value: 'mobile-development', name: 'Mobile', icon: '📱' },
-            { value: 'data-science', name: 'Data Science', icon: '📊' },
-            { value: 'machine-learning', name: 'AI/ML', icon: '🤖' },
-            { value: 'design', name: 'Design', icon: '🎨' },
-            { value: 'business', name: 'Business', icon: '💼' },
-            { value: 'devops', name: 'DevOps', icon: '⚙️' },
-            { value: 'blockchain', name: 'Blockchain', icon: '🔗' },
-            { value: 'cybersecurity', name: 'Security', icon: '🔒' },
-            { value: 'other', name: 'Other', icon: '🔧' }
-        ],
         
         init() {
-            this.updateIcons();
+            this.loadTabData();
+            this.loadNotifications();
+            this.setupRealTimeUpdates();
         },
         
-        toggleEdit(section) {
-            this.editMode[section] = !this.editMode[section];
-            if (!this.editMode[section]) {
-                this.saveProfile(section);
+        loadTabData() {
+            switch(this.activeTab) {
+                case 'sessions':
+                    this.loadSessions();
+                    break;
+                case 'payments':
+                    this.loadPayments();
+                    break;
+                case 'activity':
+                    this.loadActivity();
+                    break;
+                case 'followers':
+                    this.loadSocial();
+                    break;
             }
         },
         
-        saveProfile(section) {
-            // Save profile changes
-            this.showNotification('Profile updated successfully!', 'success');
+        async loadSessions() {
+            try {
+                const response = await fetch('/api/user/sessions/');
+                const data = await response.json();
+                this.renderSessions(data.sessions || []);
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
         },
         
-        saveSettings() {
-            // Save settings
-            this.showNotification('Settings saved successfully!', 'success');
+        async loadPayments() {
+            try {
+                const response = await fetch('/api/user/payments/');
+                const data = await response.json();
+                this.renderPayments(data.payments || []);
+            } catch (error) {
+                console.error('Error loading payments:', error);
+            }
         },
         
-        getDomainName(value) {
-            const domain = this.availableDomains.find(d => d.value === value);
-            return domain ? domain.name : value;
+        async loadActivity() {
+            try {
+                const response = await fetch('/api/user/activity/');
+                const data = await response.json();
+                this.renderActivity(data.activities || []);
+            } catch (error) {
+                console.error('Error loading activity:', error);
+            }
         },
         
-        getSkillsArray() {
-            return this.formData.skills ? this.formData.skills.split(',') : [];
+        async loadSocial() {
+            try {
+                const [followersRes, followingRes] = await Promise.all([
+                    fetch('/api/user/followers/'),
+                    fetch('/api/user/following/')
+                ]);
+                
+                const followers = await followersRes.json();
+                const following = await followingRes.json();
+                
+                this.renderFollowers(followers.users || []);
+                this.renderFollowing(following.users || []);
+            } catch (error) {
+                console.error('Error loading social data:', error);
+            }
+        },
+        
+        async loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications/');
+                const data = await response.json();
+                this.unreadCount = data.unread_count || 0;
+                this.renderNotifications(data.notifications || []);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        },
+        
+        setupRealTimeUpdates() {
+            // WebSocket connection for real-time updates
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/dashboard/`;
+            
+            const socket = new WebSocket(wsUrl);
+            
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'notification') {
+                    this.unreadCount++;
+                    this.loadNotifications();
+                }
+            };
         },
         
         handleImageUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                console.log('Image selected:', file);
+                this.selectedImage = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.imagePreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
         },
         
-        uploadImage() {
-            this.showImageUpload = false;
-            this.showNotification('Profile picture updated!', 'success');
-        },
-        
-        showNotification(message, type = 'info') {
-            console.log(`${type}: ${message}`);
-        },
-        
-        updateIcons() {
-            this.$nextTick(() => {
-                if (typeof feather !== 'undefined') {
-                    feather.replace();
+        async uploadImage() {
+            if (!this.selectedImage) return;
+            
+            const formData = new FormData();
+            formData.append('profile_image', this.selectedImage);
+            
+            try {
+                const response = await fetch('/api/user/profile-image/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                    },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    location.reload(); // Refresh to show new image
+                } else {
+                    alert('Error uploading image');
                 }
-            });
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Error uploading image');
+            }
+        },
+        
+        resetImageUpload() {
+            this.selectedImage = null;
+            this.imagePreview = null;
+            document.getElementById('profileImageInput').value = '';
+        },
+        
+        async updateProfile() {
+            try {
+                const response = await fetch('/api/user/profile/', {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.editForm)
+                });
+                
+                if (response.ok) {
+                    alert('Profile updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error updating profile');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('Error updating profile');
+            }
+        },
+        
+        resetForm() {
+            this.editForm = {
+                first_name: '{{ user.first_name }}',
+                last_name: '{{ user.last_name }}',
+                bio: '{{ user.bio }}',
+                location: '{{ user.location }}',
+                website: '{{ user.website }}',
+                {% if user.is_mentor %}
+                skills: '{{ user.skills }}',
+                {% elif user.is_learner %}
+                interests: '{{ user.interests }}',
+                {% endif %}
+            };
+        },
+        
+        renderSessions(sessions) {
+            const container = document.getElementById('sessionsContainer');
+            if (sessions.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No sessions found.</p>';
+                return;
+            }
+            
+            container.innerHTML = sessions.map(session => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">${session.title}</h4>
+                            <p class="text-sm text-gray-600">${session.date}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${session.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                            ${session.status}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        },
+        
+        renderPayments(payments) {
+            const container = document.getElementById('paymentsContainer');
+            if (payments.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No payment history found.</p>';
+                return;
+            }
+            
+            container.innerHTML = payments.map(payment => `
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">₹${payment.amount}</h4>
+                            <p class="text-sm text-gray-600">${payment.description}</p>
+                            <p class="text-xs text-gray-500">${payment.date}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${payment.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${payment.status}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        },
+        
+        renderActivity(activities) {
+            const container = document.getElementById('activityContainer');
+            if (activities.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No recent activity.</p>';
+                return;
+            }
+            
+            container.innerHTML = activities.map(activity => `
+                <div class="activity-item border-l-4 border-blue-500 pl-4 py-2">
+                    <p class="text-sm font-medium text-gray-900">${activity.description}</p>
+                    <p class="text-xs text-gray-500">${activity.time_ago}</p>
+                </div>
+            `).join('');
+        },
+        
+        renderFollowers(users) {
+            const container = document.getElementById('followersContainer');
+            this.renderUserList(container, users, 'No followers yet.');
+        },
+        
+        renderFollowing(users) {
+            const container = document.getElementById('followingContainer');
+            this.renderUserList(container, users, 'Not following anyone yet.');
+        },
+        
+        renderUserList(container, users, emptyMessage) {
+            if (users.length === 0) {
+                container.innerHTML = `<p class="text-gray-500 text-center py-8">${emptyMessage}</p>`;
+                return;
+            }
+            
+            container.innerHTML = users.map(user => `
+                <div class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        ${user.avatar_letter}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">${user.name}</p>
+                        <p class="text-xs text-gray-500">${user.role}</p>
+                    </div>
+                </div>
+            `).join('');
+        },
+        
+        renderNotifications(notifications) {
+            const container = document.getElementById('notificationsContainer');
+            if (notifications.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-gray-500">
+                        <i class="fas fa-bell text-2xl mb-2"></i>
+                        <p class="text-sm">No new notifications</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = notifications.slice(0, 5).map(notif => `
+                <div class="p-3 hover:bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                    <p class="text-sm font-medium text-gray-900">${notif.title}</p>
+                    <p class="text-xs text-gray-600">${notif.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${notif.time_ago}</p>
+                </div>
+            `).join('');
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
         }
     }
 }

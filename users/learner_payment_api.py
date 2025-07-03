@@ -186,9 +186,8 @@ def verify_session_payment(request):
             amount_paid=payment.get('amount', 0) // 100
         )
         
-        # Update session participant count
-        session.current_participants = session.current_participants + 1
-        session.save()
+        # Note: current_participants is a property that auto-calculates
+        # No need to manually update it
         
         # Create notifications (will be implemented with notification system)
         # Notification.objects.create(user=session.mentor, title='New Session Booking! 💰', message=f'{learner.username} has booked your session "{session.title}" for ₹{session.price}', type='session_booked')
