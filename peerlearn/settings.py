@@ -17,17 +17,23 @@ if not SECRET_KEY:
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # Fallback to hardcoded ALLOWED_HOSTS if .env fails
+
 default_hosts = ['localhost', '127.0.0.1']
 render_host = 'peerlearnproject-5.onrender.com'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', ','.join(default_hosts)).split(',')
+env_hosts = os.getenv('ALLOWED_HOSTS', '')
+parsed_hosts = [h.strip() for h in env_hosts.split(',') if h.strip()]
+ALLOWED_HOSTS = parsed_hosts if parsed_hosts else default_hosts
 
-# Always include Render hostname in production
+# Auto add Render host in production
 if not DEBUG and render_host not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_host)
 
 print("✅ DEBUG =", DEBUG)
 print("✅ ALLOWED_HOSTS =", ALLOWED_HOSTS)
+
+
+
 
 # Application definition
 INSTALLED_APPS = [
