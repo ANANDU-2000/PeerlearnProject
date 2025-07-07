@@ -1,10 +1,9 @@
 services:
-  # Main Web Application
   - type: web
     name: peerlearn-platform
     env: python
     region: oregon
-    plan: starter                   # Upgraded for better performance
+    plan: starter
     repo: https://github.com/ANANDU-2000/PeerlearnProject
     branch: main
     buildCommand: |
@@ -15,30 +14,27 @@ services:
     startCommand: |
       gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 peerlearn.wsgi:application
     envVars:
-    - key: SECRET_KEY
-      generateValue: true           # Auto-generate secure secret key
-    - key: DEBUG
-      value: "False"
-    - key: ALLOWED_HOSTS
-      value: "peerlearn-platform.onrender.com,localhost,127.0.0.1"
-    - key: DJANGO_SETTINGS_MODULE
-      value: "peerlearn.settings"
-    - key: PYTHONPATH
-      value: "/opt/render/project/src"
-    - key: RAZORPAY_KEY_ID
-      value: "rzp_test_JTeqXMBguhg25H"
-    - key: RAZORPAY_KEY_SECRET
-      value: "7FYtozDO4Tb6w0aEZwYtc6DB"
-    - key: SENDGRID_API_KEY
-      value: "SG.your_sendgrid_key" # Replace with actual key
-    - key: DEFAULT_FROM_EMAIL
-      value: "no-reply@peerlearn.com"
-    # DATABASE_URL will be auto-injected by Render when you add a PostgreSQL database
-
-# Additional services can be added:
-# - PostgreSQL database (add via Render dashboard)  
-# - Redis instance (add via Render dashboard)
-# - Background workers for Celery tasks
-
-
-
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "peerlearn-platform.onrender.com,localhost,127.0.0.1"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "peerlearn.settings"
+      - key: PYTHONPATH
+        value: "/opt/render/project/src"
+      - key: RAZORPAY_KEY_ID
+        value: "rzp_test_JTeqXMBguhg25H"
+      - key: RAZORPAY_KEY_SECRET
+        value: "7FYtozDO4Tb6w0aEZwYtc6DB"
+      - key: SENDGRID_API_KEY
+        value: "SG.your_sendgrid_key"
+      - key: DEFAULT_FROM_EMAIL
+        value: "noreply@peerlearn.com"
+      - key: STRIPE_PUBLISHABLE_KEY
+        value: "pk_test_xxxxxxxxxxxxxxxx"
+      - key: STRIPE_SECRET_KEY
+        value: "sk_test_xxxxxxxxxxxxxxxx"
+      - key: WEBRTC_STUN_SERVERS
+        value: "stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302"
