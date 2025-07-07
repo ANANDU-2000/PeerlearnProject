@@ -11,6 +11,8 @@ services:
       python manage.py migrate --noinput
     startCommand: |
       gunicorn --bind 0.0.0.0:$PORT --workers 4 peerlearn.wsgi:application
+      pythonVersion: 3.12.3
+
     envVars:
       - key: SECRET_KEY
         generateValue: true
