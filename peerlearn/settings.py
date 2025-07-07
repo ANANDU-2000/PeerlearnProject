@@ -17,7 +17,7 @@ if not SECRET_KEY:
     raise Exception("DJANGO SECRET_KEY environment variable not set. Aborting.")
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost 127.0.0.1 testserver').split(' ')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost 127.0.0.1 testserver').split(',')
 
 # Application definition
 INSTALLED_APPS = [
