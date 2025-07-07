@@ -3,24 +3,22 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv(os.path.join(BASE_DIR, '.env'))
-print("SECRET_KEY from env:", os.getenv('SECRET_KEY'))
-print("DATABASE_URL from env:", os.getenv('DATABASE_URL'))  # Add this line
 
-# SECURITY / SECRET_KEY / DEBUG
+# SECURITY
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
-    raise Exception("DJANGO SECRET_KEY environment variable not set. Aborting.")
+    raise Exception("❌ SECRET_KEY not found in .env file!")
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-# Fix: split by comma and default also uses comma
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
-print("✅ ALLOWED_HOSTS =", ALLOWED_HOSTS)  # Optional debug
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+print("✅ DEBUG =", DEBUG)
+print("✅ ALLOWED_HOSTS =", ALLOWED_HOSTS)
 
 # Application definition
 INSTALLED_APPS = [
@@ -31,11 +29,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Third-party
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'channels',
     'rest_framework',
+    'channels',
+
+    # Local apps
     'users',
     'sessions',
     'recommendations',
@@ -48,7 +50,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',  # Added for django-allauth
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -72,6 +74,7 @@ TEMPLATES = [
 ]
 
 # Authentication
+AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -79,9 +82,6 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-
-WSGI_APPLICATION = 'peerlearn.wsgi.application'
-ASGI_APPLICATION = 'peerlearn.asgi.application'
 
 # Database
 DATABASES = {
@@ -92,25 +92,25 @@ DATABASES = {
     )
 }
 
-# Channels Configuration - Using InMemoryChannelLayer for stability
+# Channels config
+ASGI_APPLICATION = 'peerlearn.asgi.application'
+WSGI_APPLICATION = 'peerlearn.wsgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 
-# Cache Configuration - Using LocMemCache for stability
+# Caching
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 60 * 15,  # 15 minutes
+        'TIMEOUT': 900,
     }
 }
 
-# Authentication
-AUTH_USER_MODEL = 'users.User'
-
+# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -144,9 +144,6 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5000',
@@ -154,12 +151,13 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.replit.dev',
     'https://*.replit.app',
     'https://*.replit.co',
+    'https://*.onrender.com',
 ]
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
 
-# Login/Logout redirects
+# Login redirects
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -169,31 +167,20 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
+        'console': {'class': 'logging.StreamHandler'},
     },
     'loggers': {
-        '': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-        'channels': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-        'channels.server': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
+        '': {'handlers': ['console'], 'level': 'INFO'},
+        'channels': {'handlers': ['console'], 'level': 'INFO'},
+        'channels.server': {'handlers': ['console'], 'level': 'INFO'},
     },
 }
 
-# Payment gateways
+# Payment
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
 
-# WebRTC Configuration
+# WebRTC config
 WEBRTC_CONFIG = {
     'iceServers': [
         {'urls': 'stun:stun.l.google.com:19302'},
@@ -201,3 +188,5 @@ WEBRTC_CONFIG = {
     ]
 }
 
+# Auto field
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
