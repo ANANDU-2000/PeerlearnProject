@@ -3,6 +3,10 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
+import os
+from pathlib import Path
+import dj_database_url
+from dotenv import load_dotenv
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,14 +28,16 @@ ALLOWED_HOSTS = [
     'peerlearnproject-5.onrender.com',
 ]
 
-# Optionally, allow additional hosts from .env
+# Add hosts from .env, avoiding duplicates
 env_hosts = os.getenv('ALLOWED_HOSTS', '')
 if env_hosts:
-    ALLOWED_HOSTS.extend([h.strip() for h in env_hosts.split(',') if h.strip()])
+    new_hosts = [h.strip() for h in env_hosts.split(',') if h.strip()]
+    for host in new_hosts:
+        if host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
 
 print("✅ DEBUG =", DEBUG)
 print("✅ ALLOWED_HOSTS =", ALLOWED_HOSTS)
-
 # ... rest of your settings.py remains unchanged ...
 
 
