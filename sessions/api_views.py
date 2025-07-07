@@ -61,7 +61,8 @@ def book_session(request, session_id):
     return JsonResponse({
         'success': True,
         'message': 'Session booked successfully!',
-        'booking_id': str(booking.id)
+        'booking_id': str(booking.id),
+        'redirect_url': '/sessions/my-sessions/'
     })
 
 

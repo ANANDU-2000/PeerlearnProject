@@ -175,7 +175,7 @@ def razorpay_checkout(request, session_id):
     
     if existing_booking:
         messages.info(request, 'You are already booked for this session.')
-        return redirect('learner_dashboard')
+        return redirect('my_sessions')
     
     # Handle form submission (both free and paid)
     if request.method == 'POST':
@@ -195,7 +195,7 @@ def razorpay_checkout(request, session_id):
             messages.success(request, f'🎉 Successfully enrolled in free session "{session.title}"!')
         
         print(f"DEBUG: Booking created successfully - ID: {booking.id}")
-        return redirect('learner_dashboard')
+        return redirect('my_sessions')
     
     # Display checkout page
     context = {
@@ -736,7 +736,7 @@ def verify_payment(request, session_id):
         
         if existing_booking:
             messages.info(request, 'You are already booked for this session.')
-            return redirect('payment_success', session_id=session_id)
+            return redirect('my_sessions')
         
         # Payment verified - create booking
         booking = Booking.objects.create(
@@ -749,7 +749,7 @@ def verify_payment(request, session_id):
         
         print(f"Booking created successfully: {booking.id}")
         messages.success(request, f'Payment successful! You are now booked for "{session.title}".')
-        return redirect('payment_success', session_id=session_id)
+        return redirect('my_sessions')
         
     except Exception as e:
         print(f"Payment processing error: {e}")
@@ -781,3 +781,86 @@ def payment_failure(request, session_id):
     }
     
     return render(request, 'payments/failure.html', context)
+
+@login_required
+def my_sessions(request):
+    """Show learner's session history with sub-tabs"""
+    if not request.user.is_learner:
+        messages.error(request, 'Only learners can access this page.')
+        return redirect('learner_dashboard')
+    
+    # Get all bookings for the learner (including all statuses)
+    bookings = Booking.objects.filter(
+        learner=request.user
+    ).select_related('session', 'session__mentor').order_by('-session__schedule')
+    
+    # Debug: Print all booking statuses
+    for booking in bookings:
+        print(f"DEBUG: Booking for session '{booking.session.title}' - Status: {booking.status}, Session Status: {booking.session.status}")
+    
+    # Also get sessions where learner is the mentor (for testing)
+    mentor_sessions = Session.objects.filter(
+        mentor=request.user
+    ).order_by('-schedule')
+    
+    print(f"DEBUG: Found {len(bookings)} bookings for learner {request.user.username}")
+    print(f"DEBUG: Found {len(mentor_sessions)} sessions where user is mentor")
+    
+    # If no bookings found, show a message
+    if not bookings:
+        context = {
+            'upcoming_sessions': [],
+            'completed_sessions': [],
+            'live_sessions': [],
+            'cancelled_sessions': [],
+            'total_sessions': 0,
+            'active_tab': 'upcoming',
+            'no_bookings': True
+        }
+        return render(request, 'sessions/my_sessions.html', context)
+    
+    print(f"DEBUG: Found {len(bookings)} bookings for learner {request.user.username}")
+    
+    # Categorize sessions
+    upcoming_sessions = []
+    completed_sessions = []
+    live_sessions = []
+    cancelled_sessions = []
+    
+    for booking in bookings:
+        session = booking.session
+        print(f"DEBUG: Processing session '{session.title}' - Status: {session.status}, Schedule: {session.schedule}, Now: {timezone.now()}")
+        
+        # Check if session is in the future (upcoming)
+        if session.schedule > timezone.now() and session.status in ['scheduled', 'draft']:
+            upcoming_sessions.append(booking)
+            print(f"DEBUG: Added to upcoming: {session.title}")
+        # Check if session is currently live
+        elif session.status == 'live':
+            live_sessions.append(booking)
+            print(f"DEBUG: Added to live: {session.title}")
+        # Check if session is completed
+        elif session.status == 'completed':
+            completed_sessions.append(booking)
+            print(f"DEBUG: Added to completed: {session.title}")
+        # Check if session is cancelled
+        elif session.status == 'cancelled':
+            cancelled_sessions.append(booking)
+            print(f"DEBUG: Added to cancelled: {session.title}")
+        # If session is in the past but not completed, treat as completed
+        elif session.schedule <= timezone.now() and session.status not in ['cancelled', 'live']:
+            completed_sessions.append(booking)
+            print(f"DEBUG: Added to completed (past): {session.title}")
+    
+    print(f"DEBUG: Final counts - Upcoming: {len(upcoming_sessions)}, Live: {len(live_sessions)}, Completed: {len(completed_sessions)}, Cancelled: {len(cancelled_sessions)}")
+    
+    context = {
+        'upcoming_sessions': upcoming_sessions,
+        'completed_sessions': completed_sessions,
+        'live_sessions': live_sessions,
+        'cancelled_sessions': cancelled_sessions,
+        'total_sessions': len(bookings),
+        'active_tab': request.GET.get('tab', 'upcoming')  # Default to upcoming tab
+    }
+    
+    return render(request, 'sessions/my_sessions.html', context)

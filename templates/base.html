@@ -223,6 +223,12 @@
                                 <i data-feather="user" class="h-4 w-4 inline mr-2"></i>
                                 Profile
                             </a>
+                            {% if not user.is_mentor %}
+                            <a href="{% url 'my_sessions' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i data-feather="calendar" class="h-4 w-4 inline mr-2"></i>
+                                My Sessions
+                            </a>
+                            {% endif %}
                             <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <i data-feather="log-out" class="h-4 w-4 inline mr-2"></i>
                                 Sign out
@@ -274,6 +280,12 @@
                         <i data-feather="user" class="h-4 w-4 inline mr-2"></i>
                         Profile
                     </a>
+                    {% if not user.is_mentor %}
+                    <a href="{% url 'my_sessions' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+                        <i data-feather="calendar" class="h-4 w-4 inline mr-2"></i>
+                        My Sessions
+                    </a>
+                    {% endif %}
                     <a href="{% url 'logout' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
                         <i data-feather="log-out" class="h-4 w-4 inline mr-2"></i>
                         Sign out

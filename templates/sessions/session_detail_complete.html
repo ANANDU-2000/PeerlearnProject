@@ -525,9 +525,9 @@ function sessionDetail() {
                     this.showBookingModal = false;
                     this.showNotification('Session booked successfully! Redirecting to My Sessions...', 'success');
                     
-                    // Redirect to learner sessions after 2 seconds
+                    // Redirect to my sessions after 2 seconds
                     setTimeout(() => {
-                        window.location.href = '/dashboard/learner/#sessions';
+                        window.location.href = '/sessions/my-sessions/';
                     }, 2000);
                 } else {
                     this.showNotification('Failed to book session. Please try again.', 'error');

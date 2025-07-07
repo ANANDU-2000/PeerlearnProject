@@ -186,10 +186,11 @@ window.PeerLearnDashboard = {
             });
             
             if (response.ok) {
-                this.showNotification('Session booked successfully!', 'success');
-                // Refresh the page or update UI as needed
+                const data = await response.json();
+                this.showNotification(data.message || 'Session booked successfully! Redirecting to My Sessions...', 'success');
+                // Redirect to my sessions
                 setTimeout(() => {
-                    window.location.reload();
+                    window.location.href = data.redirect_url || '/sessions/my-sessions/';
                 }, 1500);
             } else {
                 const error = await response.text();

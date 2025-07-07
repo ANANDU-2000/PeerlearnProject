@@ -269,6 +269,63 @@
                 gap: 0.5rem;
             }
         }
+        /* --- ZOOM-LIKE MOBILE LAYOUT --- */
+        @media (max-width: 640px) {
+            .video-grid {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: 1fr !important;
+                height: calc(100vh - 120px);
+                max-height: none;
+            }
+            .sidebar-modal {
+                position: fixed;
+                left: 0; right: 0; bottom: 0;
+                top: 20%;
+                z-index: 100;
+                background: #1e293b;
+                border-top-left-radius: 1.5rem;
+                border-top-right-radius: 1.5rem;
+                box-shadow: 0 -4px 32px rgba(0,0,0,0.5);
+                display: flex;
+                flex-direction: column;
+                max-height: 80vh;
+                overflow-y: auto;
+                animation: slideUp 0.3s;
+            }
+            @keyframes slideUp {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+            .mobile-control-bar {
+                position: fixed;
+                left: 0; right: 0; bottom: 0;
+                z-index: 50;
+                background: rgba(15,23,42,0.98);
+                border-top: 1px solid #334155;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                padding: 0.5rem 0;
+                box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
+            }
+            .mobile-control-bar button {
+                flex: 1 1 0;
+                margin: 0 0.25rem;
+                font-size: 1.6rem;
+                padding: 0.7rem 0;
+                border-radius: 50%;
+                background: none;
+                color: #fff;
+            }
+            .mobile-control-bar button.active {
+                background: #334155;
+            }
+            .sidebar-desktop { display: none !important; }
+        }
+        @media (min-width: 641px) {
+            .mobile-control-bar, .sidebar-modal { display: none !important; }
+            .sidebar-desktop { display: flex !important; }
+        }
     </style>
 </head>
 <body x-data="sessionRoom()" class="h-screen">
@@ -333,320 +390,160 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex overflow-hidden">
+        <div class="flex-1 flex overflow-hidden relative">
             <!-- Video Area -->
-            <div class="flex-1 p-6">
-                {% if is_waiting_room %}
-                <!-- Waiting Room -->
-                <div class="h-full flex flex-col items-center justify-center">
-                    <div class="video-container w-full max-w-2xl h-96 mb-8">
-                        <video id="localVideo" class="video-element" autoplay muted playsinline></video>
-                        <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm">
-                            You ({{ user_role|title }})
-                        </div>
-                    </div>
-                    
-                    <div class="text-center text-white mb-8">
-                        <h2 class="text-3xl font-bold mb-3">Waiting Room</h2>
-                        <p class="text-gray-300 text-lg">Prepare yourself for the session. Check your camera and microphone.</p>
-                    </div>
-                    
-                    <!-- Participant List -->
-                    <div class="w-full max-w-md mb-8">
-                        <h3 class="text-white text-lg font-semibold mb-4 flex items-center">
-                            <i class="fas fa-users mr-2"></i>
-                            Participants (<span x-text="participants.length + 1"></span>)
-                        </h3>
-                        <div class="participant-list bg-gray-800 rounded-lg p-4 space-y-3">
-                            <!-- Mentor -->
-                            <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <div class="user-avatar">{{ session.mentor.username|first|upper }}</div>
-                                    <div>
-                                        <div class="text-white font-medium">{{ session.mentor.username }}</div>
-                                        <div class="text-gray-400 text-sm">Host</div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="bg-blue-500 px-2 py-1 rounded text-xs text-white">Host</span>
-                                    <div class="network-indicator network-high"></div>
+            <div class="flex-1 p-0 sm:p-6 flex flex-col">
+                <!-- Video Grid -->
+                <div class="flex-1 mb-0 sm:mb-4">
+                    <div class="video-grid h-full" :class="videoGridClass">
+                        <!-- Local Video (Self) -->
+                        <div class="video-container relative">
+                            <video id="localVideo" class="video-element" autoplay muted playsinline></video>
+                            <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm flex items-center space-x-2">
+                                <span>You ({{ user_role|title }})</span>
+                                <div class="flex space-x-1">
+                                    <div class="w-2 h-2 rounded-full" :class="cameraStatus ? 'bg-green-500' : 'bg-red-500'"></div>
+                                    <div class="w-2 h-2 rounded-full" :class="micStatus ? 'bg-green-500' : 'bg-red-500'"></div>
                                 </div>
                             </div>
                             
-                            <!-- Learners -->
-                            <template x-for="participant in participants" :key="participant.user_id">
-                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="user-avatar" x-text="participant.username.charAt(0).toUpperCase()"></div>
-                                        <div>
-                                            <div class="text-white font-medium" x-text="participant.username"></div>
-                                            <div class="text-gray-400 text-sm" x-text="participant.joinTime"></div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="bg-green-500 px-2 py-1 rounded text-xs text-white">Participant</span>
-                                        <div class="network-indicator" :class="participant.networkQuality"></div>
-                                    </div>
-                                </div>
-                            </template>
+                            <!-- Screen Share Indicator -->
+                            <div x-show="screenSharing" class="screen-share-overlay">
+                                <i class="fas fa-desktop mr-1"></i>
+                                Screen Share
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="flex space-x-4">
-                        {% if user_role == 'mentor' %}
-                        <button @click="startSession()" 
-                                :disabled="!canStart"
-                                class="btn-primary px-8 py-3 rounded-lg text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
-                            <i class="fas fa-play"></i>
-                            <span>Start Session</span>
-                        </button>
-                        {% endif %}
-                        <button @click="leaveRoom()" class="bg-gray-600 hover:bg-gray-700 px-8 py-3 rounded-lg text-white font-medium flex items-center space-x-2">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Leave Room</span>
-                        </button>
-                    </div>
-                </div>
-                {% else %}
-                <!-- Main Session Room -->
-                <div class="h-full flex flex-col">
-                    <!-- Video Grid -->
-                    <div class="flex-1 mb-4">
-                        <div class="video-grid h-full" :class="videoGridClass">
-                            <!-- Local Video (Self) -->
-                            <div class="video-container relative">
-                                <video id="localVideo" class="video-element" autoplay muted playsinline></video>
-                                <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-white text-sm flex items-center space-x-2">
-                                    <span>You ({{ user_role|title }})</span>
-                                    <div class="flex space-x-1">
-                                        <div class="w-2 h-2 rounded-full" :class="cameraStatus ? 'bg-green-500' : 'bg-red-500'"></div>
-                                        <div class="w-2 h-2 rounded-full" :class="micStatus ? 'bg-green-500' : 'bg-red-500'"></div>
+                        
+                        <!-- Remote Videos - FIXED: Enhanced with better debugging and status indicators -->
+                        <template x-for="(participant, index) in participants" :key="participant.user_id">
+                            <div class="video-container relative" x-data="{ 
+                                streamReady: false, 
+                                videoLoaded: false, 
+                                hasError: false,
+                                connectionStatus: 'connecting',
+                                lastStatusUpdate: Date.now()
+                            }">
+                                <video :id="`remoteVideo_${participant.user_id}`" 
+                                       class="video-element" 
+                                       autoplay 
+                                       playsinline
+                                       muted="false"
+                                       @loadstart="console.log('📼 Video load started for:', participant.username)"
+                                       @loadeddata="console.log('📊 Video data loaded for:', participant.username); videoLoaded = true"
+                                       @loadedmetadata="console.log('🎥 Video metadata loaded for:', participant.username); streamReady = true"
+                                       @canplay="console.log('▶️ Video can play for:', participant.username); connectionStatus = 'ready'"
+                                       @playing="console.log('🎬 Video is playing for:', participant.username); connectionStatus = 'playing'"
+                                       @error="console.error('❌ Video error for:', participant.username); hasError = true; connectionStatus = 'error'"
+                                       @stalled="console.warn('⏸️ Video stalled for:', participant.username); connectionStatus = 'stalled'"
+                                       x-init="
+                                           console.log('🎥 Remote video element created for:', participant.username, 'ID:', participant.user_id);
+                                           // Check stream assignment after element creation
+                                           setTimeout(() => {
+                                               const video = document.getElementById(`remoteVideo_${participant.user_id}`);
+                                               if (video && !video.srcObject) {
+                                                   console.log('⚠️ Video element exists but no stream assigned for:', participant.username);
+                                               } else if (video && video.srcObject) {
+                                                   console.log('✅ Video element has stream for:', participant.username);
+                                               }
+                                           }, 1000);
+                                       "></video>
+                                
+                                <!-- Enhanced Status Indicators -->
+                                <div x-show="!streamReady || hasError" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-90">
+                                    <div class="text-white text-center p-4">
+                                        <!-- Loading State -->
+                                        <div x-show="!hasError && connectionStatus === 'connecting'" class="space-y-3">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
+                                            <div class="text-sm">Connecting to <span x-text="participant.username"></span>...</div>
+                                            <div class="text-xs text-gray-400">Setting up video stream</div>
+                                        </div>
+                                        
+                                        <!-- Ready State -->
+                                        <div x-show="!hasError && connectionStatus === 'ready'" class="space-y-3">
+                                            <div class="text-blue-400">
+                                                <i class="fas fa-check-circle text-2xl"></i>
+                                            </div>
+                                            <div class="text-sm">Video ready for <span x-text="participant.username"></span></div>
+                                        </div>
+                                        
+                                        <!-- Error State -->
+                                        <div x-show="hasError" class="space-y-3">
+                                            <div class="text-red-400">
+                                                <i class="fas fa-exclamation-triangle text-2xl"></i>
+                                            </div>
+                                            <div class="text-sm">Video connection failed</div>
+                                            <div class="text-xs text-gray-400">for <span x-text="participant.username"></span></div>
+                                            <button @click="window.location.reload()" 
+                                                    class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs">
+                                                Retry Connection
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <!-- Screen Share Indicator -->
-                                <div x-show="screenSharing" class="screen-share-overlay">
-                                    <i class="fas fa-desktop mr-1"></i>
-                                    Screen Share
+                                <!-- Enhanced Participant Info -->
+                                <div class="absolute bottom-4 left-4 bg-black bg-opacity-75 px-3 py-2 rounded-lg text-white text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <span x-text="participant.username" class="font-medium"></span>
+                                        <span x-show="participant.is_mentor" class="bg-blue-500 px-2 py-0.5 rounded text-xs">Mentor</span>
+                                        <span x-show="!participant.is_mentor" class="bg-green-500 px-2 py-0.5 rounded text-xs">Student</span>
+                                    </div>
+                                    <div class="text-xs text-gray-300 mt-1">
+                                        Status: <span x-text="connectionStatus" class="capitalize"></span>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Remote Videos - FIXED: Enhanced with better debugging and status indicators -->
-                            <template x-for="(participant, index) in participants" :key="participant.user_id">
-                                <div class="video-container relative" x-data="{ 
-                                    streamReady: false, 
-                                    videoLoaded: false, 
-                                    hasError: false,
-                                    connectionStatus: 'connecting',
-                                    lastStatusUpdate: Date.now()
-                                }">
-                                    <video :id="`remoteVideo_${participant.user_id}`" 
-                                           class="video-element" 
-                                           autoplay 
-                                           playsinline
-                                           muted="false"
-                                           @loadstart="console.log('📼 Video load started for:', participant.username)"
-                                           @loadeddata="console.log('📊 Video data loaded for:', participant.username); videoLoaded = true"
-                                           @loadedmetadata="console.log('🎥 Video metadata loaded for:', participant.username); streamReady = true"
-                                           @canplay="console.log('▶️ Video can play for:', participant.username); connectionStatus = 'ready'"
-                                           @playing="console.log('🎬 Video is playing for:', participant.username); connectionStatus = 'playing'"
-                                           @error="console.error('❌ Video error for:', participant.username); hasError = true; connectionStatus = 'error'"
-                                           @stalled="console.warn('⏸️ Video stalled for:', participant.username); connectionStatus = 'stalled'"
-                                           x-init="
-                                               console.log('🎥 Remote video element created for:', participant.username, 'ID:', participant.user_id);
-                                               // Check stream assignment after element creation
-                                               setTimeout(() => {
-                                                   const video = document.getElementById(`remoteVideo_${participant.user_id}`);
-                                                   if (video && !video.srcObject) {
-                                                       console.log('⚠️ Video element exists but no stream assigned for:', participant.username);
-                                                   } else if (video && video.srcObject) {
-                                                       console.log('✅ Video element has stream for:', participant.username);
-                                                   }
-                                               }, 1000);
-                                           "></video>
-                                    
-                                    <!-- Enhanced Status Indicators -->
-                                    <div x-show="!streamReady || hasError" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-90">
-                                        <div class="text-white text-center p-4">
-                                            <!-- Loading State -->
-                                            <div x-show="!hasError && connectionStatus === 'connecting'" class="space-y-3">
-                                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
-                                                <div class="text-sm">Connecting to <span x-text="participant.username"></span>...</div>
-                                                <div class="text-xs text-gray-400">Setting up video stream</div>
-                                            </div>
-                                            
-                                            <!-- Ready State -->
-                                            <div x-show="!hasError && connectionStatus === 'ready'" class="space-y-3">
-                                                <div class="text-blue-400">
-                                                    <i class="fas fa-check-circle text-2xl"></i>
-                                                </div>
-                                                <div class="text-sm">Video ready for <span x-text="participant.username"></span></div>
-                                            </div>
-                                            
-                                            <!-- Error State -->
-                                            <div x-show="hasError" class="space-y-3">
-                                                <div class="text-red-400">
-                                                    <i class="fas fa-exclamation-triangle text-2xl"></i>
-                                                </div>
-                                                <div class="text-sm">Video connection failed</div>
-                                                <div class="text-xs text-gray-400">for <span x-text="participant.username"></span></div>
-                                                <button @click="window.location.reload()" 
-                                                        class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs">
-                                                    Retry Connection
-                                                </button>
-                                            </div>
+                                
+                                <!-- Enhanced Network & Audio Quality -->
+                                <div class="absolute top-4 right-4 bg-black bg-opacity-50 px-2 py-1 rounded-lg">
+                                    <div class="flex items-center space-x-2 text-white text-xs">
+                                        <!-- Network Quality -->
+                                        <div class="flex items-center space-x-1">
+                                            <div class="network-indicator w-2 h-2 rounded-full" 
+                                                 :class="{
+                                                     'bg-green-400': participant.networkQuality === 'High',
+                                                     'bg-yellow-400': participant.networkQuality === 'Medium',
+                                                     'bg-red-400': participant.networkQuality === 'Low'
+                                                 }"></div>
+                                            <span x-text="participant.networkQuality"></span>
                                         </div>
-                                    </div>
-                                    
-                                    <!-- Enhanced Participant Info -->
-                                    <div class="absolute bottom-4 left-4 bg-black bg-opacity-75 px-3 py-2 rounded-lg text-white text-sm">
-                                        <div class="flex items-center space-x-2">
-                                            <span x-text="participant.username" class="font-medium"></span>
-                                            <span x-show="participant.is_mentor" class="bg-blue-500 px-2 py-0.5 rounded text-xs">Mentor</span>
-                                            <span x-show="!participant.is_mentor" class="bg-green-500 px-2 py-0.5 rounded text-xs">Student</span>
-                                        </div>
-                                        <div class="text-xs text-gray-300 mt-1">
-                                            Status: <span x-text="connectionStatus" class="capitalize"></span>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Enhanced Network & Audio Quality -->
-                                    <div class="absolute top-4 right-4 bg-black bg-opacity-50 px-2 py-1 rounded-lg">
-                                        <div class="flex items-center space-x-2 text-white text-xs">
-                                            <!-- Network Quality -->
-                                            <div class="flex items-center space-x-1">
-                                                <div class="network-indicator w-2 h-2 rounded-full" 
-                                                     :class="{
-                                                         'bg-green-400': participant.networkQuality === 'High',
-                                                         'bg-yellow-400': participant.networkQuality === 'Medium',
-                                                         'bg-red-400': participant.networkQuality === 'Low'
-                                                     }"></div>
-                                                <span x-text="participant.networkQuality"></span>
-                                            </div>
-                                            
-                                            <!-- Audio Quality -->
-                                            <div class="flex items-center space-x-1">
-                                                <i class="fas fa-volume-up" 
-                                                   :class="{
-                                                       'text-green-400': participant.audioQuality === 'High',
-                                                       'text-yellow-400': participant.audioQuality === 'Medium', 
-                                                       'text-orange-400': participant.audioQuality === 'Low',
-                                                       'text-red-400': participant.audioQuality === 'Silent'
-                                                   }"></i>
-                                                <span x-text="participant.audioQuality"></span>
-                                            </div>
+                                        
+                                        <!-- Audio Quality -->
+                                        <div class="flex items-center space-x-1">
+                                            <i class="fas fa-volume-up" 
+                                               :class="{
+                                                   'text-green-400': participant.audioQuality === 'High',
+                                                   'text-yellow-400': participant.audioQuality === 'Medium', 
+                                                   'text-orange-400': participant.audioQuality === 'Low',
+                                                   'text-red-400': participant.audioQuality === 'Silent'
+                                               }"></i>
+                                            <span x-text="participant.audioQuality"></span>
                                         </div>
                                     </div>
                                 </div>
-                            </template>
-                        </div>
-                    </div>
-                    
-                    <!-- Control Bar -->
-                    <div class="control-panel px-6 py-4 rounded-lg flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <!-- Session Timer -->
-                            <div class="flex items-center space-x-2 text-white">
-                                <i class="fas fa-clock text-red-400"></i>
-                                <span class="font-mono text-lg" x-text="sessionTimer">00:00</span>
                             </div>
-                            
-                            <!-- Camera Toggle -->
-                            <button @click="toggleCamera()" 
-                                    :class="cameraStatus ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'"
-                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
-                                <i :class="cameraStatus ? 'fas fa-video' : 'fas fa-video-slash'" class="w-5 h-5"></i>
-                            </button>
-                            
-                            <!-- Microphone Toggle -->
-                            <button @click="toggleMicrophone()" 
-                                    :class="micStatus ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'"
-                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
-                                <i :class="micStatus ? 'fas fa-microphone' : 'fas fa-microphone-slash'" class="w-5 h-5"></i>
-                            </button>
-                            
-                            <!-- Screen Share -->
-                            <button @click="shareScreen()" 
-                                    :class="screenSharing ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'"
-                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
-                                <i class="fas fa-desktop w-5 h-5"></i>
-                            </button>
-
-                            <!-- Recording Toggle (Host Only) -->
-                            {% if user_role == 'mentor' %}
-                            <button @click="toggleRecording()" 
-                                    :class="isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'"
-                                    class="p-3 rounded-full text-white transition-all duration-200 flex items-center justify-center">
-                                <i :class="isRecording ? 'fas fa-stop-circle' : 'fas fa-record-vinyl'" class="w-5 h-5"></i>
-                            </button>
-                            {% endif %}
-
-                            <!-- Gift/Donation Button (for learners) -->
-                            {% if user_role == 'learner' %}
-                            <button @click="openGiftModal()" class="p-3 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white transition-all duration-200 flex items-center justify-center">
-                                <i class="fas fa-gift w-5 h-5"></i>
-                            </button>
-                            {% endif %}
-
-                            <!-- Rating & Feedback Button -->
-                            <button @click="openFeedbackModal()" class="p-3 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all duration-200 flex items-center justify-center">
-                                <i class="fas fa-star w-5 h-5"></i>
-                            </button>
-
-                            <!-- Notifications Bell -->
-                            <button @click="toggleNotifications()" class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white transition-all duration-200 flex items-center justify-center relative">
-                                <i class="fas fa-bell w-5 h-5"></i>
-                                <span x-show="notificationCount > 0" x-text="notificationCount" 
-                                      class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                            </button>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4">
-                            <!-- Network Quality -->
-                            <div class="flex items-center space-x-2 text-white text-sm">
-                                <i class="fas fa-signal"></i>
-                                <span x-text="networkQuality">High</span>
-                            </div>
-                            
-                            <!-- Audio Quality -->
-                            <div class="flex items-center space-x-2 text-white text-sm">
-                                <i class="fas fa-volume-up" 
-                                   :class="{
-                                       'text-green-400': audioQuality === 'High',
-                                       'text-yellow-400': audioQuality === 'Medium', 
-                                       'text-orange-400': audioQuality === 'Low',
-                                       'text-red-400': audioQuality === 'Silent'
-                                   }"></i>
-                                <span :class="{
-                                          'text-green-400': audioQuality === 'High',
-                                          'text-yellow-400': audioQuality === 'Medium',
-                                          'text-orange-400': audioQuality === 'Low', 
-                                          'text-red-400': audioQuality === 'Silent'
-                                      }"
-                                      x-text="audioQuality">High</span>
-                            </div>
-                            
-                            <!-- End Session Button (Host Only) -->
-                            {% if user_role == 'mentor' %}
-                            <button @click="endSession()" class="btn-danger px-6 py-2 rounded-lg text-white font-medium flex items-center space-x-2">
-                                <i class="fas fa-stop"></i>
-                                <span>End Session</span>
-                            </button>
-                            {% endif %}
-                            
-                            <!-- Leave Button -->
-                            <button @click="leaveRoom()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg text-white font-medium flex items-center space-x-2">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>Leave</span>
-                            </button>
-                        </div>
+                        </template>
                     </div>
                 </div>
-                {% endif %}
+                <!-- Desktop Control Bar -->
+                <div class="control-panel px-6 py-4 rounded-lg flex items-center justify-center space-x-4 mt-2 sidebar-desktop">
+                    <!-- Controls as icons with tooltips -->
+                    <button @click="toggleMicrophone()" :class="micStatus ? 'bg-gray-700' : 'bg-red-600'" class="p-3 rounded-full text-white" title="Toggle Microphone"><i :class="micStatus ? 'fas fa-microphone' : 'fas fa-microphone-slash'"></i></button>
+                    <button @click="toggleCamera()" :class="cameraStatus ? 'bg-gray-700' : 'bg-red-600'" class="p-3 rounded-full text-white" title="Toggle Camera"><i :class="cameraStatus ? 'fas fa-video' : 'fas fa-video-slash'"></i></button>
+                    <button @click="shareScreen()" :class="screenSharing ? 'bg-blue-600' : 'bg-gray-700'" class="p-3 rounded-full text-white" title="Share Screen"><i class="fas fa-desktop"></i></button>
+                    {% if user_role == 'mentor' %}
+                    <button @click="toggleRecording()" :class="isRecording ? 'bg-red-600' : 'bg-gray-700'" class="p-3 rounded-full text-white" title="Record"><i :class="isRecording ? 'fas fa-stop-circle' : 'fas fa-record-vinyl'"></i></button>
+                    {% endif %}
+                    {% if user_role == 'learner' %}
+                    <button @click="openGiftModal()" class="p-3 rounded-full bg-yellow-600 text-white" title="Send Gift"><i class="fas fa-gift"></i></button>
+                    {% endif %}
+                    <button @click="openFeedbackModal()" class="p-3 rounded-full bg-purple-600 text-white" title="Feedback"><i class="fas fa-star"></i></button>
+                    <button @click="toggleSidebar('participants')" class="p-3 rounded-full bg-gray-700 text-white" title="Participants"><i class="fas fa-users"></i></button>
+                    <button @click="toggleSidebar('chat')" class="p-3 rounded-full bg-gray-700 text-white" title="Chat"><i class="fas fa-comments"></i></button>
+                    <button @click="leaveRoom()" class="p-3 rounded-full bg-gray-700 text-white" title="Leave"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
             </div>
-            
-            <!-- Sidebar -->
-            <div class="w-96 bg-gray-800 border-l border-gray-700 flex flex-col">
+            <!-- Sidebar (Desktop) -->
+            <div class="w-96 bg-gray-800 border-l border-gray-700 flex flex-col sidebar-desktop">
                 <!-- Tab Navigation -->
                 <div class="flex border-b border-gray-700">
                     <button @click="activeTab = 'participants'" 
@@ -753,6 +650,31 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <!-- Sidebar Modal (Mobile) -->
+            <template x-if="showSidebarModal">
+                <div class="sidebar-modal">
+                    <div class="flex border-b border-gray-700">
+                        <button @click="activeTab = 'participants'" :class="activeTab === 'participants' ? 'bg-gray-700 text-white' : 'text-gray-400'" class="flex-1 px-4 py-3 text-sm font-medium">Participants</button>
+                        <button @click="activeTab = 'chat'" :class="activeTab === 'chat' ? 'bg-gray-700 text-white' : 'text-gray-400'" class="flex-1 px-4 py-3 text-sm font-medium">Chat</button>
+                        <button @click="showSidebarModal = false" class="px-4 py-3 text-gray-400">Close</button>
+                    </div>
+                    <div x-show="activeTab === 'participants'" class="flex-1 flex flex-col overflow-y-auto">
+                        <!-- ...participants list code... -->
+                    </div>
+                    <div x-show="activeTab === 'chat'" class="flex-1 flex flex-col overflow-y-auto">
+                        <!-- ...chat code... -->
+                    </div>
+                </div>
+            </template>
+            <!-- Mobile Control Bar -->
+            <div class="mobile-control-bar">
+                <button @click="toggleMicrophone()" :class="micStatus ? 'active' : ''" title="Toggle Microphone"><i :class="micStatus ? 'fas fa-microphone' : 'fas fa-microphone-slash'"></i></button>
+                <button @click="toggleCamera()" :class="cameraStatus ? 'active' : ''" title="Toggle Camera"><i :class="cameraStatus ? 'fas fa-video' : 'fas fa-video-slash'"></i></button>
+                <button @click="shareScreen()" :class="screenSharing ? 'active' : ''" title="Share Screen"><i class="fas fa-desktop"></i></button>
+                <button @click="toggleSidebar('participants')" title="Participants"><i class="fas fa-users"></i></button>
+                <button @click="toggleSidebar('chat')" title="Chat"><i class="fas fa-comments"></i></button>
+                <button @click="leaveRoom()" title="Leave"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
     </div>
@@ -2119,7 +2041,8 @@
                 
                 // Test mode detection
                 isTestMode: false,
-                sameDeviceTest: false
+                sameDeviceTest: false,
+                showSidebarModal: false
             }
         }
     </script>
