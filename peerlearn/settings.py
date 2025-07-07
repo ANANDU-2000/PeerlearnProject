@@ -15,7 +15,16 @@ if not SECRET_KEY:
     raise Exception("❌ SECRET_KEY not found in .env file!")
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Fallback to hardcoded ALLOWED_HOSTS if .env fails
+default_hosts = ['localhost', '127.0.0.1']
+render_host = 'peerlearnproject-5.onrender.com'
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', ','.join(default_hosts)).split(',')
+
+# Always include Render hostname in production
+if not DEBUG and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
 
 print("✅ DEBUG =", DEBUG)
 print("✅ ALLOWED_HOSTS =", ALLOWED_HOSTS)
