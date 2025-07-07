@@ -3,11 +3,6 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-import os
-from pathlib import Path
-import dj_database_url
-from dotenv import load_dotenv
-
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,28 +14,18 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
     raise Exception("❌ SECRET_KEY not found in .env file!")
 
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-
-# Define ALLOWED_HOSTS
+DEBUG = os.getenv('RENDER') is None  # False on Render, True locally
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'peerlearnproject-5.onrender.com',
 ]
-
-# Add hosts from .env, avoiding duplicates
 env_hosts = os.getenv('ALLOWED_HOSTS', '')
 if env_hosts:
-    new_hosts = [h.strip() for h in env_hosts.split(',') if h.strip()]
-    for host in new_hosts:
-        if host not in ALLOWED_HOSTS:
-            ALLOWED_HOSTS.append(host)
+    ALLOWED_HOSTS.extend([h.strip() for h in env_hosts.split(',') if h.strip() and h.strip() not in ALLOWED_HOSTS])
 
 print("✅ DEBUG =", DEBUG)
 print("✅ ALLOWED_HOSTS =", ALLOWED_HOSTS)
-# ... rest of your settings.py remains unchanged ...
-
-
 
 # Application definition
 INSTALLED_APPS = [
@@ -51,15 +36,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Third-party
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'rest_framework',
     'channels',
-
-    # Local apps
     'users',
     'sessions',
     'recommendations',
@@ -119,7 +100,10 @@ ASGI_APPLICATION = 'peerlearn.asgi.application'
 WSGI_APPLICATION = 'peerlearn.wsgi.application'
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')],
+        },
     },
 }
 
@@ -207,6 +191,15 @@ WEBRTC_CONFIG = {
     'iceServers': [
         {'urls': 'stun:stun.l.google.com:19302'},
         {'urls': 'stun:stun1.l.google.com:19302'},
+        {
+            'urls': [
+                'turn:openrelay.metered.ca:80',
+                'turn:openrelay.metered.ca:443',
+                'turns:openrelay.metered.ca:443?transport=tcp'
+            ],
+            'username': 'openrelayproject',
+            'credential': 'openrelayproject'
+        }
     ]
 }
 

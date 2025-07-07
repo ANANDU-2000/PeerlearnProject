@@ -16,3 +16,12 @@ services:
         value: "peerlearn.settings"
       - key: PYTHON_VERSION
         value: "3.13"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: peerlearn-redis
+          property: connectionString
+databases:
+  - name: peerlearn-redis
+    type: redis
+    region: oregon
