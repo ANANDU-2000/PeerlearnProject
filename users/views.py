@@ -17,6 +17,9 @@ from django.db.models import Count, Avg, Q, Sum
 
 def landing_page(request):
     """Coursera-style landing page with ONLY future sessions and real mentors"""
+    from django.contrib.auth import get_user_model
+    from sessions.models import Session
+    User = get_user_model()
     now = timezone.now()
     
     # Get ONLY future sessions with real mentors
@@ -35,10 +38,20 @@ def landing_page(request):
         first_name='',
         last_name=''
     ).distinct()[:8]
-    
+
+    # Add stats for template
+    total_users = User.objects.count()
+    total_mentors = User.objects.filter(role='mentor').count()
+    total_sessions = Session.objects.count()
+    online_count = 0  # Replace with real online user tracking if available
+
     context = {
         'featured_sessions': featured_sessions,
         'featured_mentors': featured_mentors,
+        'total_users': total_users,
+        'total_mentors': total_mentors,
+        'total_sessions': total_sessions,
+        'online_count': online_count,
     }
     return render(request, 'landing_page.html', context)
 
