@@ -1,0 +1,125 @@
+PeerLearnPlatform: Full System Description
+=========================================
+
+1. High-Level Architecture Overview
+-----------------------------------
+PeerLearnPlatform is a real-time, interactive web application for connecting learners and mentors. It uses Django for backend, Django Channels for real-time features, Redis as a channel layer, and WebRTC for video calls. The frontend is rendered with Django templates and enhanced with JavaScript for real-time and video features.
+
+2. Page-by-Page Feature and Flow Description
+--------------------------------------------
+
+A. **Home / Landing Page**
+- **GET**: Renders the landing page with options to login/register.
+- **Frontend**: HTML/CSS, links to login/register.
+- **Backend**: Django view renders template.
+- **User**: Sees intro, can navigate to login/register.
+
+B. **User Registration**
+- **GET**: Shows registration form.
+- **POST**: Submits user data to create account.
+- **Frontend**: Form validation, error display.
+- **Backend**: Django view creates user, redirects to login.
+- **User**: Fills form, submits, gets account.
+
+C. **User Login**
+- **GET**: Shows login form.
+- **POST**: Authenticates user.
+- **Frontend**: Form, error display.
+- **Backend**: Django auth, sets session, redirects to dashboard.
+- **User**: Logs in, redirected to dashboard.
+
+D. **Dashboard (Learner/Mentor)**
+- **GET**: Shows personalized dashboard (sessions, recommendations).
+- **Frontend**: Renders sessions, recommendations, join/create buttons.
+- **Backend**: Fetches user data, sessions, recommendations.
+- **User**: Views sessions, can join or create.
+
+E. **Session Booking/Creation**
+- **GET**: Shows session creation/booking form.
+- **POST**: Submits session data.
+- **Frontend**: Form, validation.
+- **Backend**: Creates session, updates DB, notifies users.
+- **User**: Books or creates session.
+
+F. **Live Session / Video Call**
+- **GET**: Loads session room page.
+- **Frontend**: JS opens WebSocket, sets up WebRTC, displays video.
+- **Backend**: Channels consumer manages signaling, relays messages.
+- **User**: Joins call, sees/communicates with peer.
+
+G. **Admin Panel**
+- **GET**: Django admin interface for managing users, sessions, feedback.
+- **Frontend**: Django admin templates.
+- **Backend**: Django admin views/models.
+- **User**: Admin manages platform.
+
+3. Backend Request Processing
+----------------------------
+- **GET**: Django view fetches data, renders template.
+- **POST**: Django view processes form, updates DB, redirects or returns errors.
+- **WebSocket**: Channels consumer handles connect, receive, disconnect; relays signaling for WebRTC.
+
+4. Frontend-Backend Interaction
+------------------------------
+- **Forms**: Submitted via POST, handled by Django views.
+- **WebSocket**: JS opens connection to /ws/session/<room>/, exchanges signaling data for WebRTC.
+- **AJAX/Fetch**: For dynamic updates (optional).
+
+5. Real Code Flow for User Actions
+----------------------------------
+- **Login**: User submits form → Django authenticates → session set → redirect to dashboard.
+- **Join Session**: User clicks join → JS opens WebSocket → sends join message → backend relays to mentor → signaling exchange → WebRTC connection established.
+- **Video Call**: WebRTC peer connection created → STUN/TURN servers used → offer/answer/ICE exchanged via WebSocket → direct media stream established.
+
+6. How Django, Channels, Redis, WebSockets, WebRTC Work Together
+----------------------------------------------------------------
+- Django handles HTTP, user management, DB.
+- Channels adds WebSocket support.
+- Redis is the channel layer for Channels (enables scaling, message passing).
+- WebSocket is used for real-time signaling (session join, offer/answer/ICE for WebRTC).
+- WebRTC handles direct video/audio between users.
+
+7. User Roles and Flows
+-----------------------
+- **Learner**: Register → login → view dashboard → book/join session → join video call.
+- **Mentor**: Register → login → create session → accept/join session → join video call.
+- **Admin**: Login → manage users/sessions/feedback via admin panel.
+
+8. Deployment and Reliability Notes
+-----------------------------------
+- Use Daphne as ASGI server for Channels.
+- Redis must be running and accessible.
+- Run `collectstatic` before deploy; all static files must be present.
+- Render free plan may limit WebSocket support; TURN server needed for reliable WebRTC.
+- Test all flows locally and on deployed site.
+
+9. Honest Analysis
+------------------
+- **Strengths**: Real-time, scalable, supports video, recommendations, admin analytics.
+- **Challenges**: WebRTC needs TURN for reliability; static files must be managed; Render free plan has WebSocket limits.
+- **Best Practices**: Use Daphne, configure Redis, set up STUN/TURN, run collectstatic, test thoroughly.
+
+10. Summary Table: Key Features
+------------------------------
+| Feature                | File(s) / Component         | How it Works / When Used                |
+|------------------------|----------------------------|-----------------------------------------|
+| User Auth              | users/models.py, views.py  | Register/login, session management      |
+| Real-time Video        | consumers.py, JS frontend  | WebRTC + WebSocket signaling            |
+| Recommendations        | recommendations/           | ML models, API endpoints                |
+| Admin Management       | Django admin, models.py    | CRUD, analytics                         |
+| Static Files           | static/, collectstatic     | Served via Whitenoise/S3                |
+| WebSockets             | asgi.py, routing.py        | Real-time signaling, notifications      |
+| Redis                  | settings.py, Dockerfile    | Channel layer for scaling               |
+
+11. Testing Checklist
+---------------------
+- Register/login as user (learner/mentor/admin).
+- Book/create/join session.
+- Join video call from two devices.
+- Check all static files load.
+- Test admin panel.
+- Check logs for errors.
+
+12. Conclusion
+--------------
+PeerLearnPlatform is a robust, real-time learning platform using Django, Channels, Redis, and WebRTC. It supports scalable, interactive learning with video, recommendations, and admin management. Careful configuration and testing ensure reliability and a great user experience. 
