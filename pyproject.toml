@@ -13,3 +13,4 @@ dependencies = [
     "requests>=2.32.3",
     "sendgrid>=6.12.2",
 ]
+
