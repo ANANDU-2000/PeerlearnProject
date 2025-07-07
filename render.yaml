@@ -1,33 +1,18 @@
-# render.yaml
 services:
   - type: web
     name: peerlearn-platform
     env: python
     region: oregon
     plan: starter
-
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
       python manage.py migrate --noinput
-
     startCommand: |
       gunicorn --bind 0.0.0.0:$PORT --workers 4 peerlearn.wsgi:application
-
-    # ❌ REMOVE ALLOWED_HOSTS and SECRET_KEY overrides to use .env file
     envVars:
-      - key: DEBUG
-        value: "False"
       - key: DJANGO_SETTINGS_MODULE
         value: "peerlearn.settings"
-      - key: RAZORPAY_KEY_ID
-        value: "rzp_test_JTeqXMBguhg25H"
-      - key: RAZORPAY_KEY_SECRET
-        value: "7FYtozDO4Tb6w0aEZwYtc6DB"
-      - key: SENDGRID_API_KEY
-        value: "SG.YOUR_REAL_KEY"
-      - key: DEFAULT_FROM_EMAIL
-        value: "noreply@peerlearn.com"
-
-    staticPublishPath: staticfiles
+      - key: PYTHON_VERSION
+        value: "3.13"

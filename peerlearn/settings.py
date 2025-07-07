@@ -3,6 +3,7 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
+
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,22 +17,22 @@ if not SECRET_KEY:
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-# Fallback to hardcoded ALLOWED_HOSTS if .env fails
+# Define ALLOWED_HOSTS
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'peerlearnproject-5.onrender.com',
+]
 
-default_hosts = ['localhost', '127.0.0.1']
-render_host = 'peerlearnproject-5.onrender.com'
-
+# Optionally, allow additional hosts from .env
 env_hosts = os.getenv('ALLOWED_HOSTS', '')
-parsed_hosts = [h.strip() for h in env_hosts.split(',') if h.strip()]
-ALLOWED_HOSTS = parsed_hosts if parsed_hosts else default_hosts
-
-# Auto add Render host in production
-if not DEBUG and render_host not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(render_host)
+if env_hosts:
+    ALLOWED_HOSTS.extend([h.strip() for h in env_hosts.split(',') if h.strip()])
 
 print("✅ DEBUG =", DEBUG)
 print("✅ ALLOWED_HOSTS =", ALLOWED_HOSTS)
 
+# ... rest of your settings.py remains unchanged ...
 
 
 
