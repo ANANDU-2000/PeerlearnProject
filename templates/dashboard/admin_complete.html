@@ -731,6 +731,48 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Manage Sessions -->
+            <div x-show="sessionSub === 'manage'" class="fade-in">
+                <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                    <h3 class="text-lg font-semibold mb-4">All Sessions</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Mentor</th>
+                                    <th>Status</th>
+                                    <th>Scheduled</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="session in allSessions" :key="session.id">
+                                    <tr>
+                                        <td x-text="session.title"></td>
+                                        <td x-text="session.mentor_name"></td>
+                                        <td x-text="session.status"></td>
+                                        <td x-text="formatDate(session.schedule)"></td>
+                                        <td>
+                                            <button @click="editSessionDialog(session)" class="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-colors" title="Edit Session">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button @click="deleteSession(session)" class="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Delete Session">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div x-show="allSessions.length === 0" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-video text-4xl mb-4"></i>
+                        <p>No sessions found.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Other tabs continue... -->
@@ -1164,7 +1206,17 @@
                         if (response.ok) {
                             const data = await response.json();
                             if (data.success) {
-                                this.realStats = data.stats;
+                                // Defensive: ensure all nested properties exist
+                                this.realStats = {
+                                    ...this.realStats,
+                                    ...data.stats,
+                                    users: { ...this.realStats.users, ...(data.stats.users || {}) },
+                                    sessions: { ...this.realStats.sessions, ...(data.stats.sessions || {}) },
+                                    bookings: { ...this.realStats.bookings, ...(data.stats.bookings || {}) },
+                                    revenue: { ...this.realStats.revenue, ...(data.stats.revenue || {}) },
+                                    feedback: { ...this.realStats.feedback, ...(data.stats.feedback || {}) },
+                                    follows: { ...this.realStats.follows, ...(data.stats.follows || {}) }
+                                };
                                 this.lastUpdate = new Date().toLocaleTimeString();
                             }
                         }
@@ -1259,23 +1311,22 @@
                 async toggleUserBan(user) {
                     const action = user.is_active ? 'ban' : 'unban';
                     if (!confirm(`Are you sure you want to ${action} ${user.username}?`)) return;
-                    
                     try {
                         const response = await fetch(`/api/admin/toggle-user-status/${user.id}/`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRFToken': this.getCSRFToken()
-                            }
+                            },
+                            body: JSON.stringify({ action: action }) // FIX: send valid JSON body
                         });
-                        
                         if (response.ok) {
                             const data = await response.json();
                             if (data.success) {
-                                user.is_active = data.new_status;
+                                user.is_active = data.user.is_active;
                                 this.showNotification('success', data.message);
                                 this.loadRealStats();
-                                this.loadRealUsers();  // Refresh user list
+                                this.loadRealUsers();
                             } else {
                                 this.showNotification('error', data.error || 'Action failed');
                             }
@@ -1570,6 +1621,46 @@
                         case 'reminder_sent': return 'fa-bell text-white';
                         case 'user_joined': return 'fa-user-plus text-white';
                         default: return 'fa-circle text-white';
+                    }
+                },
+                
+                // 1. Add allSessions state to Alpine.js data
+                allSessions: [],
+                
+                // 2. Add loadAllSessions method
+                async loadAllSessions() {
+                    try {
+                        const response = await fetch('/api/admin/all-sessions/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.allSessions = data.sessions;
+                            }
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Failed to load all sessions');
+                    }
+                },
+                
+                // 3. Add editSessionDialog and deleteSession methods
+                editSessionDialog(session) {
+                    this.showNotification('info', `Edit functionality for session "${session.title}" - Coming soon`);
+                },
+                async deleteSession(session) {
+                    if (!confirm(`Are you sure you want to delete session "${session.title}"?`)) return;
+                    try {
+                        const response = await fetch(`/api/admin/delete-session/${session.id}/`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRFToken': this.getCSRFToken() }
+                        });
+                        if (response.ok) {
+                            this.showNotification('success', 'Session deleted');
+                            this.loadAllSessions();
+                        } else {
+                            this.showNotification('error', 'Failed to delete session');
+                        }
+                    } catch (error) {
+                        this.showNotification('error', 'Failed to delete session');
                     }
                 }
             }

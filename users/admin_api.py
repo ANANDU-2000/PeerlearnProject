@@ -942,54 +942,49 @@ def update_user_status(request, user_id):
     # Enhanced access control - allow superusers, staff, or users with admin role
     if not (request.user.is_superuser or request.user.is_staff or request.user.role == 'admin'):
         return JsonResponse({'error': 'Access denied'}, status=403)
-    
     try:
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except Exception as e:
+            return JsonResponse({'error': 'Invalid JSON body'}, status=400)
         user = get_object_or_404(User, id=user_id)
-        
         # Prevent superusers from being banned by non-superusers
         if user.is_superuser and not request.user.is_superuser:
             return JsonResponse({'error': 'Cannot modify superuser accounts'}, status=403)
-        
         action = data.get('action')
+        if not action:
+            return JsonResponse({'error': 'Missing action'}, status=400)
         reason = data.get('reason', 'No reason provided')
-        
         if action == 'ban':
             user.is_active = False
-            # Log admin action with safe activity type
             UserActivity.objects.create(
                 user=user,
-                activity_type='profile_updated',  # Use existing activity type
+                activity_type='profile_updated',
                 description=f'Account banned by admin {request.user.username}. Reason: {reason}',
                 related_user_id=request.user.id
             )
             message = f'User {user.username} has been banned'
-            
         elif action == 'unban':
             user.is_active = True
             UserActivity.objects.create(
                 user=user,
-                activity_type='profile_updated',  # Use existing activity type
+                activity_type='profile_updated',
                 description=f'Account unbanned by admin {request.user.username}',
                 related_user_id=request.user.id
             )
             message = f'User {user.username} has been unbanned'
-            
         elif action == 'verify':
             user.is_verified = True
             UserActivity.objects.create(
                 user=user,
-                activity_type='profile_updated',  # Use existing activity type
+                activity_type='profile_updated',
                 description=f'Account verified by admin {request.user.username}',
                 related_user_id=request.user.id
             )
             message = f'User {user.username} has been verified'
-            
         else:
             return JsonResponse({'error': 'Invalid action'}, status=400)
-        
         user.save()
-        
         return JsonResponse({
             'success': True,
             'message': message,
@@ -1000,7 +995,6 @@ def update_user_status(request, user_id):
                 'is_verified': getattr(user, 'is_verified', False),
             }
         })
-        
     except Exception as e:
         print(f"Error in update_user_status: {str(e)}")  # Debug logging
         return JsonResponse({'error': str(e)}, status=500)
