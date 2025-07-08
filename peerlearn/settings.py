@@ -18,7 +18,7 @@ DEBUG = os.getenv('RENDER') is None  # False on Render, True locally
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'peerlearnproject-5.onrender.com',
+    'peerlearnproject-6.onrender.com',
 ]
 env_hosts = os.getenv('ALLOWED_HOSTS', '')
 if env_hosts:
