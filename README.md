@@ -1,4 +1,8 @@
 # 🚀 **PeerLearn Platform - AI-Powered Learning Ecosystem**
+🚀 **Live Demo:** [https://peerlearn.onrender.com](https://peerlearn.onrender.com)  
+📄 **Full Documentation:** See [PROJECT_FULL_DESCRIPTION.txt](./PROJECT_FULL_DESCRIPTION.txt)  
+🧠 **ML Recommendation Docs:** [recommendations module](./recommendations/)  
+
 
 [![Django](https://img.shields.io/badge/Django-5.2.1-green.svg)](https://djangoproject.com/)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org/)
